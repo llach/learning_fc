@@ -119,4 +119,5 @@ class GripperPosEnv(GripperEnv):
 
         return obs
     
+    def get_goal(self): return self.qgoal
     def set_goal(self, g): self.qgoal = g

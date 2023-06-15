@@ -2,6 +2,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+from matplotlib.legend_handler import HandlerTuple
 from stable_baselines3.common.results_plotter import plot_results, X_TIMESTEPS
 
 from learning_fc.models import ForcePI
@@ -10,12 +11,14 @@ from learning_fc.training import make_env, make_model
 def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=None, after_step_cb=None):
     results = dict(
         q=[[] for _ in range(n_rollouts)],
+        qdes=[[] for _ in range(n_rollouts)],
         qdot=[[] for _ in range(n_rollouts)],
         qacc=[[] for _ in range(n_rollouts)],
         force=[[] for _ in range(n_rollouts)],
         in_contact=[[] for _ in range(n_rollouts)],
         r=[[] for _ in range(n_rollouts)],
         cumr=[[] for _ in range(n_rollouts)],
+        goals=[],
     )
     for i in range(n_rollouts):
         obs, _ = env.reset()
@@ -24,6 +27,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
         if reset_cb: results = reset_cb(env, model, i, results) or results
 
         done = False
+        results["goals"].append(env.get_goal())
         while not done:
             if before_step_cb: results = before_step_cb(env, model, i, results) or results
 
@@ -33,6 +37,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
             done = terminated or truncated
 
             results["q"][i].append(env.q)
+            results["qdes"][i].append(env.qdes)
             results["qdot"][i].append(env.qdot)
             results["qacc"][i].append(env.qacc)
             results["force"][i].append(env.force)
@@ -108,6 +113,71 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     return agent_results, oracle_results
 
 
+def plot_rollouts(env, res, plot_title):
+    n_trials = len(res["q"])
+    n_steps  = len(res["q"][0])
+    x        = np.arange(n_steps*n_trials)
+
+    q = np.array(res["q"]).reshape((-1,2))
+    qdes = np.array(res["qdes"]).reshape((-1,2))
+    qdot = np.array(res["qdot"]).reshape((-1,2))
+    qacc = np.array(res["qacc"]).reshape((-1,2))
+    force = np.array(res["force"]).reshape((-1,2))
+
+    r_force = np.array(res["r_force"]).reshape((-1,))
+    cumr = np.array(res["cumr"]).reshape((-1,))
+    goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
+
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
+
+    axes[0,0].set_title("joint position")
+    q1,  = axes[0,0].plot(x, q[:,0], lw=1, label="qdes")
+    q2,  = axes[0,0].plot(x, q[:,1], lw=1)
+    qd1, = axes[0,0].plot(x, qdes[:,0], lw=1)
+    qd2, = axes[0,0].plot(x, qdes[:,1], lw=1)
+    axes[0,0].legend([(q1, q2), (qd1, qd2)], ['q', 'qdes'],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+
+    axes[0,1].set_title("forces")
+    axes[0,1].plot(x, force[:,0], lw=1)
+    axes[0,1].plot(x, force[:,1], lw=1)
+    axes[0,1].plot(goals, c="grey", label="fgoal")
+    axes[0,1].legend()
+
+    axes[1,0].set_title("joint velocity")
+    axes[1,0].plot(x, qdot[:,0], lw=1)
+    axes[1,0].plot(x, qdot[:,1], lw=1)
+    axes[1,0].set_ylim(-1.1*env.vmax, 1.1*env.vmax)
+    axes[1,0].axhline(-env.vmax, lw=0.7, ls="dashed", c="grey")
+    axes[1,0].axhline(env.vmax, lw=0.7, ls="dashed", c="grey")
+
+    axes[1,1].set_title("joint acceleration")
+    axes[1,1].plot(x, qacc[:,0], lw=1)
+    axes[1,1].plot(x, qacc[:,1], lw=1)
+    axes[1,1].set_ylim(-1.1*env.amax, 1.1*env.amax)
+    axes[1,1].axhline(-env.amax, lw=0.7, ls="dashed", c="grey")
+    axes[1,1].axhline(env.amax, lw=0.7, ls="dashed", c="grey")
+
+    axes[2,0].set_title("partial rewards")
+    axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
+    axes[2,0].legend()
+
+    axes[2,1].set_title("cumulative episode reward")
+    axes[2,1].plot(x, cumr, c="red")
+
+    # axes[3,0].set_title("object velocity")
+
+    # timesteps for horizontal episode reset lines
+    # we don't need one at 0 nor at the end (hence the +1 and [:-1])
+    reset_lines = ((np.arange(n_trials)+1)*n_steps)[:-1]
+    for ax in axes.flatten():
+        for rl in reset_lines:
+            ax.axvline(rl, lw=.7, ls="dashed", c="grey")
+        ax.set_xlim(0, int(len(x)*1.05))
+    
+    fig.suptitle(plot_title)
+    plt.tight_layout()
+
 def tactile_eval(trialdir, with_vis=False):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
 
@@ -119,25 +189,42 @@ def tactile_eval(trialdir, with_vis=False):
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))
     plt.savefig(f"{trialdir}/learning_curve.png")
-    plt.clf()
 
     def force_reset_cb(env, model, i, results, **kw): 
         if isinstance(model, ForcePI): model.reset()
 
-        if "deltaf" not in results: results |= dict(deltaf=[])
-        results["deltaf"].append([])
+        for key in ["deltaf", "r_force"]:
+            if key not in results: results |= {key: []}
+            results[key].append([])
 
         return results
 
     def force_after_step_cb(env, model, i, results, goal=None, **kw):
         results["deltaf"][i].append(env.force_deltas)
+        results["r_force"][i].append(env.r_force)
         return results
 
     fc = ForcePI(env, Kp=1.5, Ki=3.1, k=160, verbose=with_vis)
-    ftargets = np.round(np.linspace(*env.fgoal_range, num=20), 4)
 
-    agent_res, oracle_res = agent_oracle_comparison(
-        env, model, fc, vis, ftargets, 
+    # comparison plot
+    agent_oracle_comparison(
+        env, model, fc, vis, 
+        goals=np.round(np.linspace(*env.fgoal_range, num=20), 4),
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb,
         plot=True, trialdir=trialdir, 
         plot_title=plot_title.replace("\n", " - Baseline Comparison\n"))
+    
+    # plot a few rollouts in more detail
+    a_res, o_res = agent_oracle_comparison(
+        env, model, fc, vis, plot=False,
+        goals=np.round(np.linspace(*env.fgoal_range, num=5), 4),
+        reset_cb=force_reset_cb, after_step_cb=force_after_step_cb
+    )
+
+    plot_rollouts(env, a_res, plot_title=plot_title.replace("\n", " - policy rollouts\n"))
+    plt.savefig(f"{trialdir}/rollouts_policy.png")
+
+    plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - baseline rollouts\n"))
+    plt.savefig(f"{trialdir}/rollouts_baseline.png")
+
+    print("tactile eval done!")

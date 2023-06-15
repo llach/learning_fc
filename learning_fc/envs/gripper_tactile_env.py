@@ -139,3 +139,5 @@ class GripperTactileEnv(GripperEnv):
         """
         self.solimp = solimp
         self.solref = solref
+
+    def get_goal(self): return self.fgoal

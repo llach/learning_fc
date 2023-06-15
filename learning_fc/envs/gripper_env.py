@@ -74,10 +74,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         # rescale to action range
         ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
 
+        self.qdes = ain
+
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
-        aout[self.data.actuator("gripper_left_finger_joint").id]  = ain[0]
-        aout[self.data.actuator("gripper_right_finger_joint").id] = ain[1]
+        aout[self.data.actuator("gripper_left_finger_joint").id]  = self.qdes[0]
+        aout[self.data.actuator("gripper_right_finger_joint").id] = self.qdes[1]
 
         return aout
     
@@ -124,14 +126,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         anorm = np.clip(np.abs(self.qacc), 0, self.amax)/self.amax
         return self.delta*np.sum(anorm)
 
-    def _get_reward(self):
-        raise NotImplementedError
+    def _is_done(self): raise NotImplementedError
+    def _get_reward(self): raise NotImplementedError
+    def _reset_model(self): raise NotImplementedError
     
-    def _is_done(self):
-        raise NotImplementedError
-    
-    def _reset_model(self):
-        raise NotImplementedError
+    def get_goal(self): raise NotImplementedError
+    def set_goal(self, g): raise NotImplementedError
 
     def reset_model(self):
         """ reset data, set joints to initial positions and randomize
