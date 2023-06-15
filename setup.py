@@ -10,14 +10,14 @@ def package_files(directory):
     return paths
 
 
-extra_files = package_files('tiago_rl/assets')
+extra_files = package_files('learning_fc/assets')
 
-setup(name='tiago_rl',
+setup(name='learning_fc',
       version='0.1',
-      description='TIAGo Reinforcement Learning Environments',
+      description='Learning Force Control with 2-DoF Grippers',
       author='Luca Lach',
       author_email='llach@techfak.uni-bielefeld.de',
-      url='https://github.com/llach/tiago_rl',
-      packages=[package for package in find_packages() if package.startswith("tiago_rl")],
-      package_data={'tiago_rl': extra_files},
+      url='https://github.com/llach/learning_fc',
+      packages=[package for package in find_packages() if package.startswith("learning_fc")],
+      package_data={'learning_fc': extra_files},
 )

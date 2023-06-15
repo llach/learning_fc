@@ -1,0 +1,96 @@
+<mujoco model="force-gripper">
+  <compiler angle="radian" meshdir="/Users/llach/repos/tiago_mj/assets/" autolimits="true" />
+  <size njmax="500" nconmax="100"/>
+
+  <option integrator="implicitfast"/>
+
+  <default>
+    <general dyntype="none" biastype="affine" forcerange="-100 100" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -100 -10" />
+  </default>
+
+  <asset>
+    <mesh name="gripper_link" file="gripper_link.stl"/>
+    <mesh name="gripper_finger_link_right" file="gripper_finger_link.stl" scale="-1 -1 1"/>
+    <mesh name="gripper_finger_link_left" file="gripper_finger_link.stl"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <body name="object" pos="0 0 0.67" >
+        <freejoint name="object_joint" />
+         <geom name="object" type="cylinder" size="0.01 0.07" mass="1" priority="1" solimp="0 0.95 0.01 0.5 2" />  
+    </body> 
+    
+    <body name="table" pos="0 0 0.3" quat="0 0 0 1">
+        <geom name="table" type="box" size="0.3 0.3 0.3" />
+
+        <body name="torso" pos="0.27 0.0 0.4" quat="0 0 0 1">
+            <geom type="box" size="0.025 0.025 0.1" />
+
+            <body name="lift" pos="0.04 0 -0.04" quat="0 0.7071068 0 0.7071068">
+                <geom type="capsule" size="0.02 0.02" mass="0.01" />
+                <joint name="lift_joint" type="slide" axis="1 0 0" range="0 0.1" />
+
+                <body name="hand" pos="0 0 -0.04" quat="0 0 0 1">
+                    <inertial pos="-0.000173877 0.000176378 0.0817469" quat="0.997803 -0.0017731 -0.00128601 0.0662102" mass="0.00286" diaginertia="0.00259542 0.00226812 0.000756434"/>
+
+                    <geom pos="0 0 0.076575" quat="0 -0.707107 0.707107 0" mass="0.01" type="mesh" rgba="1 1 1 1" mesh="gripper_link"/>
+
+                    <body name="gripper_right_finger_link" pos="0 0 0.076575" quat="0 -0.707107 0.707107 0">
+                        <inertial pos="-0.00447 0.010766 -0.121013" quat="0.944415 0.0576483 0.0941322 -0.309671" mass="0.10998" diaginertia="0.000161667 0.000161667 0.000161667"/> 
+                        <joint name="gripper_right_finger_joint" pos="0 0 -0.076575" axis="1 0 0" type="slide" range="0 0.045" />
+
+                        <geom quat="0 0 0 1" contype="0" conaffinity="0" type="mesh" rgba="0 0 0 1" mesh="gripper_finger_link_right"/>
+                        <geom name="right_finger_bb" pos="0.004 0 -0.159" type="box" rgba="1 0 0 0" size="0.004 0.025 0.06"/>
+                        <site name="right_touch_sensor_site" pos="0.004 0 -0.159" type="box" rgba="1 0 0 1" size="0.004 0.025 0.06"/>
+                    </body>
+                    <body name="gripper_left_finger_link" pos="0 0 0.076575" quat="0 -0.707107 0.707107 0">
+                        <inertial pos="-0.00447 0.010766 -0.121013" quat="0.944415 0.0576483 0.0941322 -0.309671" mass="0.10998" diaginertia="0.000161667 0.000161667 0.000161667"/>
+                        <joint name="gripper_left_finger_joint" pos="0 0 -0.076575" axis="-1 0 0" type="slide" range="0 0.045" />
+
+                        <geom quat="0 0 0 1" contype="0" conaffinity="0" type="mesh" rgba="0 0 0 1" mesh="gripper_finger_link_left"/>
+                        <geom name="left_finger_bb" pos="-0.004 0 -0.159" type="box" rgba="1 0 0 0" size="0.004 0.025 0.06" solimp="0 0.95 0.001 0.5 2" />
+                        <site name="left_touch_sensor_site" pos="-0.004 0 -0.159" type="box" rgba="1 0 0 1" size="0.004 0.025 0.06"/>
+                    </body>
+                </body>
+            </body>
+        </body>        
+    </body>
+  </worldbody>
+
+  <contact>
+    <exclude body1="torso" body2="lift"/>
+    <exclude body1="gripper_left_finger_link" body2="gripper_right_finger_link"/>
+  </contact>
+
+   <actuator>
+    <general joint="lift_joint" name="lift_joint" ctrlrange="0 0.1" />
+    <general joint="gripper_left_finger_joint"  name="gripper_left_finger_joint"  />
+    <general joint="gripper_right_finger_joint" name="gripper_right_finger_joint" />
+  </actuator>
+
+  <sensor>
+    <touch site="left_touch_sensor_site"  name="left_touch_sensor"  />
+    <touch site="right_touch_sensor_site" name="right_touch_sensor" />
+  </sensor>
+
+
+  <!-- scene specific model -->
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512"
+        height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4"
+        rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"
+        reflectance="0.2"/>
+  </asset>
+
+</mujoco>

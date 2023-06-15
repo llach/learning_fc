@@ -1,5 +1,4 @@
 mujoco
-mujoco-python-viewer
 PyYaml
 
 pyqtgraph
