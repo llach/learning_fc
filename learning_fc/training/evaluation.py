@@ -178,13 +178,13 @@ def plot_rollouts(env, res, plot_title):
     fig.suptitle(plot_title)
     plt.tight_layout()
 
-def tactile_eval(trialdir, with_vis=False):
+def tactile_eval(trialdir, plot_title=None, with_vis=False):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
 
     # recover relevant parameters
     timesteps = int(params["train"]["timesteps"])
     trial_name = params["train"]["trial_name"]
-    plot_title = f'{params["train"]["plot_title"] or "Force Control"}\n{trial_name}'
+    plot_title = f'{plot_title or "Force Control"}\n{trial_name}'
 
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))

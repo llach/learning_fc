@@ -16,10 +16,9 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], alpha=1.0, beta=1.0, gamma=1.0, **kwargs):
+    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, **kwargs):
+        self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
-        self.alpha = alpha
-        self.gamma = gamma
         self.obj_pos_range = obj_pos_range
 
         observation_space = Box(low=-1, high=1, shape=(6,), dtype=np.float64)
@@ -32,7 +31,6 @@ class GripperTactileEnv(GripperEnv):
             self,
             model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
-            beta=beta,
             **kwargs,
         )
 
@@ -55,16 +53,7 @@ class GripperTactileEnv(GripperEnv):
                 safe_rescale(self.q,     [0.0,  0.045]), 
                 safe_rescale(self.force, [0, self.fmax]), 
                 safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]),
-                # self.in_contact,
             ])
-
-    def _object_proximity_reward(self):
-        """ fingers don't move towards the object sometimes → encourage them with small, positive rewards
-        """
-        # clipping the deltas at 0 will allow π to penetrate the object without penalty
-        dl = 1-np.clip(self.q[0]-self.qo_l, 0, self.doq_l)/self.doq_l
-        dr = 1-np.clip(self.q[1]-self.qo_r, 0, self.doq_r)/self.doq_r
-        return self.gamma*(dl+dr)
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force
@@ -75,15 +64,12 @@ class GripperTactileEnv(GripperEnv):
                 rforce += 1-(np.abs(df)/self.frange_upper)
             elif df > 0:
                 rforce += 1-(df/self.frange_lower)
-        return self.alpha*rforce
+        return self.rf_scale*rforce
 
     def _get_reward(self):
         self.r_force   = self._force_reward()
-        self.r_obj_prx = self._object_proximity_reward()
-        self.r_qdot    = self._qdot_penalty()
-        self.r_qacc    = self._qacc_penalty()
 
-        return self.r_force #+ self.r_obj_prx + np.sum(self.in_contact) - self.r_qdot - self.r_qacc
+        return self.r_force
     
     def _is_done(self): return False
 

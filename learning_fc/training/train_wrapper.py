@@ -42,10 +42,10 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
     os.makedirs(trialdir, exist_ok=True)
 
     # environment setup
-    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, with_vis=False, training=True)
+    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True)
 
     # model setup
-    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, timesteps=timesteps)
+    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps)
     
     # store parameters
     with open(f"{trialdir}/parameters.json", "w") as f:
@@ -56,10 +56,9 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
         ), indent=2, sort_keys=True))
 
     # train the agent
-    try: 
-        model.learn(total_timesteps=timesteps, callback=callbacks)
-    except (KeyboardInterrupt, Exception) as e: 
+    try: model.learn(total_timesteps=timesteps, callback=callbacks)
+    except (KeyboardInterrupt) as e: 
         print(f"\ngot exception while training:\n{e}\nattempting evaluation regardless")
 
     # create evaluation plots
-    if env_name in env_eval_fn: env_eval_fn[env_name](trialdir, with_vis=False)
+    if env_name in env_eval_fn: env_eval_fn[env_name](trialdir, plot_title=plot_title, with_vis=False)

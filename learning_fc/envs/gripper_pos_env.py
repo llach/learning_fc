@@ -39,51 +39,6 @@ class GripperPosEnv(GripperEnv):
             safe_rescale(self.qdot, [-self.vmax, self.vmax]),
         ])
     
-    # # variant I) continuous reward - no restrictions
-    # def _get_reward(self):
-    #     return -np.sum(np.abs(self.qgoal - self.q))
-    
-    # # variant II.1) continuous reward inside ε-environment 
-    # # DON'T USE, THIS ONE HAS A LOGIC ERROR
-    # def _get_reward(self):
-    #     deltaq = np.abs(self.qgoal - self.q)
-    #     if not np.all(deltaq<self.eps): return 0
-
-    #     # reward is super small since ε is, make it bigger with 1e5
-    #     return np.sum(np.abs(self.qgoal - self.q))*1e5
-
-    # # variant II.2) continuous reward inside ε-environment, normalized
-    # def _get_reward(self):
-        # deltaq = np.abs(self.qgoal - self.q)
-        # if not np.all(deltaq<self.eps): return 0
-
-        # return np.sum(1-(deltaq/self.eps))
-
-    # variant III) continuous reward normalized inside ε-environment & velocity penalty
-    # def _get_reward(self):
-    #     vnorm    = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
-    #     vpenalty = np.e**(self.valpha*((vnorm-1)))
-    #     vpenalty = np.sum(vpenalty)
-
-    #     deltaq = np.abs(self.qgoal - self.q)
-    #     if not np.all(deltaq<self.eps): return -0.1*vpenalty
-
-    #     posreward = np.sum(1-(deltaq/self.eps))
-
-    #     return posreward - 2*vpenalty
-    
-    # IV.1) no ε-env, exponential velocity penalty
-    # def _get_reward(self):
-    #     vnorm    = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
-    #     vpenalty = np.e**(self.valpha*((vnorm-1)))
-    #     vpenalty = np.sum(vpenalty)
-
-    #     delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
-    #     deltaq = np.abs(self.qgoal - self.q)
-    #     posreward = np.sum(1-(deltaq/delta))
-
-    #     return posreward - vpenalty
-    
     # IV.2) no ε-env, linear velocity penalty
     def _get_reward(self):
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
