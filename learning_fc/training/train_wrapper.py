@@ -1,6 +1,7 @@
 import os
 import json
 
+from sys import platform
 from datetime import datetime
 
 from learning_fc import model_path, datefmt
@@ -61,4 +62,9 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
         print(f"\ngot exception while training:\n{e}\nattempting evaluation regardless")
 
     # create evaluation plots
-    if env_name in env_eval_fn: env_eval_fn[env_name](trialdir, name=name, plot_title=plot_title, with_vis=False)
+    if env_name in env_eval_fn: 
+        agent_rew, base_rew = env_eval_fn[env_name](trialdir, name=name, plot_title=plot_title, with_vis=False)
+
+        if platform == "darwin": # macOS gets notifications
+            import pync
+            pync.notify(f"BASE {base_rew:.1f} | RL   {agent_rew:.1f}", title="RL Training done!", activate="com.microsoft.VSCode")

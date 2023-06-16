@@ -228,4 +228,9 @@ def tactile_eval(trialdir, name=None, plot_title=None, with_vis=False):
     plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - baseline rollouts\n"))
     plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
 
+    cumr_a = np.mean(np.array(a_res["cumr"])[:,-1])
+    cumr_o = np.mean(np.array(o_res["cumr"])[:,-1])
+
     print("tactile eval done!")
+
+    return cumr_a, cumr_o

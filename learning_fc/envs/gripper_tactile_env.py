@@ -21,7 +21,7 @@ class GripperTactileEnv(GripperEnv):
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
 
-        observation_space = Box(low=-1, high=1, shape=(6,), dtype=np.float64)
+        observation_space = Box(low=-1, high=1, shape=(4,), dtype=np.float64)
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
@@ -50,7 +50,6 @@ class GripperTactileEnv(GripperEnv):
         """ concatenate internal state as observation
         """ 
         return np.concatenate([
-                safe_rescale(self.q,     [0.0,  0.045]), 
                 safe_rescale(self.force, [0, self.fmax]), 
                 safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]),
             ])

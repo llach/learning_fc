@@ -31,7 +31,7 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
             callbacks.append(
                 SaveOnBestTrainingRewardCallback(
                     env=env,
-                    check_freq=timesteps/5e2,
+                    check_freq=timesteps/25e1,
                     total_steps=timesteps,
                     save_path=logdir,
                     offset=1e3,
