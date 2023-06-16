@@ -21,11 +21,11 @@ class SaveOnBestTrainingRewardCallback(CheckpointCallback):
     """
 
     def __init__(self, env: gym.Env, check_freq: int, save_path: str, mean_n=100, total_steps: int = 0, model_name: str = "_best_model",
-                 step_offset: int = 1e4, verbose=1):
+                 offset: int = 1e4, verbose=1):
         super(SaveOnBestTrainingRewardCallback, self).__init__(
             total_steps=total_steps,
             freq=check_freq,
-            offset=step_offset,
+            offset=offset,
             env=env, 
             verbose=verbose)
             
@@ -36,7 +36,7 @@ class SaveOnBestTrainingRewardCallback(CheckpointCallback):
         self.start_time = time.time()
         self.model_name = model_name
 
-        print(f"# saving model after {self.offset} steps, checking every {self.freq} steps, for a total of {len(self.checkpoints)} checks")
+        print(f"SaveOnBestTrainingRewardCallback: saving model after {self.offset} steps, checking every {self.freq} steps, for a total of {len(self.checkpoints)} checks")
 
     def _init_callback(self) -> None:
         # Create folders if needed

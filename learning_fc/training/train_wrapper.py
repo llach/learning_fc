@@ -45,7 +45,7 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
     env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True)
 
     # model setup
-    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps)
+    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20)
     
     # store parameters
     with open(f"{trialdir}/parameters.json", "w") as f:
@@ -61,4 +61,4 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
         print(f"\ngot exception while training:\n{e}\nattempting evaluation regardless")
 
     # create evaluation plots
-    if env_name in env_eval_fn: env_eval_fn[env_name](trialdir, plot_title=plot_title, with_vis=False)
+    if env_name in env_eval_fn: env_eval_fn[env_name](trialdir, name=name, plot_title=plot_title, with_vis=False)

@@ -108,7 +108,6 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
 
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{trialdir}/baseline_comparison.png")
 
     return agent_results, oracle_results
 
@@ -178,17 +177,18 @@ def plot_rollouts(env, res, plot_title):
     fig.suptitle(plot_title)
     plt.tight_layout()
 
-def tactile_eval(trialdir, plot_title=None, with_vis=False):
+def tactile_eval(trialdir, name=None, plot_title=None, with_vis=False):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
 
     # recover relevant parameters
+    prefix = f"{name}__" if name else ""
     timesteps = int(params["train"]["timesteps"])
     trial_name = params["train"]["trial_name"]
     plot_title = f'{plot_title or "Force Control"}\n{trial_name}'
 
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))
-    plt.savefig(f"{trialdir}/learning_curve.png")
+    plt.savefig(f"{trialdir}/{prefix}learning_curve.png")
 
     def force_reset_cb(env, model, i, results, **kw): 
         if isinstance(model, ForcePI): model.reset()
@@ -213,6 +213,7 @@ def tactile_eval(trialdir, plot_title=None, with_vis=False):
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb,
         plot=True, trialdir=trialdir, 
         plot_title=plot_title.replace("\n", " - Baseline Comparison\n"))
+    plt.savefig(f"{trialdir}/{prefix}baseline_comparison.png")
     
     # plot a few rollouts in more detail
     a_res, o_res = agent_oracle_comparison(
@@ -222,9 +223,9 @@ def tactile_eval(trialdir, plot_title=None, with_vis=False):
     )
 
     plot_rollouts(env, a_res, plot_title=plot_title.replace("\n", " - policy rollouts\n"))
-    plt.savefig(f"{trialdir}/rollouts_policy.png")
+    plt.savefig(f"{trialdir}/{prefix}rollouts_policy.png")
 
     plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - baseline rollouts\n"))
-    plt.savefig(f"{trialdir}/rollouts_baseline.png")
+    plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
 
     print("tactile eval done!")

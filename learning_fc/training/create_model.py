@@ -1,7 +1,7 @@
 from stable_baselines3 import PPO, TD3, DDPG
 
 from learning_fc.utils import get_constructor_params
-from learning_fc.callbacks import SaveOnBestTrainingRewardCallback
+from learning_fc.callbacks import SaveOnBestTrainingRewardCallback, PeriodicSavingCallback
 
 modelname2cls = dict(
     ppo=PPO,
@@ -31,14 +31,21 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
             callbacks.append(
                 SaveOnBestTrainingRewardCallback(
                     env=env,
-                    check_freq=2000,
+                    check_freq=timesteps/5e2,
                     total_steps=timesteps,
                     save_path=logdir,
-                    step_offset=1e3,
+                    offset=1e3,
                     mean_n=100
                 )
             )
-        if save_periodic > 0: pass
+        if save_periodic > 0:
+            callbacks.append(
+                PeriodicSavingCallback(
+                    save_path=logdir, 
+                    save_freq=save_periodic, 
+                    offset=1e3
+                )
+            )
     elif weights is not None:
         model = model.load(f"{logdir}/weights/{weights}")
     else:
