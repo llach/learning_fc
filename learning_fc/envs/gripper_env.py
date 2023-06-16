@@ -6,6 +6,7 @@ from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
 
+import learning_fc
 from learning_fc import safe_rescale, total_contact_force
 
 DEFAULT_CAMERA_CONFIG = {
@@ -31,7 +32,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, model_path, observation_space, rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, observation_space, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
@@ -49,9 +50,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,
         )
-
-        # maximum position delta per timestep to not surpass max velocity
-        self.dq_max = self.vmax*self.dt*5 # the 5 is needed to actually get to vmax
 
         # reload the model with environment randomization
         self.reset_model()

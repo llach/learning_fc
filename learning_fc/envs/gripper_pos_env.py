@@ -19,7 +19,6 @@ class GripperPosEnv(GripperEnv):
 
         GripperEnv.__init__(
             self,
-            model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
             control_mode=control_mode,
             **kwargs,
