@@ -4,7 +4,7 @@ from gymnasium.wrappers import TimeLimit
 from stable_baselines3.common.monitor import Monitor
 
 from learning_fc.utils import get_constructor_params, safe_unwrap
-from learning_fc.envs import GripperPosEnv, GripperTactileEnv
+from learning_fc.envs import GripperPosEnv, GripperTactileEnv, ControlMode
 from learning_fc.live_vis import PosVis, TactileVis
 
 
@@ -14,8 +14,8 @@ envname2cls = dict(
 )
 
 default_env_kw = dict(
-    gripper_pos={},
-    gripper_tactile={},
+    gripper_pos=dict(control_mode=ControlMode.PositionDelta),
+    gripper_tactile=dict(control_mode=ControlMode.PositionDelta),
 )
 
 env2vis = dict(
@@ -23,7 +23,10 @@ env2vis = dict(
     gripper_tactile=TactileVis,
 )
 
-def make_env(env_name, logdir, env_kw={}, max_steps=250, nenv=1, frame_stack=1, with_vis=False, training=True):
+def make_env(env_name, logdir=None, env_kw={}, max_steps=250, nenv=1, frame_stack=1, with_vis=False, training=True):
+    # sanity checks
+    assert logdir is not None or not training, "specify logdir for training"
+
     fn_params = locals() # get locals right away to avoid "env" or "vis" to be included 
 
     # get environment class

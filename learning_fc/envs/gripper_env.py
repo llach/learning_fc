@@ -1,10 +1,12 @@
 import mujoco
 import numpy as np
 
-from learning_fc import safe_rescale, total_contact_force
+from enum import Enum
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
+
+from learning_fc import safe_rescale, total_contact_force
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -13,6 +15,10 @@ DEFAULT_CAMERA_CONFIG = {
     "elevation": -45,
     "lookat": [0.006, 0.0, 0.518]
 }
+
+class ControlMode(str, Enum):
+    Position="position"
+    PositionDelta="position_delta"
 
 class GripperEnv(MujocoEnv, utils.EzPickle):
 
@@ -25,13 +31,14 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, model_path, observation_space, rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, **kwargs):
+    def __init__(self, model_path, observation_space, rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
         self.ftheta = ftheta    # contact force noise threshold
         self.rqdot_scale = rqdot_scale # scaling factor for qdot penalty
         self.qinit_range = qinit_range
+        self.control_mode = control_mode
 
         utils.EzPickle.__init__(self, **kwargs)
         MujocoEnv.__init__(
@@ -70,10 +77,15 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         * limits joint to vmax by contraining the maximum position delta applied
         * creates full `data.ctrl`-compatible array even though some joints are not actuated 
         """
-        # rescale to action range
-        ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
-
-        self.qdes = ain
+        # transform actions to qdes depending on control mode
+        if self.control_mode == ControlMode.Position:
+            ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
+            self.qdes = ain
+        elif self.control_mode == ControlMode.PositionDelta:
+            ain = safe_rescale(ain, [-1, 1], [-0.045, 0.045])
+            self.qdes = np.clip(self.q+ain, 0, 0.045)
+        else:
+            assert False, f"unknown control mode {self.control_mode}"
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)

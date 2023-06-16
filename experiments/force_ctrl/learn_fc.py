@@ -9,4 +9,5 @@ for alg in ["ppo", "td3"]:
         model_name=alg,
         name=name,
         plot_title=plot_title,
+        # train_kw=dict(timesteps=2e3) # quick training for debugging
     )

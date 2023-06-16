@@ -2,15 +2,16 @@ import numpy as np
 from enum import Enum
 
 from learning_fc import safe_rescale
+from learning_fc.models import BaseModel
 
 class ControllerPhase(int, Enum):
     POSITION_CTRL=0
     FORCE_CLOSURE=1
     FORCE_CTRL=2
 
-class ForcePI:
+class ForcePI(BaseModel):
 
-    def __init__(self, env, Kp=1.9, Ki=3.1, k=1600, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False):
+    def __init__(self, env, Kp=1.5, Ki=3.1, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
         self.env = env
         self.verbose = verbose
         self.q_limits = q_limits
@@ -23,6 +24,8 @@ class ForcePI:
 
         # reset (or initialize) controller state
         self.reset()
+
+        BaseModel.__init__(self, control_mode=env.control_mode)
 
     def reset(self):
         self.joint_transition = [False, False]
@@ -77,11 +80,13 @@ class ForcePI:
         # if self.phase == ControllerPhase.FORCE_CTRL:
         #     print("fc", delta_qs)
 
+        return delta_qs
+
         return np.clip(q+delta_qs, *self.q_limits)
     
-    def predict(self, obs, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """
         interface to be compatible with stable baselines' API
         """
-        qdes = self.get_q(self.env.q, self.env.force)
-        return safe_rescale(qdes, [0, 0.045]), {}
+        deltaq = self.get_q(self.env.q, self.env.force)
+        return self._deltaq_to_qdes(self.env.q, deltaq), {}

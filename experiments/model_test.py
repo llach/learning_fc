@@ -1,39 +1,29 @@
 import numpy as np
 np.set_printoptions(suppress=True, precision=5)
 
-from learning_fc import safe_rescale
-from learning_fc.envs import GripperTactileEnv, GripperPosEnv
-from learning_fc.live_vis import TactileVis, PosVis
+from learning_fc.envs import ControlMode
+from learning_fc.models import PosModel, ForcePI
+from learning_fc.training import make_env
 
 with_vis = 1
-steps  = 500
-trials = 1
+steps  = 200
+trials = 5
 
-env = GripperTactileEnv(
-    obj_pos_range=[-0.0,-0.0],
-    **{"render_mode": "human", 'qinit_range': [0.025, 0.025]} if with_vis else {}
-    )
-vis = TactileVis(env) if with_vis else None
-
-# env = GripperPosEnv(**{"render_mode": "human"} if with_vis else {})
-# vis = PosVis(env) if with_vis else None
-
-vdes = 0.02 # m/s
-qdelta = vdes*env.dt
-qd = safe_rescale(qdelta, [0,0.045], [-1,1])
+env, vis, _ = make_env(
+    env_name="gripper_tactile", 
+    training=False, 
+    with_vis=with_vis, 
+    env_kw=dict(control_mode=ControlMode.PositionDelta)
+)
+model = ForcePI(env)
 
 for i in range(trials):
-    env.reset()
-    # env.set_goal(0.6)    
+    obs, _ = env.reset()
     if vis: vis.reset()
 
     for j in range(steps):
-        # action = safe_rescale(
-        #     np.clip(env.q - qdelta, 0, 0.045),
-        #     [0, 0.045],
-        #     [-1,1]
-        # )
-        action = [1,1]
+        # action = [1,1]
+        action, _ = model.predict(obs)
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)

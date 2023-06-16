@@ -112,7 +112,7 @@ class PIVis(VisBase):
         self.plt_force.update(self.env.forces)
         self.plt_cntct.update(self.env.in_contact)
 
-        self.plt_pos.update(np.concatenate([self.env.q, action]))
+        self.plt_pos.update(np.concatenate([self.env.q, self.env.qdes]))
         self.plt_vel.update(self.env.qdot)
 
         self.plt_acc.update(self.env.qacc)

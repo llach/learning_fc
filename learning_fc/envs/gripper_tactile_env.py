@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from gymnasium.spaces import Box
 
 from learning_fc import safe_rescale
-from learning_fc.envs import GripperEnv
+from learning_fc.envs import GripperEnv, ControlMode
 
 
 class GripperTactileEnv(GripperEnv):
@@ -16,7 +16,7 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, **kwargs):
+    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, **kwargs):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
@@ -31,6 +31,7 @@ class GripperTactileEnv(GripperEnv):
             self,
             model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
+            control_mode=control_mode,
             **kwargs,
         )
 

@@ -33,9 +33,8 @@ class PosVis(VisBase):
         self.win.nextRow()
 
         self.plt_r = PIWrapper(self.win, title="Reward", pens="g")
-        self.plt_in_band = PIWrapper(self.win, title="In Band", pens="b")
 
-        self.all_plots = [self.plt_pos, self.plt_vel, self.plt_r, self.plt_in_band]
+        self.all_plots = [self.plt_pos, self.plt_vel, self.plt_r]
 
     def draw_goal(self):
         qgoal = self.env.qgoal
@@ -52,11 +51,10 @@ class PosVis(VisBase):
         action = safe_rescale(action, [-1,1], [0,0.045])
 
         # store new data
-        self.plt_pos.update(np.concatenate([self.env.q, action]))
+        self.plt_pos.update(np.concatenate([self.env.q, self.env.qdes]))
         self.plt_vel.update(self.env.qdot)
 
         self.plt_r.update(reward)
-        self.plt_in_band.update(self.env.in_band)
 
         # on macOS, calling processEvents() is unnecessary
         # and even results in an error. only do so on Linux

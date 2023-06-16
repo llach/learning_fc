@@ -3,13 +3,13 @@ import numpy as np
 import xml.etree.ElementTree as ET
 
 from gymnasium.spaces import Box
-from .gripper_env import GripperEnv
+from .gripper_env import GripperEnv, ControlMode
 from learning_fc import safe_rescale
 
 
 class GripperPosEnv(GripperEnv):
 
-    def __init__(self, max_steps=50, eps=0.0005, **kwargs):
+    def __init__(self, max_steps=50, eps=0.0005, control_mode=ControlMode.Position, **kwargs):
         self.eps = eps              # radius ε for rewards with fixed ε
         self.max_steps = max_steps  # #steps to terminate after  
 
@@ -21,6 +21,7 @@ class GripperPosEnv(GripperEnv):
             self,
             model_path="/Users/llach/repos/tiago_mj/force_gripper.xml",
             observation_space=observation_space,
+            control_mode=control_mode,
             **kwargs,
         )
 

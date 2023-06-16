@@ -204,7 +204,7 @@ def tactile_eval(trialdir, plot_title=None, with_vis=False):
         results["r_force"][i].append(env.r_force)
         return results
 
-    fc = ForcePI(env, Kp=1.5, Ki=3.1, k=160, verbose=with_vis)
+    fc = ForcePI(env, verbose=with_vis)
 
     # comparison plot
     agent_oracle_comparison(
