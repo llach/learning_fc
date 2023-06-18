@@ -1,13 +1,13 @@
 import mujoco
 import numpy as np
 
-from enum import Enum
 from gymnasium import utils
 from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
 
 import learning_fc
 from learning_fc import safe_rescale, total_contact_force
+from learning_fc.enums import ControlMode, Observation, ObsConfig
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -16,10 +16,6 @@ DEFAULT_CAMERA_CONFIG = {
     "elevation": -45,
     "lookat": [0.006, 0.0, 0.518]
 }
-
-class ControlMode(str, Enum):
-    Position="position"
-    PositionDelta="position_delta"
 
 class GripperEnv(MujocoEnv, utils.EzPickle):
 
@@ -32,14 +28,17 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, observation_space, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
         self.ftheta = ftheta    # contact force noise threshold
-        self.rqdot_scale = rqdot_scale # scaling factor for qdot penalty
+        self.obs_config = obs_config    # contents of observation space    
+        self.rqdot_scale = rqdot_scale  # scaling factor for qdot penalty
         self.qinit_range = qinit_range
         self.control_mode = control_mode
+
+        observation_space = Box(low=-1, high=1, shape=(2*len(obs_config),), dtype=np.float64)
 
         utils.EzPickle.__init__(self, **kwargs)
         MujocoEnv.__init__(
@@ -122,9 +121,10 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ concatenate internal state as observation
         """
         return np.concatenate([
-                safe_rescale(self.q,    [0.0,  0.045]), 
-                safe_rescale(self.qdot, [-self.vmax, self.vmax]),
-                safe_rescale(self.qacc, [-self.amax, self.amax])
+                safe_rescale(self.q,     [0, 0.045]) if Observation.Pos in self.obs_config else [], 
+                safe_rescale(self.force, [0, self.fmax]) if Observation.Force in self.obs_config else [], 
+                safe_rescale(self.qdot, [-self.vmax, self.vmax]) if Observation.Vel in self.obs_config else [],
+                safe_rescale(self.qacc, [-self.amax, self.amax]) if Observation.Acc in self.obs_config else [],
             ])
     
     def _qdot_penalty(self):

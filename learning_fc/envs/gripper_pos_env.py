@@ -2,24 +2,22 @@ import mujoco
 import numpy as np
 import xml.etree.ElementTree as ET
 
-from gymnasium.spaces import Box
-from .gripper_env import GripperEnv, ControlMode
+from .gripper_env import GripperEnv
 from learning_fc import safe_rescale
+from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 
 class GripperPosEnv(GripperEnv):
 
-    def __init__(self, max_steps=50, eps=0.0005, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config=ObsConfig.Q_DQ, max_steps=50, eps=0.0005, control_mode=ControlMode.Position, **kwargs):
         self.eps = eps              # radius ε for rewards with fixed ε
         self.max_steps = max_steps  # #steps to terminate after  
 
         self.qgoal_range    = [0.0, 0.045]
 
-        observation_space = Box(low=-1, high=1, shape=(6,), dtype=np.float64)
-
         GripperEnv.__init__(
             self,
-            observation_space=observation_space,
+            obs_config=obs_config,
             control_mode=control_mode,
             **kwargs,
         )
@@ -33,10 +31,10 @@ class GripperPosEnv(GripperEnv):
     def _get_obs(self):
         """ concatenate internal state as observation
         """ 
+        _obs = super()._get_obs()
         return np.concatenate([
-            safe_rescale(self.q, [0.0, 0.045]),
-            safe_rescale(self.q_deltas, [-0.045, 0.045]),
-            safe_rescale(self.qdot, [-self.vmax, self.vmax]),
+            _obs,
+            safe_rescale(self.q_deltas, [-0.045, 0.045]) if Observation.PosDelta in self.obs_config else [],
         ])
     
     # IV.2) no ε-env, linear velocity penalty

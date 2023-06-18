@@ -2,10 +2,9 @@ import mujoco
 import numpy as np
 import xml.etree.ElementTree as ET
 
-from gymnasium.spaces import Box
-
 from learning_fc import safe_rescale
-from learning_fc.envs import GripperEnv, ControlMode
+from learning_fc.envs import GripperEnv
+from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 
 class GripperTactileEnv(GripperEnv):
@@ -16,12 +15,10 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
     INITIAL_OBJECT_POS = np.array([0,0,0.67])
 
-    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
-
-        observation_space = Box(low=-1, high=1, shape=(4,), dtype=np.float64)
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
@@ -29,7 +26,7 @@ class GripperTactileEnv(GripperEnv):
 
         GripperEnv.__init__(
             self,
-            observation_space=observation_space,
+            obs_config=obs_config,
             control_mode=control_mode,
             **kwargs,
         )
@@ -48,11 +45,12 @@ class GripperTactileEnv(GripperEnv):
 
     def _get_obs(self):
         """ concatenate internal state as observation
-        """ 
+        """
+        _obs = super()._get_obs()
         return np.concatenate([
-                safe_rescale(self.force, [0, self.fmax]), 
-                safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]),
-            ])
+            _obs,
+            safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]) if Observation.ForceDelta in self.obs_config else [],
+        ])
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force

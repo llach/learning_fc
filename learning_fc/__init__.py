@@ -5,3 +5,4 @@ model_path = f"{os.environ['HOME']}/fc_models/"
 tmp_model_path = "/tmp/fc_models/"
 
 from .utils import *
+from .enums import *
