@@ -177,11 +177,11 @@ def plot_rollouts(env, res, plot_title):
     fig.suptitle(plot_title)
     plt.tight_layout()
 
-def tactile_eval(trialdir, name=None, plot_title=None, with_vis=False):
+def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
 
     # recover relevant parameters
-    prefix = f"{name}__" if name else ""
+    prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
     timesteps = int(params["train"]["timesteps"])
     trial_name = params["train"]["trial_name"]
     plot_title = f'{plot_title or "Force Control"}\n{trial_name}'
@@ -222,10 +222,10 @@ def tactile_eval(trialdir, name=None, plot_title=None, with_vis=False):
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb
     )
 
-    plot_rollouts(env, a_res, plot_title=plot_title.replace("\n", " - policy rollouts\n"))
+    plot_rollouts(env, a_res, plot_title=plot_title.replace("\n", " - POLICY\n"))
     plt.savefig(f"{trialdir}/{prefix}rollouts_policy.png")
 
-    plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - baseline rollouts\n"))
+    plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - BASELINE\n"))
     plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
 
     cumr_a = np.mean(np.array(a_res["cumr"])[:,-1])

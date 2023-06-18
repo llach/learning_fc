@@ -4,8 +4,8 @@ import json
 from sys import platform
 from datetime import datetime
 
-from learning_fc import model_path, datefmt
-from learning_fc.training import make_env, make_model, tactile_eval
+from learning_fc import model_path, datefmt, get_constructor_params
+from learning_fc.training import make_env, make_model, tactile_eval, envname2cls
 
 model_defaults = dict(
     ppo=dict(timesteps=5e5),
@@ -17,25 +17,43 @@ env_eval_fn = dict(
     gripper_tactile=tactile_eval
 )
 
-def generate_trial_name(env_name, model_name, name):
+def generate_trial_name_and_plot_title(env_name, env_kw, model_name):
+    # get date and env params
     datestr = datetime.utcnow().strftime(datefmt)
+    epar = get_constructor_params(envname2cls[env_name]) | env_kw
 
-    trial_name = f"{env_name}__{model_name}"
-    if name is not None: trial_name += f"__{name}"
+    # build name and plot title lists
+    _name  = [
+        datestr, 
+        env_name, 
+        model_name, 
+        epar["control_mode"], 
+        f"obs_{'-'.join(epar['obs_config'])}"
+    ]
+    _title = [
+        model_name.upper(),
+        f"{str(epar['control_mode']).replace('.', ': ')}", 
+        f"OBS={'{'}{', '.join(epar['obs_config'])}{'}'}"
+    ]
 
-    return trial_name+f"__{datestr}"
+    return "__".join(_name), " | ".join(_title)
 
-def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, train_kw={}, logdir=model_path, name=None, plot_title=None):
+def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
     # build training parameters dict, store locals
     tkw = model_defaults[model_name] | train_kw
 
     # build trial name and dir
-    trial_name = generate_trial_name(env_name=env_name, model_name=model_name, name=name)
+    trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, env_kw=env_kw)
     trialdir = f"{logdir}/{trial_name}/"
+
+    print( "##########################")
+    print(f"######## Running trial {trial_name}")
+    print( "##########################")
 
     # easy ref to total steps as integer
     timesteps = int(tkw["timesteps"])
 
+    # store all parameters
     fn_params = locals()
 
     # create log and trial dirs
@@ -63,7 +81,7 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
 
     # create evaluation plots
     if env_name in env_eval_fn: 
-        agent_rew, base_rew = env_eval_fn[env_name](trialdir, name=name, plot_title=plot_title, with_vis=False)
+        agent_rew, base_rew = env_eval_fn[env_name](trialdir, trial_name=trial_name, plot_title=plot_title, with_vis=False)
 
         if platform == "darwin": # macOS gets notifications
             import pync

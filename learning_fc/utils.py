@@ -21,7 +21,7 @@ def find_latest_model_in_path(path, filters=[]):
     trial_name = None
     date = datetime(1999, 1, 1)
     for tn in trial_names:
-        d = datetime.strptime(tn.split("__")[-1], datefmt)
+        d = datetime.strptime(tn.split("__")[0], datefmt)
         if d > date:
             trial_name = tn
             date = d
@@ -32,7 +32,7 @@ def find_latest_model_in_path(path, filters=[]):
 """ model / env creation
 """
 
-def get_constructor_params(cls, obj):
+def get_constructor_params(cls, obj=None):
     """ 
     get constructor arguments and return dict with their values of the instantiated object.
     `obj.__getattribute__(k)` only works if the class stores a reference to the variable. if not we'll get the default value specified in the constructor
@@ -54,7 +54,7 @@ def get_constructor_params(cls, obj):
     # this could be done elegantly with dict comprehension, but the jsonable check requires us to do it in a long loop
     cparams = dict()
     for k in init_args:
-        p = obj.__getattribute__(k) if hasattr(obj, k) else objparams[k].default
+        p = obj.__getattribute__(k) if obj and hasattr(obj, k) else objparams[k].default
         if is_jsonable(p): cparams |= {k: p}
     return cparams
 
