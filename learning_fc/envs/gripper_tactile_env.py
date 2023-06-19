@@ -11,9 +11,12 @@ class GripperTactileEnv(GripperEnv):
 
     QY_SGN_l =  1
     QY_SGN_r = -1
+    INITIAL_OBJECT_POS = np.array([0,0,0.65])
+
+    # default: [0.02, 1]
     SOLREF = [0.02, 1]
-    SOLIMP = [0, 0.95, 0.01, 0.2, 2] # dmin is set to 0 to allow soft contacts
-    INITIAL_OBJECT_POS = np.array([0,0,0.67])
+    # default: [0.9, 0.95, 0.001, 0.5, 2]
+    SOLIMP = [0, 0.95, 0.01, 0.2, 2] 
 
     def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
         self.rf_scale = rf_scale        # scaling factor for force reward
