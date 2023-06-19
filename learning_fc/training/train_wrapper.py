@@ -11,6 +11,7 @@ model_defaults = dict(
     ppo=dict(timesteps=5e5),
     td3=dict(timesteps=1e5),
     ddpg=dict(timesteps=1e5),
+    sac=dict(timesteps=1e5),
 )
 
 env_eval_fn = dict(

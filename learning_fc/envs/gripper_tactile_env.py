@@ -58,9 +58,9 @@ class GripperTactileEnv(GripperEnv):
         rforce = 0
         for df in deltaf:
             if df <= 0: # overshooting
-                rforce += 1-(np.abs(df)/self.frange_upper)
+                rforce += 1-(np.clip(np.abs(df), 0.0, self.frange_upper)/self.frange_upper)
             elif df > 0:
-                rforce += 1-(df/self.frange_lower)
+                rforce += 1-(np.clip(df, 0.0, self.frange_lower)/self.frange_lower)
         return self.rf_scale*rforce
 
     def _get_reward(self):

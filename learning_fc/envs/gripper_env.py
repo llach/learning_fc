@@ -28,7 +28,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.85, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.68, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force

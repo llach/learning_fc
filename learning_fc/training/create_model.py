@@ -1,4 +1,4 @@
-from stable_baselines3 import PPO, TD3, DDPG
+from stable_baselines3 import PPO, TD3, DDPG, SAC
 
 from learning_fc.utils import get_constructor_params
 from learning_fc.callbacks import SaveOnBestTrainingRewardCallback, PeriodicSavingCallback
@@ -6,6 +6,7 @@ from learning_fc.callbacks import SaveOnBestTrainingRewardCallback, PeriodicSavi
 modelname2cls = dict(
     ppo=PPO,
     td3=TD3,
+    sac=SAC,
     ddpg=DDPG,
 )
 
