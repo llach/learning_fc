@@ -64,6 +64,20 @@ def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=Non
         after_step_cb=after_step_cb
     )
 
+def force_reset_cb(env, model, i, results, **kw): 
+        if isinstance(model, ForcePI): model.reset()
+
+        for key in ["deltaf", "r_force"]:
+            if key not in results: results |= {key: []}
+            results[key].append([])
+
+        return results
+
+def force_after_step_cb(env, model, i, results, goal=None, **kw):
+    results["deltaf"][i].append(env.force_deltas)
+    results["r_force"][i].append(env.r_force)
+    return results
+
 def make_eval_env_model(trialdir, with_vis=False):
     # load parameters
     with open(f"{trialdir}/parameters.json", "r") as f:
@@ -189,20 +203,6 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False):
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))
     plt.savefig(f"{trialdir}/{prefix}learning_curve.png")
-
-    def force_reset_cb(env, model, i, results, **kw): 
-        if isinstance(model, ForcePI): model.reset()
-
-        for key in ["deltaf", "r_force"]:
-            if key not in results: results |= {key: []}
-            results[key].append([])
-
-        return results
-
-    def force_after_step_cb(env, model, i, results, goal=None, **kw):
-        results["deltaf"][i].append(env.force_deltas)
-        results["r_force"][i].append(env.r_force)
-        return results
 
     fc = ForcePI(env, verbose=with_vis)
 

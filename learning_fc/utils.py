@@ -21,12 +21,12 @@ def find_latest_model_in_path(path, filters=[]):
     trial_name = None
     date = datetime(1999, 1, 1)
     for tn in trial_names:
-        d = datetime.strptime(tn.split("__")[0], datefmt)
+        d = datetime.strptime(tn.split("/")[-1].split("__")[0], datefmt)
         if d > date:
             trial_name = tn
             date = d
 
-    assert trial_name, f"could not find a trial under {path} with filters {filters}"
+    assert trial_name is not None, f"could not find a trial under {path} with filters {filters}"
     return trial_name
 
 """ model / env creation
@@ -75,15 +75,16 @@ def safe_rescale(x, bounds1, bounds2=[-1,1]):
     return (((x - low1) * (high2 - low2)) / (high1 - low1)) + low2
 
 def total_contact_force(model, data, g1, g2):
-    force = np.zeros((3,))
+    ft = np.zeros((6,))
     ncontacts = 0
+
     for i, c in enumerate(data.contact):
         name1 = data.geom(c.geom1).name
         name2 = data.geom(c.geom2).name
 
         if (g1==name1 and g2==name2) or (g1==name2 and g2==name1):
-            ft = np.zeros((6,))
-            mujoco.mj_contactForce(model, data, i, ft)
-            force += ft[:3]
+            c_ft = np.zeros((6,))
+            mujoco.mj_contactForce(model, data, i, c_ft)
+            ft += c_ft
             ncontacts += 1
-    return force, ncontacts
+    return ft[:3], ft[3:], ncontacts

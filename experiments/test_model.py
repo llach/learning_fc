@@ -8,14 +8,14 @@ from learning_fc.training import make_env
 
 with_vis = 1
 steps  = 200
-trials = 2
+trials = 5
 
 env, vis, _ = make_env(
     # env_name="gripper_pos", 
     env_name="gripper_tactile", 
     training=False, 
     with_vis=with_vis, 
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)#, obj_pos_range=[-0.03, -0.03])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, qinit_range=[0.025, 0.025])#, obj_pos_range=[-0.03, -0.03])
 )
 # model = PosModel(control_mode=env.control_mode)
 model = ForcePI(env)
@@ -31,7 +31,7 @@ for i in range(trials):
     last_a = np.zeros((n_a,2))
     for j in range(steps):
         # fixed position action, requires ControlMode.Position
-        # action = safe_rescale([0.014, 0.014], [0.0, 0.045])
+        # action = safe_rescale([0.01, 0.01], [0.0, 0.045])
 
         # trying (oscillating) min/max actions
         # action = np.array([-1,-1])
@@ -39,13 +39,14 @@ for i in range(trials):
 
         # model action
         action, _ = model.predict(obs)
+        # print(model.error_integral)
 
         # FFT
-        last_a[j%n_a,:] = action
+        # last_a[j%n_a,:] = action
 
-        print(j, freqs[:6])
-        print(j, np.abs(np.fft.fft(last_a[:,0]))[:6])
-        print()
+        # print(j, freqs[:6])
+        # print(j, np.abs(np.fft.fft(last_a[:,0]))[:6])
+        # print()
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
