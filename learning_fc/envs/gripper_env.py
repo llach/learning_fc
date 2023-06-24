@@ -7,8 +7,8 @@ from gymnasium.spaces import Box
 from gymnasium.envs.mujoco import MujocoEnv
 
 import learning_fc
-from learning_fc import safe_rescale, total_contact_force
-from learning_fc.enums import ControlMode, Observation, ObsConfig
+from learning_fc import safe_rescale, get_pad_forces
+from learning_fc.enums import ControlMode, Observation
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -112,10 +112,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ])
 
         # contact force and binary in_contact state
-        self.force = np.array([
-            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "left_finger_bb")[0])),
-            np.sum(np.abs(total_contact_force(self.model, self.data, "object", "right_finger_bb")[0]))
-        ])
+        self.force = get_pad_forces(self.model, self.data)
         self.in_contact = self.force > self.ftheta
 
     def _get_obs(self):

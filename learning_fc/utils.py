@@ -88,3 +88,22 @@ def total_contact_force(model, data, g1, g2):
             ft += c_ft
             ncontacts += 1
     return ft[:3], ft[3:], ncontacts
+
+def get_pad_forces(model, data):
+    fl, fr = 0, 0
+    for j, c in enumerate(data.contact):
+        name1 = data.geom(c.geom1).name
+        name2 = data.geom(c.geom2).name
+
+        if name1 != "object":  continue # lowest ID geoms come first
+        if name2[:3] != "pad": continue # geoms for force measurements need to have "pad" in their name
+
+        c_ft = np.zeros((6,))
+        mujoco.mj_contactForce(model, data, j, c_ft)
+        f = c_ft[0] # only consider normal force
+
+        if name2[-2:] == "_l":   fl += f 
+        elif name2[-2:] == "_r": fr += f
+        else: print(f"unknown pad {name2}")
+
+    return np.array([fl, fr])

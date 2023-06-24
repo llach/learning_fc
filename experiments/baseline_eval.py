@@ -50,38 +50,15 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
 N_GOALS = 5
 
-# for st in np.linspace(0,.5,20):
 env, _, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
     with_vis=False, 
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)#, j_arma=0.1, j_damp=1.0)#, obj_pos_range=[-0.03, -0.03])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ,)# obj_pos_range=[-0.03, 0.03])
 )
 model = ForcePI(env)
 
-def after_cb(env, *args, **kwargs):
-    data = env.data
-    mdl  = env.model
-
-    fl, fr = 0, 0
-    for j, c in enumerate(data.contact):
-        name1 = data.geom(c.geom1).name
-        name2 = data.geom(c.geom2).name
-
-        if name1 != "object":  continue # lowest ID geoms come first
-        if name2[:3] != "pad": continue # geoms for force measurements need to have "pad" in their name
-
-        c_ft = np.zeros((6,))
-        mj.mj_contactForce(mdl, data, j, c_ft)
-        f = c_ft[0] # only consider normal force
-
-        if name2[-2:] == "_l":   fl += f 
-        elif name2[-2:] == "_r": fr += f
-        else: print(f"unknown pad {name2}")
-
-    if fl>0 or fr>0: print(fl, fr)
-    return force_after_step_cb(env, *args, **kwargs)
-
+def after_cb(env, *args, **kwargs): return force_after_step_cb(env, *args, **kwargs)
 
 res = oracle_results = deterministic_eval(env, model, None, np.linspace(0.3, 0.6, 6), reset_cb=force_reset_cb, after_step_cb=after_cb)
 
