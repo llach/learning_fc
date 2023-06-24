@@ -1,4 +1,5 @@
 import numpy as np
+import mujoco as mj
 np.set_printoptions(suppress=True, precision=5)
 
 from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, force_after_step_cb, plot_rollouts
@@ -49,34 +50,40 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
 N_GOALS = 5
 
+# for st in np.linspace(0,.5,20):
 env, _, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
     with_vis=False, 
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)#, obj_pos_range=[-0.03, -0.03])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)#, j_arma=0.1, j_damp=1.0)#, obj_pos_range=[-0.03, -0.03])
 )
 model = ForcePI(env)
-# model = StaticModel(0.012)
 
-goals = np.round(np.linspace(*env.fgoal_range, num=N_GOALS), 4)
-res = oracle_results = deterministic_eval(env, model, None, goals, reset_cb=force_reset_cb, after_step_cb=force_after_step_cb)
+def after_cb(env, *args, **kwargs):
+    data = env.data
+    mdl  = env.model
 
-force = np.array(res["force"][-1])
+    fl, fr = 0, 0
+    for j, c in enumerate(data.contact):
+        name1 = data.geom(c.geom1).name
+        name2 = data.geom(c.geom2).name
 
-print(analyze_freqs(force[-20:,0], env.dt))
-print(analyze_freqs(force[-20:,1], env.dt))
+        if name1 != "object":  continue # lowest ID geoms come first
+        if name2[:3] != "pad": continue # geoms for force measurements need to have "pad" in their name
 
-plt.plot(force[:,0], label="left")
-plt.plot(force[:,1], label="right")
+        c_ft = np.zeros((6,))
+        mj.mj_contactForce(mdl, data, j, c_ft)
+        f = c_ft[0] # only consider normal force
 
-plt.xlabel("timestep")
-plt.ylabel("f(t)")
-plt.title("solver=Rk4, multiccd=enable")
-plt.legend()
-plt.tight_layout()
+        if name2[-2:] == "_l":   fl += f 
+        elif name2[-2:] == "_r": fr += f
+        else: print(f"unknown pad {name2}")
+
+    if fl>0 or fr>0: print(fl, fr)
+    return force_after_step_cb(env, *args, **kwargs)
+
+
+res = oracle_results = deterministic_eval(env, model, None, np.linspace(0.3, 0.6, 6), reset_cb=force_reset_cb, after_step_cb=after_cb)
+
+plot_rollouts(env, res, f"Baseline Rollouts")
 plt.show()
-
-# exit(0)
-pass
-# plot_rollouts'(env, res, "Baseline Rollouts")
-# plt.show()'

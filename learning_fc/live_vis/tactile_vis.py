@@ -48,7 +48,7 @@ class TactileVis(VisBase):
 
         amax = self.env.amax
         self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"], yrange=[-1.2*amax, 1.2*amax], ticks=[-amax, 0, amax])
-        self.plt_vobj = PIWrapper(self.win, title="Object Velocity", pens=["m", "b"], yrange=[-0.02, 0.8])
+        self.plt_vobj = PIWrapper(self.win, title="Object Velocity", pens=["r", "g", "b"])
 
         self.plt_acc.draw_line(
             name="upper_limit",
@@ -116,7 +116,7 @@ class TactileVis(VisBase):
         self.plt_vel.update(self.env.qdot)
 
         self.plt_acc.update(self.env.qacc)
-        self.plt_vobj.update([self.env.objv, self.env.objw])
+        self.plt_vobj.update(np.abs(self.env.objv))
 
         self.plt_r.update(reward)
         self.plt_r_force.update(self.env.r_force)

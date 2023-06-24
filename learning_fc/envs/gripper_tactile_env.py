@@ -1,6 +1,5 @@
 import mujoco
 import numpy as np
-import xml.etree.ElementTree as ET
 
 from learning_fc import safe_rescale
 from learning_fc.envs import GripperEnv
@@ -9,16 +8,16 @@ from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 class GripperTactileEnv(GripperEnv):
 
+    # constants
     QY_SGN_l =  1
     QY_SGN_r = -1
-    INITIAL_OBJECT_POS = np.array([0,0,0.65])
+    INITIAL_OBJECT_POS = np.array([0,0,0.05])
+    
+    SOLREF = [0.02, 1] # default: [0.02, 1]
+    SOLIMP = [0, 0.95, 0.01, 0.2, 2] # default: [0.9, 0.95, 0.001, 0.5, 2]
 
-    # default: [0.02, 1]
-    SOLREF = [0.02, 1]
-    # default: [0.9, 0.95, 0.001, 0.5, 2]
-    SOLIMP = [0, 0.95, 0.01, 0.2, 2] 
-
-    def __init__(self, fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
+    def __init__(self, 
+                 fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
@@ -43,8 +42,8 @@ class GripperTactileEnv(GripperEnv):
         self.force_deltas = self.fgoal - self.force
 
         # object state
-        self.objv = np.linalg.norm(self.data.joint("object_joint").qvel[:3])
-        self.objw = np.linalg.norm(self.data.joint("object_joint").qvel[3:])
+        self.objv = self.data.joint("object_joint").qvel[:3]
+        self.objw = self.data.joint("object_joint").qvel[3:]
 
     def _get_obs(self):
         """ concatenate internal state as observation
@@ -73,12 +72,10 @@ class GripperTactileEnv(GripperEnv):
     
     def _is_done(self): return False
 
-    def _reset_model(self):
+    def _reset_model(self, root):
         """ reset data, set joints to initial positions and randomize
         """
-        xmlmodel = ET.parse(self.fullpath)
-        root = xmlmodel.getroot()
-
+        
         #-----------------------------
         # random object start 
         self.oy = round(np.random.uniform(*self.obj_pos_range), 3) # object y position
@@ -93,7 +90,7 @@ class GripperTactileEnv(GripperEnv):
         
         # store object half-width (radius for cylinders)
         self.ow = float(objgeom.attrib['size'].split(' ')[0])
-        assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
+        # assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
@@ -110,9 +107,6 @@ class GripperTactileEnv(GripperEnv):
         # distance between object and finger (doesn't take finger width into account)
         self.doq_l = self.qinit_l-self.qo_l 
         self.doq_r = self.qinit_r-self.qo_r
-
-        # create model from modified XML
-        return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
 
     def set_goal(self, x): 
         # set goal force and calculate interval sizes above and below goal force

@@ -1,5 +1,6 @@
 import mujoco
 import numpy as np
+import xml.etree.ElementTree as ET
 
 from gymnasium import utils
 from gymnasium.spaces import Box
@@ -11,10 +12,10 @@ from learning_fc.enums import ControlMode, Observation, ObsConfig
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
-    "distance": 0.8,
-    "azimuth": -160,
-    "elevation": -45,
-    "lookat": [0.006, 0.0, 0.518]
+    "azimuth": 153,
+    "distance": 0.33,
+    "elevation": -49,
+    "lookat": [-0.00099796, -0.00137387, 0.04537828]
 }
 
 class GripperEnv(MujocoEnv, utils.EzPickle):
@@ -28,7 +29,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/force_gripper.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.68, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=0.68, ftheta=0.05, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
@@ -86,8 +87,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
-        aout[self.data.actuator("gripper_left_finger_joint").id]  = self.qdes[0]
-        aout[self.data.actuator("gripper_right_finger_joint").id] = self.qdes[1]
+        aout[self.data.actuator("finger_left").id]  = self.qdes[0]
+        aout[self.data.actuator("finger_right").id] = self.qdes[1]
 
         return aout
     
@@ -98,16 +99,16 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # joint states
         self.q = np.array([
-            self.data.joint("gripper_left_finger_joint").qpos[0],
-            self.data.joint("gripper_right_finger_joint").qpos[0]
+            self.data.joint("finger_joint_l").qpos[0],
+            self.data.joint("finger_joint_r").qpos[0]
         ])
         self.qdot = np.array([
-            self.data.joint("gripper_left_finger_joint").qvel[0],
-            self.data.joint("gripper_right_finger_joint").qvel[0]
+            self.data.joint("finger_joint_l").qvel[0],
+            self.data.joint("finger_joint_r").qvel[0]
         ])
         self.qacc = np.array([
-            self.data.joint("gripper_left_finger_joint").qacc[0],
-            self.data.joint("gripper_right_finger_joint").qacc[0]
+            self.data.joint("finger_joint_l").qacc[0],
+            self.data.joint("finger_joint_r").qacc[0]
         ])
 
         # contact force and binary in_contact state
@@ -146,15 +147,22 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.qinit_l = round(np.random.uniform(*self.qinit_range), 3)
         self.qinit_r = round(np.random.uniform(*self.qinit_range), 3)
 
-        self.model = self._reset_model()
+        xmlmodel = ET.parse(self.fullpath)
+        root = xmlmodel.getroot()
+
+        root.find("compiler").attrib["meshdir"] = learning_fc.__path__[0]+"/assets/meshes/"
+
+        # create model from modified XML
+        self._reset_model(root)
+        self.model = mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
 
         self.model.vis.global_.offwidth = self.width
         self.model.vis.global_.offheight = self.height
 
         # load data, set starting joint values (open gripper)
         self.data  = mujoco.MjData(self.model)
-        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = self.qinit_l
-        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = self.qinit_r
+        self.data.qpos[self._name_2_qpos_id("finger_joint_l")] = self.qinit_l
+        self.data.qpos[self._name_2_qpos_id("finger_joint_r")] = self.qinit_r
 
         # update renderer's pointers, otherwise scene will be empty
         self.mujoco_renderer.model = self.model
