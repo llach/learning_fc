@@ -1,7 +1,7 @@
 from learning_fc.enums import ControlMode, ObsConfig
 from learning_fc.training import train
 
-for alg in ["ppo", "sac", "td3"]:
+for alg in ["ppo", "sac"]:
     for ctrl in [ControlMode.Position, ControlMode.PositionDelta]:
         for obs in [ObsConfig.F_DF, ObsConfig.Q_F_DF]:
             train(
