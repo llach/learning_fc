@@ -48,19 +48,32 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
     return filtered_data
 
-N_GOALS = 5
+N_GOALS = 1
 
 env, _, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
     with_vis=False, 
+    max_steps=100,
     env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ,)# obj_pos_range=[-0.03, 0.03])
 )
-model = ForcePI(env)
+# model = ForcePI(env)
+model = StaticModel(0.0)
 
 def after_cb(env, *args, **kwargs): return force_after_step_cb(env, *args, **kwargs)
 
-res = oracle_results = deterministic_eval(env, model, None, np.linspace(0.3, 0.6, 6), reset_cb=force_reset_cb, after_step_cb=after_cb)
+res = deterministic_eval(env, model, None, np.linspace(0.3, 0.6, 6), reset_cb=force_reset_cb, after_step_cb=after_cb)
 
-plot_rollouts(env, res, f"Baseline Rollouts")
+
+force = np.array(res["force"][-1])
+print(res["force"][-1][60])
+
+plt.plot(range(len(force)), force[:,0], label="left")
+plt.plot(range(len(force)), force[:,1], label="right")
+
+plt.legend()
+plt.tight_layout()
 plt.show()
+
+# plot_rollouts(env, res, f"Baseline Rollouts")
+# plt.show()

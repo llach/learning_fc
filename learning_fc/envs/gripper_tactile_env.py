@@ -17,7 +17,7 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # default: [0.9, 0.95, 0.001, 0.5, 2]
 
     def __init__(self, 
-                 fgoal_range=[0.3, 0.6], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
+                 fgoal_range=[0.3, 1.5], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
