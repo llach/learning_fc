@@ -16,8 +16,15 @@ class GripperTactileEnv(GripperEnv):
     SOLREF = [0.02, 1] # default: [0.02, 1]
     SOLIMP = [0, 0.95, 0.01, 0.2, 2] # default: [0.9, 0.95, 0.001, 0.5, 2]
 
-    def __init__(self, 
-                 fgoal_range=[0.3, 1.5], obj_pos_range=[0, 0], rf_scale=1.0, control_mode=ControlMode.Position, obs_config=ObsConfig.F_DF, **kwargs):
+    def __init__(
+            self,      
+            fgoal_range=[0.3, 1.5], 
+            obj_pos_range=[0, 0], 
+            rf_scale=1.0, 
+            control_mode=ControlMode.Position, 
+            obs_config=ObsConfig.F_DF, 
+            **kwargs
+        ):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
@@ -42,6 +49,7 @@ class GripperTactileEnv(GripperEnv):
         self.force_deltas = self.fgoal - self.force
 
         # object state
+        self.oy_t = self.data.joint("object_joint").qpos[1]
         self.objv = self.data.joint("object_joint").qvel[:3]
         self.objw = self.data.joint("object_joint").qvel[3:]
 
@@ -53,6 +61,11 @@ class GripperTactileEnv(GripperEnv):
             _obs,
             safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]) if Observation.ForceDelta in self.obs_config else [],
         ])
+    
+    def _object_pos_penalty(self):
+        oy  = np.abs(self.oy)
+        oyt = np.clip(self.oy_t, -oy, oy)
+        return 1-np.abs(oyt/oy)
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force
@@ -67,8 +80,9 @@ class GripperTactileEnv(GripperEnv):
 
     def _get_reward(self):
         self.r_force   = self._force_reward()
+        self.r_obj_pos = self._object_pos_penalty()
 
-        return self.r_force
+        return self.r_force - self.r_obj_pos
     
     def _is_done(self): return False
 
@@ -90,7 +104,7 @@ class GripperTactileEnv(GripperEnv):
         
         # store object half-width (radius for cylinders)
         self.ow = float(objgeom.attrib['size'].split(' ')[0])
-        # assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
+        assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))

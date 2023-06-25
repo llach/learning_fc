@@ -8,6 +8,15 @@ from stable_baselines3.common.results_plotter import plot_results, X_TIMESTEPS
 from learning_fc.models import ForcePI
 from learning_fc.training import make_env, make_model
 
+TACTILE_ENV_MEMBERS = [
+    "force_deltas", 
+    "r_force",
+    "r_obj_pos",
+    "objv",
+    "objw",
+    "oy_t"
+]
+
 def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=None, after_step_cb=None):
     results = dict(
         q=[[] for _ in range(n_rollouts)],
@@ -67,15 +76,14 @@ def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=Non
 def force_reset_cb(env, model, i, results, **kw): 
         if isinstance(model, ForcePI): model.reset()
 
-        for key in ["deltaf", "r_force"]:
+        for key in TACTILE_ENV_MEMBERS:
             if key not in results: results |= {key: []}
             results[key].append([])
 
         return results
 
 def force_after_step_cb(env, model, i, results, goal=None, **kw):
-    results["deltaf"][i].append(env.force_deltas)
-    results["r_force"][i].append(env.r_force)
+    for key in TACTILE_ENV_MEMBERS:  results[key][i].append(getattr(env, key))
     return results
 
 def make_eval_env_model(trialdir, with_vis=False):
@@ -138,6 +146,7 @@ def plot_rollouts(env, res, plot_title):
     force = np.array(res["force"]).reshape((-1,2))
 
     r_force = np.array(res["r_force"]).reshape((-1,))
+    r_obj_pos = np.array(res["r_obj_pos"]).reshape((-1,))
     cumr = np.array(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
 
@@ -173,6 +182,7 @@ def plot_rollouts(env, res, plot_title):
 
     axes[2,0].set_title("partial rewards")
     axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
+    axes[2,0].plot(x, r_obj_pos, lw=1, label="r_obj_pos", c="orange")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
