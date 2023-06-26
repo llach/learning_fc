@@ -116,7 +116,7 @@ class TactileVis(VisBase):
         self.plt_vel.update(self.env.qdot)
 
         self.plt_acc.update(self.env.qacc)
-        self.plt_vobj.update(np.abs(self.env.objv))
+        self.plt_vobj.update(np.abs(self.env.obj_v))
 
         self.plt_r.update(reward)
         self.plt_r_force.update(self.env.r_force)

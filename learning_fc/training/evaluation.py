@@ -12,9 +12,8 @@ TACTILE_ENV_MEMBERS = [
     "force_deltas", 
     "r_force",
     "r_obj_pos",
-    "objv",
-    "objw",
-    "oy_t"
+    "obj_v",
+    "obj_pos"
 ]
 
 def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=None, after_step_cb=None):

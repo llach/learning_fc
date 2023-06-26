@@ -1,6 +1,6 @@
 import numpy as np
 import mujoco as mj
-np.set_printoptions(suppress=True, precision=5)
+np.set_printoptions(suppress=True, precision=7)
 
 from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, force_after_step_cb, plot_rollouts
 from learning_fc.enums import ControlMode, ObsConfig
@@ -48,33 +48,35 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
     return filtered_data
 
-N_GOALS = 5
-env, _, _ = make_env(
+N_GOALS = 1
+env, vis, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
-    with_vis=False, 
+    with_vis=0, 
     max_steps=200,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ,obj_pos_range=[-0.018, 0.018])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ,obj_pos_range=[-0.018, -0.018])
 )
-model = ForcePI(env)
-# model = StaticModel(0.0)
+# model = ForcePI(env)
+model = StaticModel(0.0)
 
 def after_cb(env, *args, **kwargs): return force_after_step_cb(env, *args, **kwargs)
 
-res = deterministic_eval(env, model, None, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=after_cb)
+res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=after_cb)
 
 r_obj_pos = np.array(res["r_obj_pos"][-1])
-oy_t = np.array(res["oy_t"][-1])
-x = range(len(oy_t))
+# oy_t = np.array(res["oy_t"][-1])
+objv = np.array(res["obj_v"][-1])[:,1]
+x = range(len(r_obj_pos))
 
-# plt.plot(r_obj_pos, label="r_obj_pos", color="orange")
+plt.plot(r_obj_pos, label="r_obj_pos", color="orange")
 
-# ax2 = plt.twinx()
+ax2 = plt.twinx()
 # ax2.plot(oy_t, label="oy_t")
+ax2.plot(objv, label="objv")
 
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-
-plot_rollouts(env, res, f"Baseline Rollouts")
+plt.legend()
+plt.tight_layout()
 plt.show()
+
+# plot_rollouts(env, res, f"Baseline Rollouts")
+# plt.show()

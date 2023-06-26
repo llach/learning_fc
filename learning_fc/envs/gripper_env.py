@@ -50,9 +50,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,
         )
-
-        # reload the model with environment randomization
-        self.reset_model()
     
     def _name_2_qpos_id(self, name):
         """ given a joint name, return their `qpos`-array address

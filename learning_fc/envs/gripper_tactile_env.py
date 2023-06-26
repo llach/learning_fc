@@ -21,11 +21,13 @@ class GripperTactileEnv(GripperEnv):
             fgoal_range=[0.3, 1.5], 
             obj_pos_range=[0, 0], 
             rf_scale=1.0, 
+            ro_scale=100.0, 
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             **kwargs
         ):
         self.rf_scale = rf_scale        # scaling factor for force reward
+        self.ro_scale = ro_scale        # scaling factor for objet movement penalty
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.obj_pos_range = obj_pos_range
 
@@ -40,6 +42,8 @@ class GripperTactileEnv(GripperEnv):
             **kwargs,
         )
 
+        self.fgoal = 0
+
     def _update_state(self):
         """ updates internal state variables that may be used as observations
         """
@@ -49,9 +53,9 @@ class GripperTactileEnv(GripperEnv):
         self.force_deltas = self.fgoal - self.force
 
         # object state
-        self.oy_t = self.data.joint("object_joint").qpos[1]
-        self.objv = self.data.joint("object_joint").qvel[:3]
-        self.objw = self.data.joint("object_joint").qvel[3:]
+        obj_pos_t = self.data.joint("object_joint").qpos[:3]
+        self.obj_v = obj_pos_t - self.obj_pos
+        self.obj_pos = obj_pos_t.copy()
 
     def _get_obs(self):
         """ concatenate internal state as observation
@@ -63,9 +67,8 @@ class GripperTactileEnv(GripperEnv):
         ])
     
     def _object_pos_penalty(self):
-        oy  = np.abs(self.oy)
-        oyt = np.clip(self.oy_t, -oy, oy)
-        return 1-np.abs(oyt/oy)
+        self.total_object_movement += np.abs(self.obj_v[1])
+        return self.total_object_movement
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force
@@ -79,8 +82,8 @@ class GripperTactileEnv(GripperEnv):
         return self.rf_scale*rforce
 
     def _get_reward(self):
-        self.r_force   = self._force_reward()
-        self.r_obj_pos = self._object_pos_penalty()
+        self.r_force   = self.rf_scale * self._force_reward()
+        self.r_obj_pos = self.ro_scale * self._object_pos_penalty()
 
         return self.r_force - self.r_obj_pos
     
@@ -89,21 +92,22 @@ class GripperTactileEnv(GripperEnv):
     def _reset_model(self, root):
         """ reset data, set joints to initial positions and randomize
         """
-        
+
         #-----------------------------
         # random object start 
         self.oy = round(np.random.uniform(*self.obj_pos_range), 3) # object y position
-        object_pos    = self.INITIAL_OBJECT_POS.copy()
-        object_pos[1] = self.oy
+        self.obj_pos    = self.INITIAL_OBJECT_POS.copy()
+        self.obj_pos[1] = self.oy
 
         obj = root.findall(".//body[@name='object']")[0]
-        obj.attrib['pos']    = ' '.join(map(str, object_pos))
+        obj.attrib['pos']    = ' '.join(map(str, self.obj_pos))
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
         
         # store object half-width (radius for cylinders)
         self.ow = float(objgeom.attrib['size'].split(' ')[0])
+        self.total_object_movement = 0
         assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
         # sample goal force

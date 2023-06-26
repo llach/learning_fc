@@ -18,7 +18,7 @@ env_eval_fn = dict(
     gripper_tactile=tactile_eval
 )
 
-def generate_trial_name_and_plot_title(env_name, env_kw, model_name):
+def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame_stack):
     # get date and env params
     datestr = datetime.utcnow().strftime(datefmt)
     epar = get_constructor_params(envname2cls[env_name]) | env_kw
@@ -29,22 +29,23 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name):
         env_name, 
         model_name, 
         epar["control_mode"], 
-        f"obs_{'-'.join(epar['obs_config'])}"
+        f"obs_{'-'.join(epar['obs_config'])}",
+        f"nenv-{nenv}"
     ]
     _title = [
         model_name.upper(),
         f"{str(epar['control_mode']).replace('.', ': ')}", 
-        f"OBS={'{'}{', '.join(epar['obs_config'])}{'}'}"
+        f"OBS={'{'}{', '.join(epar['obs_config'])}{'}'}x{frame_stack}"
     ]
 
     return "__".join(_name), " | ".join(_title)
 
-def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
+def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
     # build training parameters dict, store locals
     tkw = model_defaults[model_name] | train_kw
 
     # build trial name and dir
-    trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, env_kw=env_kw)
+    trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, nenv=nenv, frame_stack=frame_stack, env_kw=env_kw)
     trialdir = f"{logdir}/{trial_name}/"
 
     print( "##########################")
@@ -62,7 +63,7 @@ def train(env_name="gripper_tactile", model_name="ppo", env_kw={}, model_kw={}, 
     os.makedirs(trialdir, exist_ok=True)
 
     # environment setup
-    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True)
+    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True, nenv=1, frame_stack=1)
 
     # model setup
     model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20)
