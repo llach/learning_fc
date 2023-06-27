@@ -100,7 +100,8 @@ def get_pad_forces(model, data):
 
         c_ft = np.zeros((6,))
         mujoco.mj_contactForce(model, data, j, c_ft)
-        f = c_ft[0] # only consider normal force
+        # f = c_ft[0] # only consider normal force
+        f = sum(c_ft[:3])
 
         if name2[-2:] == "_l":   fl += f 
         elif name2[-2:] == "_r": fr += f

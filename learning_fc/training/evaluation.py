@@ -31,8 +31,8 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
     for i in range(n_rollouts):
         obs, _ = env.reset()
 
-        if vis: vis.reset()
         if reset_cb: results = reset_cb(env, model, i, results) or results
+        if vis: vis.reset()
 
         done = False
         results["goals"].append(env.get_goal())

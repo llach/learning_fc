@@ -64,19 +64,18 @@ class TactileVis(VisBase):
         self.win.nextRow()
 
         self.plt_r = PIWrapper(self.win, title="r(t)", pens="g")
-        self.plt_r_force = PIWrapper(self.win, title="r_force", pens="b")
+        self.plt_r_parts = PIWrapper(self.win, title="r_force & r_obj_pos", pens=["b", "y"])
 
-        self.win.nextRow()
+        # self.win.nextRow()
 
-        self.plt_r_obj_prx = PIWrapper(self.win, title="r_obj_prx", pens="b", yrange=[-0.1, 2.2], ticks=[0,2])
-        self.plt_r_qdot = PIWrapper(self.win, title="r_qdot & r_qacc", pens=["r", "c"], yrange=[0.1, -2.2], ticks=[0,-2])
+        # self.plt_r_obj_prx = PIWrapper(self.win, title="r_obj_prx", pens="b", yrange=[-0.1, 2.2], ticks=[0,2])
+        # self.plt_r_qdot = PIWrapper(self.win, title="r_qdot & r_qacc", pens=["r", "c"], yrange=[0.1, -2.2], ticks=[0,-2])
 
         self.all_plots = [
             self.plt_force, self.plt_cntct, 
             self.plt_pos, self.plt_vel, 
             self.plt_acc, self.plt_vobj, 
-            self.plt_r, self.plt_r_force, 
-            self.plt_r_obj_prx, self.plt_r_qdot
+            self.plt_r, self.plt_r_parts, 
         ]
 
     def draw_goal(self):
@@ -85,19 +84,19 @@ class TactileVis(VisBase):
 
         self.plt_force.draw_line(
             name="fgoal",
-            pos=fgoal,
+            pos=round(fgoal, 3),
             angle=0,
             pen=dict(color="#00FF00", width=1)
         )
         self.plt_force.draw_line(
             name="noise_upper",
-            pos=fgoal+fth,
+            pos=round(fgoal+fth, 3),
             angle=0,
             pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )
         self.plt_force.draw_line(
             name="noise_lower",
-            pos=fgoal-fth,
+            pos=round(fgoal-fth),
             angle=0,
             pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )
@@ -119,7 +118,7 @@ class TactileVis(VisBase):
         self.plt_vobj.update(np.abs(self.env.obj_v))
 
         self.plt_r.update(reward)
-        self.plt_r_force.update(self.env.r_force)
+        self.plt_r_parts.update([self.env.r_force, self.env.r_obj_pos])
 
         # self.plt_r_obj_prx.update(self.env.r_obj_prx)
         # self.plt_r_qdot.update([-self.env.r_qdot, -self.env.r_qacc])

@@ -1,26 +1,18 @@
 import mujoco
 import numpy as np
-np.set_printoptions(suppress=True, precision=3)
 
 import matplotlib.pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 
 from learning_fc import safe_rescale
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.live_vis import TactileVis
 
 with_vis = 0
+trials   = 10
+steps    = 50
 
-steps  = 100
-
-sidx   = 4
-trials = 10
-# vrange = [0.01, 0.99]
-# values = np.linspace(*vrange, trials)
-
-# values = np.arange(1,6)
-values = 10*[2]
-trials = len(values)
-paramname="power"
+pname, sidx, values = "width", 2, np.linspace(0.0, 0.01, trials)
 
 env = GripperTactileEnv(
     obj_pos_range=[0,0],
@@ -33,12 +25,15 @@ vdes = 0.15 # m/s
 qdelta = vdes*0.1
 qd = safe_rescale(qdelta, [0,0.045], [-1,1])
 
+q = np.zeros((trials, steps, 2))
+qdes = np.zeros((trials, steps, 2))
 forces = np.zeros((trials, steps))
 
 for i in range(trials):
     solimp = env.SOLIMP
     solimp[sidx] = values[i]
     env.set_solver_parameters(solimp=solimp)
+
     env.reset()
     if vis: vis.reset()
 
@@ -52,18 +47,34 @@ for i in range(trials):
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
 
-        forces[i,j]=env.forces[0]
+        forces[i,j]=env.force[0]
+        qdes[i,j]=env.qdes
+        q[i,j]=env.q
 env.close()
-print("fmax", np.max(forces))
 
 plt.figure(figsize=(9,6))
-for v, ftraj in zip(values, forces):
-    plt.plot(ftraj, label=f"{paramname}={v:.4f}")
 
-plt.ylabel("force (left finger)")
-plt.xlabel("time")
-plt.title("contact force behavior for solimp changes")
-plt.legend()
+labels = []
+curves = [tuple() for _ in range(trials)]
+for i, (v, ftraj) in enumerate(zip(values, forces)):
+    c, = plt.plot(ftraj, alpha=0.8)
+    curves[i] += tuple([c])
+    labels.append(f"{pname}={v:.4f}")
+plt.ylabel("f(t) [left]")
+plt.xlabel("t")
+
+ax2 = plt.twinx()
+for i, qs in enumerate(q):
+    c = ax2.plot(qs[:,0])
+    curves[i] += tuple(c)
+ax2.set_ylim(0.015, 0.047)
+ax2.set_ylabel("joint position")
+plt.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="upper right", ncol=trials//3, shadow=True)
+
+si = env.SOLIMP
+si[sidx] = pname
+fmax=np.max(forces)
+plt.title(f"SOLIMP={si} | fmax={fmax:.3f}")
 
 plt.tight_layout()
 plt.show()

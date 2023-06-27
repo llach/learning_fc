@@ -35,6 +35,7 @@ class ForcePI(BaseModel):
 
     def get_q(self, q, f_t):
         delta_qs = np.zeros_like(q)
+        delta_q_ = 0
 
         for i, f in enumerate(f_t):
 
@@ -71,9 +72,12 @@ class ForcePI(BaseModel):
 
                 # integrate error TODO clip error integral?
                 self.error_integral += delta_q * self.env.dt
-                delta_q_ = self.Kp * delta_q + self.Ki * self.error_integral
+                delta_q_ += self.Kp * delta_q + self.Ki * self.error_integral
 
                 delta_qs[i] = -delta_q_
+
+        # equally distribute position delta
+        if self.phase == ControllerPhase.FORCE_CTRL: delta_qs = np.array(2*[-delta_q_/2])
 
         # if self.phase == ControllerPhase.POSITION_CTRL:
         #     print("fc", delta_qs)
@@ -81,8 +85,6 @@ class ForcePI(BaseModel):
         #     print("fc", delta_qs)
 
         return delta_qs
-
-        return np.clip(q+delta_qs, *self.q_limits)
     
     def predict(self, *args, **kwargs):
         """

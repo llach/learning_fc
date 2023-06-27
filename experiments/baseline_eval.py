@@ -48,20 +48,26 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
     return filtered_data
 
-N_GOALS = 1
+N_GOALS  = 5
+with_vis = 1
 env, vis, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
-    with_vis=0, 
-    max_steps=200,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ,obj_pos_range=[-0.018, -0.018])
+    with_vis=with_vis, 
+    max_steps=250,
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, obj_pos_range=[-0.01, -0.01])
 )
-# model = ForcePI(env)
-model = StaticModel(0.0)
+model = ForcePI(env, verbose=1)
+# model = StaticModel(0.0)
 
-def after_cb(env, *args, **kwargs): return force_after_step_cb(env, *args, **kwargs)
+def after_cb(env, *args, **kwargs): 
+    # env.q
+    return force_after_step_cb(env, *args, **kwargs)
 
-res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=after_cb)
+goals = np.linspace(*env.fgoal_range, N_GOALS)
+goals = [1.45]
+print(f"goals={goals}")
+res = deterministic_eval(env, model, vis, goals, reset_cb=force_reset_cb, after_step_cb=after_cb)
 
 r_obj_pos = np.array(res["r_obj_pos"][-1])
 # oy_t = np.array(res["oy_t"][-1])
@@ -78,5 +84,5 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-# plot_rollouts(env, res, f"Baseline Rollouts")
-# plt.show()
+plot_rollouts(env, res, f"Baseline Rollouts")
+plt.show()

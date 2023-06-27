@@ -1,6 +1,6 @@
 import inspect 
 
-from gymnasium.wrappers import TimeLimit
+from gymnasium.wrappers import TimeLimit, FrameStack, FlattenObservation
 from stable_baselines3.common.monitor import Monitor
 
 from learning_fc.utils import get_constructor_params, safe_unwrap
@@ -39,6 +39,9 @@ def make_env(env_name, logdir=None, env_kw={}, max_steps=250, nenv=1, frame_stac
     # instantiate environment and wrap
     env = ecls(**default_env_kw[env_name] | env_kw)
     env = TimeLimit(env, max_episode_steps=max_steps)
+    if frame_stack > 1:
+        env = FrameStack(env=env, num_stack=frame_stack, lz4_compress=False)
+        env = FlattenObservation(env=env)
     if training: env = Monitor(env, logdir) # we only need this wrapper during training
 
     # (optional) create live vis
