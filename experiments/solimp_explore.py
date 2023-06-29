@@ -12,7 +12,10 @@ with_vis = 0
 trials   = 10
 steps    = 50
 
-pname, sidx, values = "width", 2, np.linspace(0.0, 0.01, trials)
+# pname, sidx, values = "dmin", 0, np.linspace(0, 1, trials)
+pname, sidx, values = "width", 2, np.linspace(0.0001, 0.017, trials)
+# pname, sidx, values = "midpoint", 3, np.linspace(0, 1, trials)
+# pname, sidx, values = "power", 4, np.arange(10)+1
 
 env = GripperTactileEnv(
     obj_pos_range=[0,0],
@@ -67,14 +70,21 @@ ax2 = plt.twinx()
 for i, qs in enumerate(q):
     c = ax2.plot(qs[:,0])
     curves[i] += tuple(c)
-ax2.set_ylim(0.015, 0.047)
+
+l = ax2.axhline(env.ow, ls="dashed", c="grey", lw=1)
+curves.append(tuple([l]))
+labels.append("obj. radius")
+
+ax2.set_ylim(0.005, 0.033)
 ax2.set_ylabel("joint position")
 plt.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="upper right", ncol=trials//3, shadow=True)
 
 si = env.SOLIMP
 si[sidx] = pname
 fmax=np.max(forces)
-plt.title(f"SOLIMP={si} | fmax={fmax:.3f}")
+qmin=np.min(q)
+pdep=env.ow-qmin
+plt.title(f"SOLIMP={si} | fmax={fmax:.3f} | pdepth={pdep:.5f}")
 
 plt.tight_layout()
 plt.show()

@@ -61,7 +61,7 @@
   <body name="object" pos="0 0 0.05">
     <freejoint name="object_joint" />
     <inertial mass="0.1" pos="0 0 0" diaginertia="0.0001 0.00025 0.00017"/>
-    <geom name="object" type="cylinder" size="0.03 0.05" priority="1" solimp="0.9 0.95 0.001 0.5 2" />  
+    <geom name="object" type="cylinder" size="0.02 0.05" priority="1" solimp="0.9 0.95 0.001 0.5 2" />  
   </body> 
   
   <body name="hand" childclass="panda" pos="-0.1 0 0.05" quat="0 0.7071068 0 0.7071068" >

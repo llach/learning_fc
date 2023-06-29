@@ -14,7 +14,7 @@ class GripperTactileEnv(GripperEnv):
     INITIAL_OBJECT_POS = np.array([0,0,0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0, 0.5, 0.001, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0.7, 0.95, 0.005, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     def __init__(
             self,      

@@ -19,6 +19,10 @@ class ObsConfig:
         Observation.PosDelta
     ]
 
+    DF     = [
+        Observation.ForceDelta, 
+    ]
+
     F_DF   = [
         Observation.Force, 
         Observation.ForceDelta

@@ -49,13 +49,13 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
     return filtered_data
 
 N_GOALS  = 5
-with_vis = 1
+with_vis = 0
 env, vis, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
     with_vis=with_vis, 
     max_steps=250,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, obj_pos_range=[-0.01, -0.01])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, obj_pos_range=[-0.005, -0.005])
 )
 model = ForcePI(env, verbose=1)
 # model = StaticModel(0.0)
@@ -65,7 +65,7 @@ def after_cb(env, *args, **kwargs):
     return force_after_step_cb(env, *args, **kwargs)
 
 goals = np.linspace(*env.fgoal_range, N_GOALS)
-goals = [1.45]
+goals = 5*[1.45]
 print(f"goals={goals}")
 res = deterministic_eval(env, model, vis, goals, reset_cb=force_reset_cb, after_step_cb=after_cb)
 
@@ -74,15 +74,15 @@ r_obj_pos = np.array(res["r_obj_pos"][-1])
 objv = np.array(res["obj_v"][-1])[:,1]
 x = range(len(r_obj_pos))
 
-plt.plot(r_obj_pos, label="r_obj_pos", color="orange")
+# plt.plot(r_obj_pos, label="r_obj_pos", color="orange")
 
-ax2 = plt.twinx()
-# ax2.plot(oy_t, label="oy_t")
-ax2.plot(objv, label="objv")
+# ax2 = plt.twinx()
+# # ax2.plot(oy_t, label="oy_t")
+# ax2.plot(objv, label="objv")
 
-plt.legend()
-plt.tight_layout()
-plt.show()
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
 
 plot_rollouts(env, res, f"Baseline Rollouts")
 plt.show()

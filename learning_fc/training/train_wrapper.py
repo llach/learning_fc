@@ -30,7 +30,7 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
         model_name, 
         epar["control_mode"], 
         f"obs_{'-'.join(epar['obs_config'])}",
-        f"nenv-{nenv}"
+        f"nenv-{nenv}",
         f"k-{frame_stack}"
     ]
     _title = [
