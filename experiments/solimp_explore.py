@@ -13,9 +13,9 @@ trials   = 10
 steps    = 50
 
 # pname, sidx, values = "dmin", 0, np.linspace(0, 1, trials)
-pname, sidx, values = "width", 2, np.linspace(0.0001, 0.017, trials)
+# pname, sidx, values = "width", 2, np.linspace(0.0001, 0.017, trials)
 # pname, sidx, values = "midpoint", 3, np.linspace(0, 1, trials)
-# pname, sidx, values = "power", 4, np.arange(10)+1
+pname, sidx, values = "power", 4, np.arange(10)+1
 
 env = GripperTactileEnv(
     obj_pos_range=[0,0],
@@ -77,7 +77,7 @@ labels.append("obj. radius")
 
 ax2.set_ylim(0.005, 0.033)
 ax2.set_ylabel("joint position")
-plt.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="upper right", ncol=trials//3, shadow=True)
+plt.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="lower right", ncol=trials//3, shadow=True)
 
 si = env.SOLIMP
 si[sidx] = pname

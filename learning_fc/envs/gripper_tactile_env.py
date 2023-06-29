@@ -14,7 +14,7 @@ class GripperTactileEnv(GripperEnv):
     INITIAL_OBJECT_POS = np.array([0,0,0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0.7, 0.95, 0.005, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0, 0.95, 0.005, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     def __init__(
             self,      
@@ -112,19 +112,6 @@ class GripperTactileEnv(GripperEnv):
 
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
-
-        # signs for object q calculation
-        sgnl = np.sign(self.oy)*self.QY_SGN_l
-        sgnr = np.sign(self.oy)*self.QY_SGN_r
-        # if oy is zero, sign(oy) also is, then it's fine to not do the assertion
-        if self.oy != 0: assert sgnl != sgnr, "sgnl != sgnr"
-
-        self.qo_l = sgnl*self.oy + self.ow 
-        self.qo_r = sgnr*self.oy + self.ow
-
-        # distance between object and finger (doesn't take finger width into account)
-        self.doq_l = self.qinit_l-self.qo_l 
-        self.doq_r = self.qinit_r-self.qo_r
 
     def set_goal(self, x): 
         # set goal force and calculate interval sizes above and below goal force
