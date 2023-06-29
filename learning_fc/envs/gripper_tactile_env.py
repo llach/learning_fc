@@ -11,7 +11,9 @@ class GripperTactileEnv(GripperEnv):
     # constants
     QY_SGN_l =  1
     QY_SGN_r = -1
-    INITIAL_OBJECT_POS = np.array([0,0,0.05])
+    
+    INITIAL_OBJECT_POS  = np.array([0, 0, 0.05])
+    INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
     SOLIMP = [0, 0.95, 0.005, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
@@ -19,7 +21,8 @@ class GripperTactileEnv(GripperEnv):
     def __init__(
             self,      
             fgoal_range=[0.3, 1.5], 
-            obj_pos_range=[0, 0], 
+            oy_range=[0, 0], 
+            wo_range=[0.01, 0.035], 
             rf_scale=1.0, 
             ro_scale=100.0, 
             control_mode=ControlMode.Position, 
@@ -28,12 +31,15 @@ class GripperTactileEnv(GripperEnv):
         ):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.ro_scale = ro_scale        # scaling factor for objet movement penalty
+        self.wo_range = wo_range        # sampling range for object width
+        self.oy_range = oy_range        # sampling range for object position
         self.fgoal_range = fgoal_range  # sampling range for fgoal
-        self.obj_pos_range = obj_pos_range
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
         self.solimp = self.SOLIMP
+
+        assert min(wo_range) >= 0.01 and max(wo_range)<=0.35, "wo_range has to be in [0.01, 0.035]"
 
         GripperEnv.__init__(
             self,
@@ -95,20 +101,25 @@ class GripperTactileEnv(GripperEnv):
 
         #-----------------------------
         # random object start 
-        self.oy = round(np.random.uniform(*self.obj_pos_range), 3) # object y position
+        self.oy = round(np.random.uniform(*self.oy_range), 3) # object y position
         self.obj_pos    = self.INITIAL_OBJECT_POS.copy()
         self.obj_pos[1] = self.oy
 
         obj = root.findall(".//body[@name='object']")[0]
-        obj.attrib['pos']    = ' '.join(map(str, self.obj_pos))
+        obj.attrib['pos'] = ' '.join(map(str, self.obj_pos))
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
         
         # store object half-width (radius for cylinders)
-        self.ow = float(objgeom.attrib['size'].split(' ')[0])
+        self.wo = round(np.random.uniform(*self.wo_range), 3)
+
+        object_dims    = self.INITIAL_OBJECT_SIZE.copy()
+        object_dims[0] = self.wo
+        objgeom.attrib["size"] = ' '.join(map(str, object_dims))
+        
+        assert np.abs(self.wo) > np.abs(self.oy), "|wo| > |oy|"
         self.total_object_movement = 0
-        assert np.abs(self.ow) > np.abs(self.oy), "|ow| > |oy|"
 
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))

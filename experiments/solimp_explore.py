@@ -18,7 +18,7 @@ steps    = 50
 pname, sidx, values = "power", 4, np.arange(10)+1
 
 env = GripperTactileEnv(
-    obj_pos_range=[0,0],
+    oy_range=[0,0],
     **{"render_mode": "human"} if with_vis else {}
     )
 vis = TactileVis(env) if with_vis else None
@@ -71,7 +71,7 @@ for i, qs in enumerate(q):
     c = ax2.plot(qs[:,0])
     curves[i] += tuple(c)
 
-l = ax2.axhline(env.ow, ls="dashed", c="grey", lw=1)
+l = ax2.axhline(env.wo, ls="dashed", c="grey", lw=1)
 curves.append(tuple([l]))
 labels.append("obj. radius")
 
@@ -83,7 +83,7 @@ si = env.SOLIMP
 si[sidx] = pname
 fmax=np.max(forces)
 qmin=np.min(q)
-pdep=env.ow-qmin
+pdep=env.wo-qmin
 plt.title(f"SOLIMP={si} | fmax={fmax:.3f} | pdepth={pdep:.5f}")
 
 plt.tight_layout()
