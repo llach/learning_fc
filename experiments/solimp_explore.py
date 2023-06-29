@@ -19,8 +19,9 @@ pname, sidx, values = "power", 4, np.arange(10)+1
 
 env = GripperTactileEnv(
     oy_range=[0,0],
+    wo_range=[0.03, 0.03],
     **{"render_mode": "human"} if with_vis else {}
-    )
+)
 vis = TactileVis(env) if with_vis else None
 
 # dertermine q delta for a certain velocity

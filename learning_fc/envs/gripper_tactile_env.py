@@ -16,7 +16,7 @@ class GripperTactileEnv(GripperEnv):
     INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0, 0.95, 0.005, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0.9, 0.95, 0.001, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     def __init__(
             self,      
@@ -39,7 +39,7 @@ class GripperTactileEnv(GripperEnv):
         self.solref = self.SOLREF
         self.solimp = self.SOLIMP
 
-        assert min(wo_range) >= 0.01 and max(wo_range)<=0.35, "wo_range has to be in [0.01, 0.035]"
+        assert np.min(wo_range) >= 0.01 and np.max(wo_range)<=0.35, "wo_range has to be in [0.01, 0.035]"
 
         GripperEnv.__init__(
             self,

@@ -55,7 +55,7 @@ env, vis, _ = make_env(
     training=False, 
     with_vis=with_vis, 
     max_steps=250,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, obj_pos_range=[-0.005, -0.005])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, oy_range=[-0.005, -0.005])
 )
 model = ForcePI(env, verbose=1)
 # model = StaticModel(0.0)
