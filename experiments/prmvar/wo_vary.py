@@ -60,9 +60,11 @@ plt.figure(figsize=(9,6))
 plt.plot(wos, ffinal,  label="f_final")
 plt.ylabel("f_final")
 plt.xlabel("object width")
+plt.ylim(0.0, 3.7)
 
 ax2 = plt.twinx()
 ax2.plot(wos, dp, c="orange", label="dp")
+ax2.set_ylim(0.0, 0.01)
 
 plt.legend()
 plt.title(f"wo_range={WO_RANGE} | SOLIMP={env.solimp}")

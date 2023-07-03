@@ -7,7 +7,7 @@
     <default class="panda">
       <material specular="0.5" shininess="0.25"/>
       <joint armature="0.1" damping="1" axis="0 0 1" range="0.0 0.045"/>
-      <general dyntype="none" biastype="affine" ctrlrange="0 0.045" forcerange="-87 87"/>
+      <general dyntype="none" biastype="affine" forcerange="-20 20" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -100 -10" />
       <default class="finger" >
         <joint axis="0 1 0" type="slide" />
       </default>
@@ -107,8 +107,8 @@
   </contact>
 
   <actuator>
-    <general class="panda" name="finger_left"  joint="finger_joint_l" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -100 -10"/>
-    <general class="panda" name="finger_right" joint="finger_joint_r" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -100 -10"/>
+    <general class="panda" name="finger_left"  joint="finger_joint_l" />
+    <general class="panda" name="finger_right" joint="finger_joint_r" />
   </actuator>
 
   <!-- scene visuals -->

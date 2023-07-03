@@ -1,6 +1,5 @@
 import numpy as np
 import mujoco as mj
-np.set_printoptions(suppress=True, precision=7)
 
 from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, force_after_step_cb, plot_rollouts
 from learning_fc.enums import ControlMode, ObsConfig
@@ -55,17 +54,17 @@ env, vis, _ = make_env(
     training=False, 
     with_vis=with_vis, 
     max_steps=250,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, oy_range=[-0.005, -0.005])
+    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)
 )
-model = ForcePI(env, verbose=1)
+model = ForcePI(env, Kp=.1, verbose=1)
 # model = StaticModel(0.0)
 
 def after_cb(env, *args, **kwargs): 
-    # env.q
+    # print(env.force, env.qdes)
     return force_after_step_cb(env, *args, **kwargs)
 
 goals = np.linspace(*env.fgoal_range, N_GOALS)
-goals = 5*[1.45]
+# goals = 5*[0.6]
 print(f"goals={goals}")
 res = deterministic_eval(env, model, vis, goals, reset_cb=force_reset_cb, after_step_cb=after_cb)
 

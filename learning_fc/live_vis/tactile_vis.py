@@ -96,7 +96,7 @@ class TactileVis(VisBase):
         )
         self.plt_force.draw_line(
             name="noise_lower",
-            pos=round(fgoal-fth),
+            pos=round(fgoal-fth, 3),
             angle=0,
             pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )

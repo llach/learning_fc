@@ -12,10 +12,8 @@ with_vis = 0
 trials   = 10
 steps    = 50
 
-# pname, sidx, values = "dmin", 0, np.linspace(0, 1, trials)
-# pname, sidx, values = "width", 2, np.linspace(0.0001, 0.017, trials)
-# pname, sidx, values = "midpoint", 3, np.linspace(0, 1, trials)
-pname, sidx, values = "power", 4, np.arange(10)+1
+# pname, sidx, values = "stiffness", 0, np.linspace(0, .95, trials)
+pname, sidx, values = "damping", 2, np.linspace(0.0, 0.02, trials)
 
 env = GripperTactileEnv(
     oy_range=[0,0],
@@ -58,6 +56,8 @@ env.close()
 
 plt.figure(figsize=(9,6))
 
+# forces /= 100*env.wo
+
 labels = []
 curves = [tuple() for _ in range(trials)]
 for i, (v, ftraj) in enumerate(zip(values, forces)):
@@ -66,18 +66,22 @@ for i, (v, ftraj) in enumerate(zip(values, forces)):
     labels.append(f"{pname}={v:.4f}")
 plt.ylabel("f(t) [left]")
 plt.xlabel("t")
-
-ax2 = plt.twinx()
-for i, qs in enumerate(q):
-    c = ax2.plot(qs[:,0])
-    curves[i] += tuple(c)
-
-l = ax2.axhline(env.wo, ls="dashed", c="grey", lw=1)
+l = plt.axhline(1.0, ls="dashed", c="cyan", lw=1)
 curves.append(tuple([l]))
-labels.append("obj. radius")
+labels.append("f final")
 
-ax2.set_ylim(0.005, 0.033)
-ax2.set_ylabel("joint position")
+# ax2 = plt.twinx()
+# for i, qs in enumerate(q):
+#     c = ax2.plot(qs[:,0])
+#     curves[i] += tuple(c)
+
+# l = ax2.axhline(env.wo, ls="dashed", c="grey", lw=1)
+# curves.append(tuple([l]))
+# labels.append("obj. radius")
+
+# ax2.set_ylim(0.005, 0.033)
+# ax2.set_ylabel("joint position")
+
 plt.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="lower right", ncol=trials//3, shadow=True)
 
 si = env.SOLIMP

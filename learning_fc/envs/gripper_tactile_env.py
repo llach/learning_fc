@@ -7,32 +7,30 @@ from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 
 class GripperTactileEnv(GripperEnv):
-
     # constants
-    QY_SGN_l =  1
-    QY_SGN_r = -1
-    
     INITIAL_OBJECT_POS  = np.array([0, 0, 0.05])
     INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0.9, 0.95, 0.001, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0.3167, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     def __init__(
             self,      
-            fgoal_range=[0.3, 1.5], 
-            oy_range=[0, 0], 
+            fgoal_range=[0.02, 0.3], 
             wo_range=[0.01, 0.035], 
+            oy_init=None, 
+            xi_max=0.005,
             rf_scale=1.0, 
             ro_scale=100.0, 
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             **kwargs
         ):
+        self.oy_init = oy_init          # object position. None → sampling
+        self.xi_max   = xi_max          # maximum position error to reach fmax
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.ro_scale = ro_scale        # scaling factor for objet movement penalty
         self.wo_range = wo_range        # sampling range for object width
-        self.oy_range = oy_range        # sampling range for object position
         self.fgoal_range = fgoal_range  # sampling range for fgoal
 
         # solver parameters that control object deformation and contact force behavior
@@ -53,15 +51,16 @@ class GripperTactileEnv(GripperEnv):
     def _update_state(self):
         """ updates internal state variables that may be used as observations
         """
-        super()._update_state()
-
-        # force deltas to goal
-        self.force_deltas = self.fgoal - self.force
 
         # object state
         obj_pos_t = self.data.joint("object_joint").qpos[:3]
         self.obj_v = obj_pos_t - self.obj_pos
         self.obj_pos = obj_pos_t.copy()
+
+        super()._update_state()
+
+        # force deltas to goal
+        self.force_deltas = self.fgoal - self.force
 
     def _get_obs(self):
         """ concatenate internal state as observation
@@ -100,8 +99,18 @@ class GripperTactileEnv(GripperEnv):
         """
 
         #-----------------------------
-        # random object start 
-        self.oy = round(np.random.uniform(*self.oy_range), 3) # object y position
+        # object parameter variation
+        self.wo = round(np.random.uniform(*self.wo_range), 3)
+
+        if self.oy_init is None:
+            # sampling constraints
+            oy_q_const  = (0.97*0.045)-self.wo      # qmax-wo
+            oy_xi_const = self.wo - self.xi_max
+            oy_abs = min(oy_q_const, oy_xi_const)
+
+            self.oy = round(np.random.uniform(-oy_abs, oy_abs), 3)
+        else: self.oy = self.oy_init
+            
         self.obj_pos    = self.INITIAL_OBJECT_POS.copy()
         self.obj_pos[1] = self.oy
 
@@ -110,9 +119,6 @@ class GripperTactileEnv(GripperEnv):
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
-        
-        # store object half-width (radius for cylinders)
-        self.wo = round(np.random.uniform(*self.wo_range), 3)
 
         object_dims    = self.INITIAL_OBJECT_SIZE.copy()
         object_dims[0] = self.wo
