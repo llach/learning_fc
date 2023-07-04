@@ -8,7 +8,7 @@ from gymnasium.envs.mujoco import MujocoEnv
 
 import learning_fc
 from learning_fc import safe_rescale, get_pad_forces
-from learning_fc.enums import ControlMode, Observation
+from learning_fc.enums import ControlMode, Observation, ObsConfig
 
 DEFAULT_CAMERA_CONFIG = {
     "trackbodyid": -1,
@@ -29,7 +29,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, obs_config, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=1.0, ftheta=0.001, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config=ObsConfig.Q_F_DF, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=1.0, ftheta=0.001, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
@@ -39,7 +39,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.qinit_range = qinit_range
         self.control_mode = control_mode
 
-        observation_space = Box(low=-1, high=1, shape=(2*len(obs_config),), dtype=np.float64)
+        observation_space = Box(
+            low=-1., 
+            high=1., 
+            shape=(2*len(obs_config),), 
+            dtype=np.float64
+        )
 
         utils.EzPickle.__init__(self, **kwargs)
         MujocoEnv.__init__(
@@ -61,9 +66,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ torso joint is ignored, this env is for gripper behavior only
         """
         self.action_space = Box(
-            low  = np.array([-1, -1]), 
-            high = np.array([1, 1]), 
-            dtype=np.float32
+            low   = np.array([-1, -1], dtype=np.float64), 
+            high  = np.array([ 1,  1], dtype=np.float64), 
+            dtype = np.float64
         )
         return self.action_space
     
@@ -201,3 +206,4 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             {},     # info
         )
     
+if __name__ == "__main__": env = GripperEnv()
