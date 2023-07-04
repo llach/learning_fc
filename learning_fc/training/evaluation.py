@@ -92,7 +92,7 @@ def make_eval_env_model(trialdir, with_vis=False):
 
     # modify env creation parameters for eval and create
     params["make_env"] |= dict(training=False, nenv=1, with_vis=with_vis)
-    params["make_env"]["env_kw"] |= params["make_env"].pop("init_params")
+    params["make_env"]["env_kw"] = params["make_env"].pop("init_params") | params["make_env"]["env_kw"]
     env, vis, _ = make_env(**params["make_env"])
 
     # same for the model
@@ -200,8 +200,9 @@ def plot_rollouts(env, res, plot_title):
     fig.suptitle(plot_title)
     plt.tight_layout()
 
-def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False):
+def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
+    if trial_name is None: trial_name = params["train"]["trial_name"]
 
     # recover relevant parameters
     prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)

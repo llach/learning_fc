@@ -2,6 +2,7 @@ import inspect
 
 from gymnasium.wrappers import TimeLimit, FrameStack, FlattenObservation
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from learning_fc.utils import get_constructor_params, safe_unwrap
 from learning_fc.envs import GripperPosEnv, GripperTactileEnv, ControlMode
@@ -36,13 +37,20 @@ def make_env(env_name, logdir=None, env_kw={}, max_steps=250, nenv=1, frame_stac
     # prepare environment arguments
     if with_vis: env_kw |= dict(render_mode="human")
 
-    # instantiate environment and wrap
-    env = ecls(**default_env_kw[env_name] | env_kw)
-    env = TimeLimit(env, max_episode_steps=max_steps)
-    if frame_stack > 1:
-        env = FrameStack(env=env, num_stack=frame_stack, lz4_compress=False)
-        env = FlattenObservation(env=env)
-    if training: env = Monitor(env, logdir) # we only need this wrapper during training
+    def _make_env():
+        # instantiate environment and wrap
+        env = ecls(**default_env_kw[env_name] | env_kw)
+        env = TimeLimit(env, max_episode_steps=max_steps)
+        if frame_stack > 1:
+            env = FrameStack(env=env, num_stack=frame_stack, lz4_compress=False)
+            env = FlattenObservation(env=env)
+        return env
+    
+    env = SubprocVecEnv([lambda: _make_env() for _ in range(nenv)]) if nenv>1 and training else _make_env()
+    
+    if training: # we only need this wrapper during training
+        mon_cls = Monitor if nenv == 1 else VecMonitor
+        env = mon_cls(env, logdir) 
 
     # (optional) create live vis
     vis = env2vis[env_name](env) if with_vis else None

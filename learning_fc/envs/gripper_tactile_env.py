@@ -12,11 +12,11 @@ class GripperTactileEnv(GripperEnv):
     INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0.3167, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0.5, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     def __init__(
             self,      
-            fgoal_range=[0.02, 0.3], 
+            fgoal_range=[0.05, 0.9], 
             wo_range=[0.01, 0.035], 
             oy_init=None, 
             xi_max=0.005,

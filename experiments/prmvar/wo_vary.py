@@ -13,7 +13,7 @@ trials   = 10
 steps    = 50
 
 env = GripperTactileEnv(
-    oy_range=[0,0], # keep object centered
+    oy_init=0, # keep object centered
     **{"render_mode": "human"} if with_vis else {}
     )
 vis = TactileVis(env) if with_vis else None

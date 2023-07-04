@@ -13,8 +13,8 @@ with_vis = 0
 trials   = 10
 steps    = 50
 
-# pname, sidx, values = "dmin", 0, np.linspace(0, .95, trials)
-pname, sidx, values = "width", 2, np.linspace(0.0, 0.01, trials)
+pname, sidx, values = "dmin", 0, np.linspace(0.5, .5, trials)
+# pname, sidx, values = "width", 2, np.linspace(0.0, 0.01, trials)
 # pname, sidx, values = "midpoint", 3, np.linspace(0, 1, trials)
 # pname, sidx, values = "power", 4, np.arange(10)+1
 
@@ -29,13 +29,16 @@ vis = TactileVis(env) if with_vis else None
 q = np.zeros((trials, steps, 2))
 forces = np.zeros((trials, steps))
 
+dp = 0.005
+dp = 0.03
+
 for i in range(trials):
     solimp = env.SOLIMP
     solimp[sidx] = values[i]
     env.set_solver_parameters(solimp=solimp)
 
     env.reset()
-    qdes = env.wo-0.005
+    qdes = env.wo-dp
     if vis: vis.reset()
 
     for j in range(steps):

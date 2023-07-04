@@ -56,7 +56,7 @@ env, vis, _ = make_env(
     max_steps=250,
     env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ)
 )
-model = ForcePI(env, Kp=.1, verbose=1)
+model = ForcePI(env, Kp=.5, Ki=.8, verbose=1)
 # model = StaticModel(0.0)
 
 def after_cb(env, *args, **kwargs): 

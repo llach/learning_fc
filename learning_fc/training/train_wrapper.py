@@ -64,7 +64,7 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, e
     os.makedirs(trialdir, exist_ok=True)
 
     # environment setup
-    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True, nenv=1, frame_stack=1)
+    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True, nenv=nenv, frame_stack=frame_stack)
 
     # model setup
     model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20)
