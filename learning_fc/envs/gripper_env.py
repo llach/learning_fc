@@ -40,10 +40,10 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.control_mode = control_mode
 
         observation_space = Box(
-            low=-1., 
-            high=1., 
+            low=np.float32(-1.), 
+            high=np.float32(1.), 
             shape=(2*len(obs_config),), 
-            dtype=np.float64
+            dtype=np.float32
         )
 
         utils.EzPickle.__init__(self, **kwargs)
@@ -66,9 +66,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """ torso joint is ignored, this env is for gripper behavior only
         """
         self.action_space = Box(
-            low   = np.array([-1, -1], dtype=np.float64), 
-            high  = np.array([ 1,  1], dtype=np.float64), 
-            dtype = np.float64
+            low   = np.array([-1, -1], dtype=np.float32), 
+            high  = np.array([ 1,  1], dtype=np.float32), 
+            dtype = np.float32
         )
         return self.action_space
     
@@ -117,7 +117,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # contact force and binary in_contact state
         self.force = get_pad_forces(self.model, self.data)
-        self.in_contact = self.force > self.ftheta
+        self.in_contact  = self.force > self.ftheta
+        self.had_contact = self.in_contact | self.had_contact
 
     def _get_obs(self):
         """ concatenate internal state as observation
@@ -127,6 +128,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
                 safe_rescale(self.force, [0, self.fmax]) if Observation.Force in self.obs_config else [], 
                 safe_rescale(self.qdot, [-self.vmax, self.vmax]) if Observation.Vel in self.obs_config else [],
                 safe_rescale(self.qacc, [-self.amax, self.amax]) if Observation.Acc in self.obs_config else [],
+                self.in_contact  if Observation.InCon  in self.obs_config else [],
+                self.had_contact if Observation.HadCon in self.obs_config else [],
             ])
     
     def _qdot_penalty(self):
@@ -174,6 +177,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             for _, v in self.mujoco_renderer._viewers.items():
                 v.model = self.model
                 v.data = self.data
+
+        self.had_contact = np.array([0, 0], dtype=bool)
 
         self._update_state()
         return self._get_obs()

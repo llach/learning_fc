@@ -13,6 +13,9 @@ class Observation(str, Enum):
     PosDelta="dq"
     ForceDelta="df"
 
+    InCon="inC"
+    HadCon="hadC"
+
 class ObsConfig:
     Q_DQ   = [
         Observation.Pos,
@@ -32,4 +35,26 @@ class ObsConfig:
         Observation.Pos, 
         Observation.Force, 
         Observation.ForceDelta
+    ]
+
+    Q_F_DF_IN = [
+        Observation.Pos, 
+        Observation.Force, 
+        Observation.ForceDelta,
+        Observation.InCon
+    ]
+
+    Q_F_DF_HAD = [
+        Observation.Pos, 
+        Observation.Force, 
+        Observation.ForceDelta,
+        Observation.HadCon
+    ]
+
+    Q_F_DF_IN_HAD = [
+        Observation.Pos, 
+        Observation.Force, 
+        Observation.ForceDelta,
+        Observation.InCon,
+        Observation.HadCon
     ]
