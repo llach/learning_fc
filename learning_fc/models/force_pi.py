@@ -12,7 +12,6 @@ class ControllerPhase(int, Enum):
 class ForcePI(BaseModel):
 
     def __init__(self, env, Kp=.5, Ki=3.1, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
-        self.env = env
         self.verbose = verbose
         self.q_limits = q_limits
 
@@ -25,7 +24,7 @@ class ForcePI(BaseModel):
         # reset (or initialize) controller state
         self.reset()
 
-        BaseModel.__init__(self, control_mode=env.control_mode)
+        BaseModel.__init__(self, env=env, control_mode=env.control_mode)
 
     def reset(self):
         self.joint_transition = [False, False]

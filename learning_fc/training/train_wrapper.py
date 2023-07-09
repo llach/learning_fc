@@ -5,7 +5,7 @@ from sys import platform
 from datetime import datetime
 
 from learning_fc import model_path, datefmt, get_constructor_params
-from learning_fc.training import make_env, make_model, tactile_eval, envname2cls
+from learning_fc.training import make_env, make_model, tactile_eval, envname2cls, pos_eval
 
 model_defaults = dict(
     ppo=dict(timesteps=5e5),
@@ -15,7 +15,8 @@ model_defaults = dict(
 )
 
 env_eval_fn = dict(
-    gripper_tactile=tactile_eval
+    gripper_tactile=tactile_eval,
+    gripper_pos=pos_eval
 )
 
 def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame_stack):
@@ -41,7 +42,7 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
 
     return "__".join(_name), " | ".join(_title)
 
-def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
+def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
     # build training parameters dict, store locals
     tkw = model_defaults[model_name] | train_kw
 
@@ -64,7 +65,7 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, e
     os.makedirs(trialdir, exist_ok=True)
 
     # environment setup
-    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, env_kw=env_kw, with_vis=False, training=True, nenv=nenv, frame_stack=frame_stack)
+    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, max_steps=max_steps, env_kw=env_kw, with_vis=False, training=True, nenv=nenv, frame_stack=frame_stack)
 
     # model setup
     model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20)

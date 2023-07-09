@@ -29,13 +29,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, obs_config=ObsConfig.Q_F_DF, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", rqdot_scale=0.0, vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], fmax=1.0, ftheta=0.001, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, obs_config=ObsConfig.Q_F_DF, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], dq_max=0.001, fmax=1.0, ftheta=0.001, control_mode=ControlMode.Position, **kwargs):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
+        self.dq_max = dq_max
         self.ftheta = ftheta    # contact force noise threshold
         self.obs_config = obs_config    # contents of observation space    
-        self.rqdot_scale = rqdot_scale  # scaling factor for qdot penalty
         self.qinit_range = qinit_range
         self.control_mode = control_mode
 
@@ -82,12 +82,10 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             ain = safe_rescale(ain, [-1, 1], [0.0, 0.045])
             self.qdes = ain
         elif self.control_mode == ControlMode.PositionDelta:
-            ain = safe_rescale(ain, [-1, 1], [-0.045, 0.045])
+            ain = safe_rescale(ain, [-1, 1], [-self.dq_max, self.dq_max])
             self.qdes = np.clip(self.q+ain, 0, 0.045)
         else:
             assert False, f"unknown control mode {self.control_mode}"
-
-        # print(self.q, self.qdes)
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)
@@ -134,7 +132,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     
     def _qdot_penalty(self):
         vnorm = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
-        return self.rqdot_scale*np.sum(vnorm)
+        return np.sum(vnorm)
 
     def _is_done(self): raise NotImplementedError
     def _get_reward(self): raise NotImplementedError
@@ -179,6 +177,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
                 v.data = self.data
 
         self.had_contact = np.array([0, 0], dtype=bool)
+        self.t_since_force_closure = 0
 
         self._update_state()
         return self._get_obs()
@@ -199,6 +198,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self._step_mujoco_simulation(self._make_action(a), self.frame_skip)
         if self.render_mode == "human":
             self.render()
+
+        if np.all(self.had_contact): self.t_since_force_closure += 1
 
         # update internal state variables
         self._update_state()

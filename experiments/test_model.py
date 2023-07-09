@@ -6,15 +6,25 @@ from learning_fc.enums import ControlMode, ObsConfig
 from learning_fc.models import ForcePI
 from learning_fc.training import make_env
 
-with_vis = 1
-steps  = 200
-trials = 5
+with_vis = 0
+steps  = 250
+trials = 1
 
 env, vis, _ = make_env(
     env_name="gripper_tactile", 
     training=False, 
     with_vis=with_vis, 
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, qinit_range=[0.045, 0.045], obj_pos_range=[-0.025, -0.025])
+    env_kw=dict(
+        control_mode=ControlMode.Position, 
+        obs_config=ObsConfig.Q_DQ, 
+        qinit_range=[0.045, 0.045], 
+        oy_init=-0.015,
+        wo_range=[0.025, 0.025],
+        co_scale=0,
+        rf_scale=0,
+        ro_scale=50,
+        rp_scale=1,
+    )
 )
 model = ForcePI(env)
 
@@ -26,12 +36,13 @@ for i in range(trials):
     if vis: vis.reset()
 
     last_a = np.zeros((n_a,2))
+    cumrew = 0
     for j in range(steps):
         # fixed position action, requires ControlMode.Position
-        action = safe_rescale([0.01, 0.01], [0.0, 0.045])
+        # action = safe_rescale([0.01, 0.01], [0.0, 0.045])
 
         # trying (oscillating) min/max actions
-        # action = np.array([-1,-1])
+        action = np.array([-1,-1])
         # if j%2==1: action *= -1
 
         # model action
@@ -47,4 +58,10 @@ for i in range(trials):
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
+
+        print(env.r_obj_prox, env.r_obj_pos)
+
+        cumrew += r
 env.close()
+
+print(cumrew)

@@ -7,7 +7,10 @@ from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 
 class GripperTactileEnv(GripperEnv):
+    
     # constants
+    QY_SGN_l = -1
+    QY_SGN_r =  1
     INITIAL_OBJECT_POS  = np.array([0, 0, 0.05])
     INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
     
@@ -21,17 +24,25 @@ class GripperTactileEnv(GripperEnv):
             oy_init=None, 
             xi_max=0.005,
             rf_scale=1.0, 
-            ro_scale=100.0, 
+            ro_scale=1.0, 
+            rv_scale=0.0, 
+            rp_scale=0.0, 
+            co_scale=0.0,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
+            max_contact_steps=-1,
             **kwargs
         ):
         self.oy_init = oy_init          # object position. None → sampling
         self.xi_max   = xi_max          # maximum position error to reach fmax
         self.rf_scale = rf_scale        # scaling factor for force reward
-        self.ro_scale = ro_scale        # scaling factor for objet movement penalty
+        self.ro_scale = ro_scale        # scaling factor for object movement penalty
+        self.rv_scale = rv_scale        # scaling factor for joint velocity penalty
+        self.rp_scale = rp_scale        # scaling factor for object proximity
+        self.co_scale = co_scale        # scaling factor for in-contact reward
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
+        self.max_contact_steps = max_contact_steps
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
@@ -56,6 +67,7 @@ class GripperTactileEnv(GripperEnv):
         obj_pos_t = self.data.joint("object_joint").qpos[:3]
         self.obj_v = obj_pos_t - self.obj_pos
         self.obj_pos = obj_pos_t.copy()
+        self.oy_t = obj_pos_t[1]
 
         super()._update_state()
 
@@ -84,15 +96,35 @@ class GripperTactileEnv(GripperEnv):
                 rforce += 1-(np.clip(np.abs(df), 0.0, self.frange_upper)/self.frange_upper)
             elif df > 0:
                 rforce += 1-(np.clip(df, 0.0, self.frange_lower)/self.frange_lower)
-        return self.rf_scale*rforce
+        return rforce
+    
+    def _contact_reward(self):
+        return np.sum(self.in_contact)
+
+    def _object_proximity_reward(self):
+        """ fingers don't move towards the object sometimes → encourage them with small, positive rewards
+        """
+
+        def _doi(q, sgn):
+            if np.sign(self.oy_t) == sgn:
+                d = np.abs(self.oy_t) + self.wo
+            else:
+                d = self.wo - np.abs(self.oy_t)
+            return 1-np.clip(q-d, 0.0, self.d_o)/self.d_o
+
+        return np.sum([_doi(self.q[0], self.QY_SGN_l), _doi(self.q[1], self.QY_SGN_r)])
 
     def _get_reward(self):
-        self.r_force   = self.rf_scale * self._force_reward()
-        self.r_obj_pos = self.ro_scale * self._object_pos_penalty()
+        self.r_force    =   self.rf_scale * self._force_reward()
+        self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
+        self.r_con      =   self.co_scale * self._contact_reward()
+        self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
+        self.r_qvel     = - self.rv_scale * self._qdot_penalty()
 
-        return self.r_force - self.r_obj_pos
+        return self.r_force + self.r_obj_pos + self.r_con + self.r_obj_prox + self.r_qvel
     
-    def _is_done(self): return False
+    def _is_done(self): 
+        if self.max_contact_steps != -1 and self.t_since_force_closure >= self.max_contact_steps: return True
 
     def _reset_model(self, root):
         """ reset data, set joints to initial positions and randomize
@@ -129,6 +161,8 @@ class GripperTactileEnv(GripperEnv):
 
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
+
+        self.d_o = self.wo-np.abs(self.oy)
 
     def set_goal(self, x): 
         # set goal force and calculate interval sizes above and below goal force

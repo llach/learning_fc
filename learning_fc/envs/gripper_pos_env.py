@@ -9,7 +9,17 @@ from learning_fc.enums import ControlMode, ObsConfig, Observation
 
 class GripperPosEnv(GripperEnv):
 
-    def __init__(self, obs_config=ObsConfig.Q_DQ, max_steps=50, eps=0.0005, control_mode=ControlMode.Position, **kwargs):
+    def __init__(self, 
+                 obs_config=ObsConfig.Q_DQ, 
+                 max_steps=50, 
+                 rv_scale=0.0,
+                 rp_scale=1.0,
+                 eps=0.0005, 
+                 control_mode=ControlMode.Position, 
+                 **kwargs
+        ):
+        self.rp_scale = rp_scale
+        self.rv_scale = rv_scale
         self.eps = eps              # radius ε for rewards with fixed ε
         self.max_steps = max_steps  # #steps to terminate after  
 
@@ -41,17 +51,17 @@ class GripperPosEnv(GripperEnv):
     def _get_reward(self):
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
         deltaq = np.abs(self.qgoal - self.q)
-        posreward = np.sum(1-(deltaq/delta))
+        
+        self.r_pos  =   self.rp_scale * np.sum(1-(deltaq/delta))
+        self.r_qdot = - self.rv_scale * self._qdot_penalty()
 
-        return posreward - self._qdot_penalty()
+        return self.r_pos + self.r_qdot
     
     def _is_done(self): return False
 
-    def _reset_model(self):
+    def _reset_model(self, root):
         """ reset data, set joints to initial positions and randomize
         """
-        xmlmodel = ET.parse(self.fullpath)
-        root = xmlmodel.getroot()
 
         # remove object from scene
         wb = root.findall(".//worldbody")[0]
@@ -60,17 +70,15 @@ class GripperPosEnv(GripperEnv):
 
         # sample goal position
         self.qgoal = round(np.random.uniform(*self.qgoal_range), 4)
-
-        # create model from modified XML
-        return mujoco.MjModel.from_xml_string(ET.tostring(xmlmodel.getroot(), encoding='utf8', method='xml'))
     
     def reset_model(self):
-        obs = super().reset_model()
+        super().reset_model()
 
-        self.data.qpos[self._name_2_qpos_id("gripper_left_finger_joint")]  = round(np.random.uniform(*self.qgoal_range), 4)
-        self.data.qpos[self._name_2_qpos_id("gripper_right_finger_joint")] = round(np.random.uniform(*self.qgoal_range), 4)
+        self.data.joint("finger_joint_l").qpos = round(np.random.uniform(*self.qgoal_range), 4)
+        self.data.joint("finger_joint_r").qpos = round(np.random.uniform(*self.qgoal_range), 4)
 
-        return obs
+        self._update_state()
+        return self._get_obs() 
     
     def get_goal(self): return self.qgoal
     def set_goal(self, g): self.qgoal = g

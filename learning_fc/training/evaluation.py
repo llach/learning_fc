@@ -5,16 +5,28 @@ import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 from stable_baselines3.common.results_plotter import plot_results, X_TIMESTEPS
 
-from learning_fc.models import ForcePI
+from learning_fc.models import ForcePI, PosModel
 from learning_fc.training import make_env, make_model
 
 TACTILE_ENV_MEMBERS = [
     "force_deltas", 
     "r_force",
     "r_obj_pos",
+    "r_obj_prox",
+    "r_con",
     "obj_v",
     "obj_pos"
 ]
+
+POSITION_ENV_MEMBERS = [
+    "r_pos",
+    "r_qdot"
+]
+
+def safe_last_cumr(res):
+    try: return np.array(res["cumr"])[:,-1]
+    except: return np.array([cr[-1] for cr in res["cumr"]])
+
 
 def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=None, after_step_cb=None):
     results = dict(
@@ -73,16 +85,27 @@ def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=Non
     )
 
 def force_reset_cb(env, model, i, results, **kw): 
-        if isinstance(model, ForcePI): model.reset()
+    if isinstance(model, ForcePI): model.reset()
 
-        for key in TACTILE_ENV_MEMBERS:
-            if key not in results: results |= {key: []}
-            results[key].append([])
+    for key in TACTILE_ENV_MEMBERS:
+        if key not in results: results |= {key: []}
+        results[key].append([])
 
-        return results
+    return results
 
 def force_after_step_cb(env, model, i, results, goal=None, **kw):
     for key in TACTILE_ENV_MEMBERS:  results[key][i].append(getattr(env, key))
+    return results
+
+def pos_reset_cb(env, model, i, results, **kw): 
+    for key in POSITION_ENV_MEMBERS:
+        if key not in results: results |= {key: []}
+        results[key].append([])
+
+    return results
+
+def pos_after_step_cb(env, model, i, results, goal=None, **kw):
+    for key in POSITION_ENV_MEMBERS:  results[key][i].append(getattr(env, key))
     return results
 
 def make_eval_env_model(trialdir, with_vis=False):
@@ -110,8 +133,8 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     print("policy evaluation")
     agent_results = deterministic_eval(env, agent, vis, goals, reset_cb=reset_cb, after_step_cb=after_step_cb)
 
-    cumr_a = np.array(agent_results["cumr"])[:,-1]
-    cumr_o = np.array(oracle_results["cumr"])[:,-1]
+    cumr_a = np.array([cr[-1] for cr in agent_results["cumr"]])
+    cumr_o = np.array([cr[-1] for cr in oracle_results["cumr"]])
 
     print(f"RL   {np.mean(cumr_a):.0f}±{np.std(cumr_a):.1f}")
     print(f"BASE {np.mean(cumr_o):.0f}±{np.std(cumr_o):.1f}")
@@ -136,18 +159,21 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
 def plot_rollouts(env, res, plot_title):
     n_trials = len(res["q"])
     n_steps  = len(res["q"][0])
-    x        = np.arange(n_steps*n_trials)
 
-    q = np.array(res["q"]).reshape((-1,2))
-    qdes = np.array(res["qdes"]).reshape((-1,2))
-    qdot = np.array(res["qdot"]).reshape((-1,2))
-    qacc = np.array(res["qacc"]).reshape((-1,2))
-    force = np.array(res["force"]).reshape((-1,2))
+    q = np.concatenate(res["q"])
+    qdes = np.concatenate(res["qdes"])
+    qdot = np.concatenate(res["qdot"])
+    qacc = np.concatenate(res["qacc"])
+    force = np.concatenate(res["force"])
 
-    r_force = np.array(res["r_force"]).reshape((-1,))
-    r_obj_pos = np.array(res["r_obj_pos"]).reshape((-1,))
-    cumr = np.array(res["cumr"]).reshape((-1,))
+    r_force = np.concatenate(res["r_force"]).reshape((-1,))
+    r_obj_pos = np.concatenate(res["r_obj_pos"]).reshape((-1,))
+    r_obj_prox = np.concatenate(res["r_obj_prox"]).reshape((-1,))
+    r_con = np.concatenate(res["r_con"]).reshape((-1,))
+    cumr = np.concatenate(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
+
+    x = np.arange(q.shape[0])
 
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
 
@@ -182,6 +208,8 @@ def plot_rollouts(env, res, plot_title):
     axes[2,0].set_title("partial rewards")
     axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
     axes[2,0].plot(x, r_obj_pos, lw=1, label="r_obj_pos", c="orange")
+    axes[2,0].plot(x, r_obj_prox, lw=1, label="r_obj_prox", c="red")
+    axes[2,0].plot(x, r_con, lw=1, label="r_con", c="yellow")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
@@ -200,7 +228,8 @@ def plot_rollouts(env, res, plot_title):
     fig.suptitle(plot_title)
     plt.tight_layout()
 
-def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True):
+
+def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
     if trial_name is None: trial_name = params["train"]["trial_name"]
 
@@ -228,7 +257,7 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     # plot a few rollouts in more detail
     a_res, o_res = agent_oracle_comparison(
         env, model, fc, vis, plot=False,
-        goals=np.round(np.linspace(*env.fgoal_range, num=5), 4),
+        goals=np.round(np.linspace(*env.fgoal_range, num=nrollouts), 4),
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb
     )
 
@@ -238,9 +267,126 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - BASELINE\n"))
     plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
 
-    cumr_a = np.mean(np.array(a_res["cumr"])[:,-1])
-    cumr_o = np.mean(np.array(o_res["cumr"])[:,-1])
+    cumr_a = np.mean(safe_last_cumr(a_res))
+    cumr_o = np.mean(safe_last_cumr(o_res))
 
     print("tactile eval done!")
+
+    return cumr_a, cumr_o
+
+
+def plot_pos_rollouts(env, res, plot_title):
+    n_trials = len(res["q"])
+    n_steps  = len(res["q"][0])
+
+    q = np.concatenate(res["q"])
+    qdes = np.concatenate(res["qdes"])
+    qdot = np.concatenate(res["qdot"])
+    qacc = np.concatenate(res["qacc"])
+    force = np.concatenate(res["force"])
+
+    r_pos  = np.concatenate(res[ "r_pos"]).reshape((-1,))
+    r_qdot = np.concatenate(res["r_qdot"]).reshape((-1,))
+    
+    cumr = np.concatenate(res["cumr"]).reshape((-1,))
+    goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
+
+    x = np.arange(q.shape[0])
+
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
+
+    axes[0,0].set_title("joint position")
+    q1,  = axes[0,0].plot(x, q[:,0], lw=1, label="qdes")
+    q2,  = axes[0,0].plot(x, q[:,1], lw=1)
+    qd1, = axes[0,0].plot(x, qdes[:,0], lw=1)
+    qd2, = axes[0,0].plot(x, qdes[:,1], lw=1)
+    axes[0,0].legend([(q1, q2), (qd1, qd2)], ['q', 'qdes'],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+
+    axes[0,1].set_title("forces")
+    axes[0,1].plot(x, force[:,0], lw=1)
+    axes[0,1].plot(x, force[:,1], lw=1)
+    axes[0,1].plot(goals, c="grey", label="fgoal")
+    axes[0,1].legend()
+
+    axes[1,0].set_title("joint velocity")
+    axes[1,0].plot(x, qdot[:,0], lw=1)
+    axes[1,0].plot(x, qdot[:,1], lw=1)
+    axes[1,0].set_ylim(-1.1*env.vmax, 1.1*env.vmax)
+    axes[1,0].axhline(-env.vmax, lw=0.7, ls="dashed", c="grey")
+    axes[1,0].axhline(env.vmax, lw=0.7, ls="dashed", c="grey")
+
+    axes[1,1].set_title("joint acceleration")
+    axes[1,1].plot(x, qacc[:,0], lw=1)
+    axes[1,1].plot(x, qacc[:,1], lw=1)
+    axes[1,1].set_ylim(-1.1*env.amax, 1.1*env.amax)
+    axes[1,1].axhline(-env.amax, lw=0.7, ls="dashed", c="grey")
+    axes[1,1].axhline(env.amax, lw=0.7, ls="dashed", c="grey")
+
+    axes[2,0].set_title("partial rewards")
+    axes[2,0].plot(x, r_pos,  lw=1, label="r_pos",  c="cyan")
+    axes[2,0].plot(x, r_qdot, lw=1, label="r_qdot", c="orange")
+    axes[2,0].legend()
+
+    axes[2,1].set_title("cumulative episode reward")
+    axes[2,1].plot(x, cumr, c="red")
+
+    # axes[3,0].set_title("object velocity")
+
+    # timesteps for horizontal episode reset lines
+    # we don't need one at 0 nor at the end (hence the +1 and [:-1])
+    reset_lines = ((np.arange(n_trials)+1)*n_steps)[:-1]
+    for ax in axes.flatten():
+        for rl in reset_lines:
+            ax.axvline(rl, lw=.7, ls="dashed", c="grey")
+        ax.set_xlim(0, int(len(x)*1.05))
+    
+    fig.suptitle(plot_title)
+    plt.tight_layout()
+
+
+def pos_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5):
+    env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
+    if trial_name is None: trial_name = params["train"]["trial_name"]
+
+    # recover relevant parameters
+    prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
+    timesteps = int(params["train"]["timesteps"])
+    trial_name = params["train"]["trial_name"]
+    plot_title = f'{plot_title or "Position Control"}\n{trial_name}'
+
+    # learning curve
+    plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))
+    plt.savefig(f"{trialdir}/{prefix}learning_curve.png")
+
+    # baseline model
+    pc = PosModel()
+
+    # comparison plot
+    agent_oracle_comparison(
+        env, model, pc, vis, 
+        goals=np.round(np.linspace(*env.qgoal_range, num=20), 4),
+        reset_cb=pos_reset_cb, after_step_cb=pos_after_step_cb,
+        plot=True, trialdir=trialdir, 
+        plot_title=plot_title.replace("\n", " - Baseline Comparison\n"))
+    plt.savefig(f"{trialdir}/{prefix}baseline_comparison.png")
+
+     # plot a few rollouts in more detail
+    a_res, o_res = agent_oracle_comparison(
+        env, model, pc, vis, plot=False,
+        goals=np.round(np.linspace(*env.qgoal_range, num=nrollouts), 4),
+        reset_cb=pos_reset_cb, after_step_cb=pos_after_step_cb,
+    )
+
+    plot_pos_rollouts(env, a_res, plot_title=plot_title.replace("\n", " - POLICY\n"))
+    plt.savefig(f"{trialdir}/{prefix}rollouts_policy.png")
+
+    plot_pos_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - BASELINE\n"))
+    plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
+
+    cumr_a = np.mean(safe_last_cumr(a_res))
+    cumr_o = np.mean(safe_last_cumr(o_res))
+
+    print("pos eval done!")
 
     return cumr_a, cumr_o

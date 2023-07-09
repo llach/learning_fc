@@ -9,7 +9,7 @@ from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlMode
 from learning_fc.live_vis import TactileVis
 
-with_vis = 0
+with_vis = 1
 trials   = 10
 steps    = 50
 
@@ -47,6 +47,8 @@ for i in range(trials):
             [0, 0.045],
             [-1,1]
         )
+
+        # action = [-.1,-.1] if j < steps/2 else [1,1]
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
