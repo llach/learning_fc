@@ -42,7 +42,7 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
 
     return "__".join(_name), " | ".join(_title)
 
-def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path):
+def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path, weights=None):
     # build training parameters dict, store locals
     tkw = model_defaults[model_name] | train_kw
 
@@ -68,7 +68,7 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
     env, _, eparams = make_env(env_name=env_name, logdir=trialdir, max_steps=max_steps, env_kw=env_kw, with_vis=False, training=True, nenv=nenv, frame_stack=frame_stack)
 
     # model setup
-    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20)
+    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20, weights=weights)
     
     # store parameters
     with open(f"{trialdir}/parameters.json", "w") as f:

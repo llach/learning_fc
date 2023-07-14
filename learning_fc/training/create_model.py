@@ -47,10 +47,8 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
                     offset=1e3
                 )
             )
-    elif weights is not None:
-        model = model.load(f"{logdir}/weights/{weights}")
-    else:
-        assert False, "training != True && weights == None"
+    if weights is not None:
+        model.set_parameters(f"{weights}")
 
     # get model creation parameters to replicate the environment config while testing
     init_params = get_constructor_params(mcls, model)

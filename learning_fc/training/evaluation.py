@@ -119,7 +119,7 @@ def make_eval_env_model(trialdir, with_vis=False):
     env, vis, _ = make_env(**params["make_env"])
 
     # same for the model
-    params["make_model"] |= dict(training=False, weights="_best_model")
+    params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/_best_model")
     params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
     params["make_model"]["logdir"] = trialdir # in case folder was renamed 
     model, _, _ = make_model(env, **params["make_model"])

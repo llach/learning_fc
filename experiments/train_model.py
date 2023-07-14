@@ -1,9 +1,11 @@
+from learning_fc import model_path
 from learning_fc.enums import ControlMode, ObsConfig, Observation as Obs
 from learning_fc.training import train
 
 ALG  = "ppo"
 OBS  = ObsConfig.Q_VEL_F_DF_IN_HAD
 CTRL = ControlMode.PositionDelta
+
 
 if __name__ == "__main__": 
     for rfs in [3]:
@@ -24,5 +26,6 @@ if __name__ == "__main__":
                 # wo_range=[0.025, 0.025]   
             ), 
             frame_stack=3,
+            weights=f"{model_path}/2023-07-14_10-05-20__ppo_fc_base/weights/_best_model.zip"
             # train_kw=dict(timesteps=2e3) # quick training for debugging
             )
