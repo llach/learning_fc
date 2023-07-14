@@ -59,7 +59,7 @@ class ObsConfig:
         Observation.HadCon
     ]
 
-    Q_DQ_F_DF_IN_HAD = [
+    Q_VEL_F_DF_IN_HAD = [
         Observation.Pos, 
         Observation.Vel, 
         Observation.Force, 

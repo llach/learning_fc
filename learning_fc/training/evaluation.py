@@ -121,6 +121,7 @@ def make_eval_env_model(trialdir, with_vis=False):
     # same for the model
     params["make_model"] |= dict(training=False, weights="_best_model")
     params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
+    params["make_model"]["logdir"] = trialdir # in case folder was renamed 
     model, _, _ = make_model(env, **params["make_model"])
 
     return env, model, vis, params
@@ -360,7 +361,7 @@ def pos_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, trainin
     plt.savefig(f"{trialdir}/{prefix}learning_curve.png")
 
     # baseline model
-    pc = PosModel()
+    pc = PosModel(env)
 
     # comparison plot
     agent_oracle_comparison(

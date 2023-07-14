@@ -24,7 +24,7 @@ class ForcePI(BaseModel):
         # reset (or initialize) controller state
         self.reset()
 
-        BaseModel.__init__(self, env=env, control_mode=env.control_mode)
+        BaseModel.__init__(self, env=env)
 
     def reset(self):
         self.joint_transition = [False, False]

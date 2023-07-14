@@ -84,22 +84,23 @@ class GripperTactileEnv(GripperEnv):
         ])
     
     def _object_pos_penalty(self):
-        self.total_object_movement += np.abs(self.obj_v[1])
-        return self.total_object_movement
+        # self.total_object_movement += np.abs(self.obj_v[1])
+        # return self.total_object_movement
+        return 1 if np.abs(self.obj_v[1]) > 0.0001 else 0
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force
         
         rforce = 0
-        for df in deltaf:
+        for df in deltaf: 
             if df <= 0: # overshooting
-                rforce += 1-(np.clip(np.abs(df), 0.0, self.frange_upper)/self.frange_upper)
+                rforce += 1-(np.clip(np.abs(df), 0.0, self.fram)/self.fram)
             elif df > 0:
-                rforce += 1-(np.clip(df, 0.0, self.frange_lower)/self.frange_lower)
+                rforce += 1-(np.clip(df, 0.0, self.fram)/self.fram)
         return rforce
     
     def _contact_reward(self):
-        return np.sum(self.in_contact)
+        return np.sum(self.had_contact)
 
     def _object_proximity_reward(self):
         """ fingers don't move towards the object sometimes → encourage them with small, positive rewards
@@ -119,7 +120,7 @@ class GripperTactileEnv(GripperEnv):
         self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_con      =   self.co_scale * self._contact_reward()
         self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
-        self.r_qvel     = - self.rv_scale * self._qdot_penalty()
+        self.r_qvel     = 0# - self.rv_scale * self._qdot_penalty()
 
         return self.r_force + self.r_obj_pos + self.r_con + self.r_obj_prox + self.r_qvel
     
@@ -162,13 +163,14 @@ class GripperTactileEnv(GripperEnv):
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
-        self.d_o = self.wo-np.abs(self.oy)
+        self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
     def set_goal(self, x): 
         # set goal force and calculate interval sizes above and below goal force
         self.fgoal = x
         self.frange_upper = self.fmax - self.fgoal
         self.frange_lower = self.fgoal # fmin is 0
+        self.fram = min([self.frange_lower, self.frange_upper])
 
     def set_solver_parameters(self, solimp=None, solref=None):
         """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters

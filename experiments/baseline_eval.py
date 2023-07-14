@@ -56,7 +56,7 @@ env, vis, _ = make_env(
     max_steps=250,
     env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, max_contact_steps=100)
 )
-model = ForcePI(env, Kp=.7, Ki=1.5, verbose=0)
+model = ForcePI(env, verbose=0)
 # model = StaticModel(0.0)
 
 def after_cb(env, *args, **kwargs): 
@@ -69,8 +69,8 @@ print(f"goals={goals}")
 res = deterministic_eval(env, model, vis, goals, reset_cb=force_reset_cb, after_step_cb=after_cb)
 
 cumrs = np.array([cr[-1] for cr in res["cumr"]])
-print(cumrs)
-exit(0)
+# print(cumrs)
+# exit(0)
 r_obj_pos = np.array(res["r_obj_pos"][-1])
 # oy_t = np.array(res["oy_t"][-1])
 objv = np.array(res["obj_v"][-1])[:,1]

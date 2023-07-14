@@ -7,7 +7,7 @@
     <default class="panda">
       <material specular="0.5" shininess="0.25"/>
       <joint armature="0.1" damping="1" axis="0 0 1" range="0.0 0.045"/>
-      <general dyntype="none" biastype="affine" forcerange="-3 3" ctrlrange="0 0.045" gainprm="300 0 0" biasprm="0 -300 -30" />
+      <general dyntype="none" biastype="affine" forcerange="-3 3" ctrlrange="0 0.045" gainprm="500 0 0" biasprm="0 -500 -50" />
       <default class="finger" >
         <joint axis="0 1 0" type="slide" />
       </default>

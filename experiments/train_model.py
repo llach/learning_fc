@@ -2,33 +2,27 @@ from learning_fc.enums import ControlMode, ObsConfig, Observation as Obs
 from learning_fc.training import train
 
 ALG  = "ppo"
-OBS  = [Obs.Pos, Obs.Vel, Obs.PosDelta]
+OBS  = ObsConfig.Q_VEL_F_DF_IN_HAD
 CTRL = ControlMode.PositionDelta
 
 if __name__ == "__main__": 
-    for rv in [
-        2.0
-    ]:
+    for rfs in [3]:
         train(
-            env_name="gripper_pos", 
+            env_name="gripper_tactile", 
             model_name=ALG,
             nenv=6,
-            train_kw=dict(timesteps=2e5),
-            max_steps=50,
+            train_kw=dict(timesteps=15e5),
+            max_steps=200,
             env_kw=dict(
                 control_mode=CTRL, 
                 obs_config=OBS, 
-                # co_scale=1, 
-                # ro_scale=100,
-                # rf_scale=0,
+                co_scale=1, 
+                # ro_scale=4,
                 rp_scale=1,
-                # rv_scale=rv,'
+                rf_scale=rfs,
                 # oy_init=-0.015,
                 # wo_range=[0.025, 0.025]   
             ), 
-            model_kw=dict(
-                # gamma=ga,
-            ),
-            frame_stack=1,
+            frame_stack=3,
             # train_kw=dict(timesteps=2e3) # quick training for debugging
             )

@@ -37,6 +37,8 @@ for i in range(trials):
 
     last_a = np.zeros((n_a,2))
     cumrew = 0
+
+    obvs = []
     for j in range(steps):
         # fixed position action, requires ControlMode.Position
         # action = safe_rescale([0.01, 0.01], [0.0, 0.045])
@@ -59,9 +61,9 @@ for i in range(trials):
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
 
-        print(env.r_obj_prox, env.r_obj_pos)
+        obvs.append(np.abs(env.obj_v[1]))
 
         cumrew += r
 env.close()
 
-print(cumrew)
+print(cumrew, np.max(obvs))
