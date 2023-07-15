@@ -1,5 +1,6 @@
 import time
 import json
+import numpy as np
 
 from gym import Env
 from learning_fc import CsvWriter
@@ -25,17 +26,19 @@ class ParamSchedule:
 
         self.var_name = var_name
 
-        self.first_value = first_value
-        self.final_value = final_value
+        if isinstance(first_value, list):
+            self.first_value = np.array(first_value)
+            self.final_value = np.array(final_value)
+        else:
+            self.first_value = first_value
+            self.final_value = final_value
 
-        assert start < stop, "start < stop in ParameterSchedule"
+        assert start < stop, "start < stop"
         self.dur = self.stop-self.start
 
     def get_value(self, t):
-        l = t - self.start
-        if l<1: return self.first_value
-        if l>self.dur: return self.final_value
-        return (l/self.dur)*self.final_value
+        alpha = np.clip((t - self.start)/self.dur, 0.0, 1.0)
+        return self.first_value + alpha * (self.final_value-self.first_value)
 
 class ParamScheduleCallback(ProxyBaseCallback):
 
