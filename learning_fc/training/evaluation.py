@@ -108,7 +108,7 @@ def pos_after_step_cb(env, model, i, results, goal=None, **kw):
     for key in POSITION_ENV_MEMBERS:  results[key][i].append(getattr(env, key))
     return results
 
-def make_eval_env_model(trialdir, with_vis=False):
+def make_eval_env_model(trialdir, with_vis=False, checkpoint="_best_model"):
     # load parameters
     with open(f"{trialdir}/parameters.json", "r") as f:
         params = json.load(f)
@@ -119,7 +119,7 @@ def make_eval_env_model(trialdir, with_vis=False):
     env, vis, _ = make_env(**params["make_env"])
 
     # same for the model
-    params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/_best_model")
+    params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/{checkpoint}")
     params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
     params["make_model"]["logdir"] = trialdir # in case folder was renamed 
     model, _, _ = make_model(env, **params["make_model"])

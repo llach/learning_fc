@@ -4,6 +4,7 @@ import mujoco
 import inspect
 import numpy as np
 
+from typing import Any
 from datetime import datetime
 from learning_fc import datefmt
 
@@ -108,3 +109,23 @@ def get_pad_forces(model, data):
         else: print(f"unknown pad {name2}")
 
     return np.array([fl, fr])
+
+
+class CsvWriter:
+
+    def __init__(self, file: str, headers: list[str]):
+        self.file = file
+        self.headers = headers
+
+        self.headers_line = ','.join(self.headers)
+
+        self.file_handler = open(self.file, "wt")
+        self.file_handler.write(f'{self.headers_line}\n')
+        self.file_handler.flush()
+
+    def write(self, vals: list[Any]):
+        self.file_handler.write(f"{','.join([str(v) for v in vals])}\n")
+        self.file_handler.flush()
+
+    def close(self):
+        self.file_handler.close()

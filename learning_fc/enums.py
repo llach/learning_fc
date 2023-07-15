@@ -9,6 +9,7 @@ class Observation(str, Enum):
     Vel="qdot"
     Acc="qacc"
     Force="f"
+    Action="act"
 
     PosDelta="dq"
     ForceDelta="df"
@@ -66,4 +67,14 @@ class ObsConfig:
         Observation.ForceDelta,
         Observation.InCon,
         Observation.HadCon
+    ]
+
+    Q_VEL_F_DF_IN_HAD_ACT = [
+        Observation.Pos, 
+        Observation.Vel, 
+        Observation.Force, 
+        Observation.ForceDelta,
+        Observation.InCon,
+        Observation.HadCon,
+        Observation.Action
     ]

@@ -1,7 +1,7 @@
 from stable_baselines3 import PPO, TD3, DDPG, SAC
 
 from learning_fc.utils import get_constructor_params
-from learning_fc.callbacks import SaveOnBestTrainingRewardCallback, PeriodicSavingCallback
+from learning_fc.callbacks import SaveOnBestTrainingRewardCallback, PeriodicSavingCallback, ParamScheduleCallback
 
 modelname2cls = dict(
     ppo=PPO,
@@ -12,7 +12,7 @@ modelname2cls = dict(
 
 model_default_params = dict(policy="MlpPolicy", verbose=1) # default parameters for all policies, regardless of the algorithm
 
-def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, save_on_best=True, save_periodic=-1, weights=None):
+def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, save_on_best=True, save_periodic=-1, weights=None, schedules=[]):
     # store function params, remove non-hashable ones
     fn_params = locals()
     fn_params.pop("env")
@@ -45,6 +45,15 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
                     save_path=logdir, 
                     save_freq=save_periodic, 
                     offset=1e3
+                )
+            )
+        if schedules is not []:
+            callbacks.append(
+                ParamScheduleCallback(
+                    env=env, 
+                    schedules=schedules, 
+                    log_dir=logdir, 
+                    write_freq=timesteps/25e1
                 )
             )
     if weights is not None:

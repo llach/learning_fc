@@ -28,15 +28,19 @@ class GripperTactileEnv(GripperEnv):
             rv_scale=0.0, 
             rp_scale=0.0, 
             co_scale=0.0,
+            ra_scale=0.0,
+            ov_max=0.0001,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             max_contact_steps=-1,
             **kwargs
         ):
-        self.oy_init = oy_init          # object position. None → sampling
+        self.ov_max   = ov_max
         self.xi_max   = xi_max          # maximum position error to reach fmax
+        self.oy_init  = oy_init         # object position. None → sampling
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.ro_scale = ro_scale        # scaling factor for object movement penalty
+        self.ra_scale = ra_scale        # scaling factor for action difference penalty
         self.rv_scale = rv_scale        # scaling factor for joint velocity penalty
         self.rp_scale = rp_scale        # scaling factor for object proximity
         self.co_scale = co_scale        # scaling factor for in-contact reward
@@ -86,7 +90,10 @@ class GripperTactileEnv(GripperEnv):
     def _object_pos_penalty(self):
         # self.total_object_movement += np.abs(self.obj_v[1])
         # return self.total_object_movement
-        return 1 if np.abs(self.obj_v[1]) > 0.0001 else 0
+        return 1 if np.abs(self.obj_v[1]) > self.ov_max else 0
+    
+    def _action_penalty(self):
+        return np.sum(np.abs(self.last_a - self.ain))
     
     def _force_reward(self):
         deltaf = self.fgoal - self.force
@@ -120,9 +127,10 @@ class GripperTactileEnv(GripperEnv):
         self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_con      =   self.co_scale * self._contact_reward()
         self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
+        self.r_act      = - self.ra_scale * self._action_penalty()
         self.r_qvel     = 0# - self.rv_scale * self._qdot_penalty()
 
-        return self.r_force + self.r_obj_pos + self.r_con + self.r_obj_prox + self.r_qvel
+        return self.r_force + self.r_obj_pos + self.r_con + self.r_obj_prox + self.r_qvel + self.r_act
     
     def _is_done(self): 
         if self.max_contact_steps != -1 and self.t_since_force_closure >= self.max_contact_steps: return True

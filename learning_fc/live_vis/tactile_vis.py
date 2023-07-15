@@ -64,7 +64,7 @@ class TactileVis(VisBase):
         self.win.nextRow()
 
         self.plt_r = PIWrapper(self.win, title="r(t)", pens="g")
-        self.plt_r_parts = PIWrapper(self.win, title="r_force | r_obj_pos | r_con | r_prox", pens=["b", "y", "c", "r"])
+        self.plt_r_parts = PIWrapper(self.win, title="r_force | r_obj_pos | r_con | r_prox", pens=["b", "y", "c", "r", "g"])
 
         # self.win.nextRow()
 
@@ -118,7 +118,7 @@ class TactileVis(VisBase):
         self.plt_vobj.update(np.abs(self.env.obj_v))
 
         self.plt_r.update(reward)
-        self.plt_r_parts.update([self.env.r_force, self.env.r_obj_pos, self.env.r_con, self.env.r_obj_prox])
+        self.plt_r_parts.update([self.env.r_force, self.env.r_obj_pos, self.env.r_con, self.env.r_obj_prox, self.env.r_act])
 
         # self.plt_r_obj_prx.update(self.env.r_obj_prx)
         # self.plt_r_qdot.update([-self.env.r_qdot, -self.env.r_qacc])

@@ -39,6 +39,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.qinit_range = qinit_range
         self.control_mode = control_mode
 
+        self.ain = np.array([0, 0])
+
         observation_space = Box(
             low=np.float32(-1.), 
             high=np.float32(1.), 
@@ -128,6 +130,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
                 safe_rescale(self.qacc, [-self.amax, self.amax]) if Observation.Acc in self.obs_config else [],
                 self.in_contact  if Observation.InCon  in self.obs_config else [],
                 self.had_contact if Observation.HadCon in self.obs_config else [],
+                self.ain if Observation.Action in self.obs_config else [],
             ])
     
     def _qdot_penalty(self):
@@ -178,6 +181,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         self.had_contact = np.array([0, 0], dtype=bool)
         self.t_since_force_closure = 0
+        self.t = 0
 
         self._update_state()
         return self._get_obs()
@@ -193,6 +197,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             truncated
             info
         """
+        if self.t == 0: self.last_a = a.copy() # avoid penalty on first timestep
+        self.ain = a.copy()
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
         self._step_mujoco_simulation(self._make_action(a), self.frame_skip)
@@ -203,11 +209,18 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         # update internal state variables
         self._update_state()
+
+        obs = self._get_obs()
+        rew = self._get_reward()
+        don = self._is_done()  # terminated
+
+        self.t += 1
+        self.last_a = a.copy()
         
         return (
-            self._get_obs(),
-            self._get_reward(),
-            self._is_done(),  # terminated
+            obs,
+            rew,
+            don,
             False,  # truncated
             {},     # info
         )
