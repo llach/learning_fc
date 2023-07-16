@@ -13,7 +13,7 @@ with_vis = 1
 # trial = f"{model_path}/2023-07-09_16-42-39__gripper_tactile__ppo__pos_delta__obs_q-qdot-f-df-inC-hadC__nenv-1__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
-env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="model300000")
+env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis)#, checkpoint="model300000")
 
 def as_cb(env, model, i, results, goal=None, **kw):
     # print(env.obj_v[1], env.r_obj_pos)
@@ -24,10 +24,10 @@ def as_cb(env, model, i, results, goal=None, **kw):
 # res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=as_cb)
 # print(np.array(res["cumr"])[:,-1])
 
-env.set_attr("ro_scale", 10)
-env.set_attr("ra_scale", 5)
-env.set_attr("wo_range", [0.025, 0.025])
-env.set_attr("oy_init", 0.02)
+# env.set_attr("ro_scale", 10)
+# env.set_attr("ra_scale", 5)
+# env.set_attr("wo_range", [0.02, 0.025])
+# env.set_attr("oy_range", [-0.01, 0.01])
 
 
 for i in range(N_GOALS):

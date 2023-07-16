@@ -22,6 +22,7 @@ class GripperTactileEnv(GripperEnv):
             fgoal_range=[0.05, 0.9], 
             wo_range=[0.01, 0.035], 
             oy_init=None, 
+            oy_range=None,
             xi_max=0.005,
             rf_scale=1.0, 
             ro_scale=1.0, 
@@ -37,16 +38,19 @@ class GripperTactileEnv(GripperEnv):
         ):
         self.ov_max   = ov_max
         self.xi_max   = xi_max          # maximum position error to reach fmax
-        self.oy_init  = oy_init         # object position. None → sampling
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.ro_scale = ro_scale        # scaling factor for object movement penalty
         self.ra_scale = ra_scale        # scaling factor for action difference penalty
         self.rv_scale = rv_scale        # scaling factor for joint velocity penalty
         self.rp_scale = rp_scale        # scaling factor for object proximity
         self.co_scale = co_scale        # scaling factor for in-contact reward
+        self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.max_contact_steps = max_contact_steps
+
+        if oy_init is not None:
+            self.oy_range = [oy_init, oy_init]
 
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
@@ -143,14 +147,17 @@ class GripperTactileEnv(GripperEnv):
         # object parameter variation
         self.wo = round(np.random.uniform(*self.wo_range), 3)
 
-        if self.oy_init is None:
-            # sampling constraints
-            oy_q_const  = (0.97*0.045)-self.wo      # qmax-wo
-            oy_xi_const = self.wo - self.xi_max
-            oy_abs = min(oy_q_const, oy_xi_const)
+        # oy sampling constraints
+        oy_q_const  = (0.97*0.045)-self.wo      # qmax-wo
+        oy_xi_const = self.wo - self.xi_max
+        oy_max = min(oy_q_const, oy_xi_const)
 
-            self.oy = round(np.random.uniform(-oy_abs, oy_abs), 3)
-        else: self.oy = self.oy_init
+        if self.oy_range is not None:
+            oy_range = np.clip(self.oy_range, -oy_max, oy_max)
+        else:
+            oy_range = [-oy_max, oy_max]
+
+        self.oy = round(np.random.uniform(*oy_range), 3)
             
         self.obj_pos    = self.INITIAL_OBJECT_POS.copy()
         self.obj_pos[1] = self.oy
