@@ -1,10 +1,12 @@
 import os
 import json
+import numpy as np
 
 from sys import platform
 from datetime import datetime
 
 from learning_fc import model_path, datefmt, get_constructor_params
+from learning_fc.callbacks import ParamSchedule
 from learning_fc.training import make_env, make_model, tactile_eval, envname2cls, pos_eval
 
 model_defaults = dict(
@@ -72,13 +74,16 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
     
     # store parameters
     with open(f"{trialdir}/parameters.json", "w") as f:
-        fn_params.pop("schedules")
-        mparams.pop("schedules")
+        def to_json(o):
+            if isinstance(o, ParamSchedule): return o.__dict__
+            if isinstance(o, np.ndarray): return list(o)
+            return o
+        
         f.write(json.dumps(dict(
             make_env=eparams,
             make_model=mparams,
             train=fn_params
-        ), indent=2, sort_keys=True))
+        ), indent=2, sort_keys=True, default=to_json))
 
     # train the agent
     try: model.learn(total_timesteps=timesteps, callback=callbacks)
