@@ -129,3 +129,38 @@ class CsvWriter:
 
     def close(self):
         self.file_handler.close()
+
+class CsvReader:
+
+    def __init__(self, fi):
+        self.data = {}
+        self.headers = []
+
+        with open(fi, "r") as f:
+            first_line = True
+            for l in f.readlines():
+                if first_line:
+                    for h in l.split(","):
+                        h = h.replace("\n", "")
+                        self.data.update({
+                            h: []
+                        })
+                        self.headers.append(h)
+                    first_line = False
+                else:
+                    for i, d in enumerate(l.split(",")):
+                        self.data[self.headers[i]].append(self._parse_number(d))
+
+    def _parse_number(self, n):
+        try:
+            if "[" in n:
+                return np.fromstring(
+                    n.replace("[", "").replace("]", ""), 
+                    dtype=float, 
+                    sep=" "
+                )
+            elif "." in n: return float(n)
+            else: return int(n)
+        except Exception as e:
+            print(f"cannot convert {n} to neither int nor float:\n{e}")
+            return 0.0

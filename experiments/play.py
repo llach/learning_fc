@@ -24,11 +24,6 @@ def as_cb(env, model, i, results, goal=None, **kw):
 # res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=as_cb)
 # print(np.array(res["cumr"])[:,-1])
 
-# env.set_attr("ro_scale", 10)
-# env.set_attr("ra_scale", 5)
-# env.set_attr("wo_range", [0.02, 0.025])
-# env.set_attr("oy_range", [-0.01, 0.01])
-
 
 for i in range(N_GOALS):
     obs, _ = env.reset()

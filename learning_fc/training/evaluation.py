@@ -1,10 +1,12 @@
+import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib.legend_handler import HandlerTuple
-from stable_baselines3.common.results_plotter import plot_results, X_TIMESTEPS
+from stable_baselines3.common.results_plotter import load_results, window_func, X_TIMESTEPS, EPISODES_WINDOW, ts2xy
 
+from learning_fc.utils import CsvReader
 from learning_fc.models import ForcePI, PosModel
 from learning_fc.training import make_env, make_model
 
@@ -118,6 +120,10 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="_best_model"):
     params["make_env"]["env_kw"] = params["make_env"].pop("init_params") | params["make_env"]["env_kw"]
     env, vis, _ = make_env(**params["make_env"])
 
+    # set the final values of scheduled parameters
+    for sc in params["train"]["schedules"]:
+        env.set_attr(sc["var_name"], sc["final_value"])
+
     # same for the model
     params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/{checkpoint}")
     params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
@@ -230,6 +236,77 @@ def plot_rollouts(env, res, plot_title):
     plt.tight_layout()
 
 
+def plot_curves(
+    xy_list, x_axis, title, figsize
+):
+    """
+    plot the curves
+
+    :param xy_list: the x and y coordinates to plot
+    :param x_axis: the axis for the x and y output
+        (can be X_TIMESTEPS='timesteps', X_EPISODES='episodes' or X_WALLTIME='walltime_hrs')
+    :param title: the title of the plot
+    :param figsize: Size of the figure (width, height)
+    """
+
+    plt.figure(title, figsize=figsize)
+    max_x = max(xy[0][-1] for xy in xy_list)
+    min_x = 0
+    for _, (x, y) in enumerate(xy_list):
+        plt.scatter(x, y, s=2)
+        # Do not plot the smoothed curve at all if the timeseries is shorter than window size.
+        if x.shape[0] >= EPISODES_WINDOW:
+            # Compute and plot rolling mean with window of size EPISODE_WINDOW
+            x, y_mean = window_func(x, y, EPISODES_WINDOW, np.mean)
+            plt.plot(x, y_mean)
+    plt.xlim(min_x, max_x)
+    plt.title(title)
+    plt.xlabel(x_axis)
+    plt.ylabel("Episode Rewards")
+    
+def plot_results(
+    dirs, num_timesteps, x_axis, task_name, figsize=(14.5, 8.8)
+):
+    """
+    Plot the results using csv files from ``Monitor`` wrapper.
+
+    :param dirs: the save location of the results to plot
+    :param num_timesteps: only plot the points below this value
+    :param x_axis: the axis for the x and y output
+        (can be X_TIMESTEPS='timesteps', X_EPISODES='episodes' or X_WALLTIME='walltime_hrs')
+    :param task_name: the title of the task to plot
+    :param figsize: Size of the figure (width, height)
+    """
+
+    data_frames = []
+    for folder in dirs:
+        data_frame = load_results(folder)
+        if num_timesteps is not None:
+            data_frame = data_frame[data_frame.l.cumsum() <= num_timesteps]
+        data_frames.append(data_frame)
+    xy_list = [ts2xy(data_frame, x_axis) for data_frame in data_frames]
+    plot_curves(xy_list, x_axis, task_name, figsize)
+
+    sched_file = f"{dirs[0]}/scheduled_params.csv"
+    if os.path.isfile(sched_file):
+        csvr = CsvReader(sched_file)
+
+        ax2 = plt.twinx()
+        next(ax2._get_lines.prop_cycler)['color']
+
+        tx = csvr.data["timesteps"]
+        for k, v in csvr.data.items():
+            if k in ["timesteps", "walltime"]: continue
+
+            v = np.array(v)
+            if len(v.shape)>=2 and v.shape[1]==2: v = np.abs(v[:,1]-v[:,0])
+            v /= v[-1]
+
+            ax2.plot(tx, v, label=k)
+        ax2.legend(loc="lower right")
+    plt.tight_layout()
+
+
 def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
     if trial_name is None: trial_name = params["train"]["trial_name"]
@@ -241,7 +318,7 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     plot_title = f'{plot_title or "Force Control"}\n{trial_name}'
 
     # learning curve
-    plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(8,4))
+    plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(11.5, 6.8))
     plt.savefig(f"{trialdir}/{prefix}learning_curve.png")
 
     fc = ForcePI(env, verbose=with_vis)

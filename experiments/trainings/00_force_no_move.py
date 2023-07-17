@@ -79,28 +79,3 @@ if __name__ == "__main__":
             oy_schedule 
         ]
     )
-
-    
-    # train(
-    #     env_name="gripper_tactile", 
-    #     model_name=ALG,
-    #     nenv=6,
-    #     train_kw=dict(timesteps=TIME),
-    #     max_steps=200,
-    #     env_kw=dict(
-    #         control_mode=CTRL, 
-    #         obs_config=OBS, 
-    #         co_scale=1,
-    #         rp_scale=1,
-    #         ro_scale=ro_schedule.final_value,
-    #         ra_scale=0,
-    #         rf_scale=rf_schedule.final_value,
-    #         wo_range=wo_schedule.final_value,
-    #         oy_range=oy_schedule.final_value    
-    #     ), 
-    #     frame_stack=3,
-    #     schedules=[
-    #         ra_schedule,
-    #     ],
-    #     weights=f"{model_path}/2023-07-17_13-03-20__gripper_tactile__ppo__pos_delta__obs_q-qdot-f-df-inC-hadC-act__nenv-6__k-3/weights/_best_model.zip"
-    # )

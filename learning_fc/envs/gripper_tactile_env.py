@@ -149,7 +149,7 @@ class GripperTactileEnv(GripperEnv):
 
         # oy sampling constraints
         oy_q_const  = (0.97*0.045)-self.wo      # qmax-wo
-        oy_xi_const = self.wo - self.xi_max
+        oy_xi_const = self.wo - self.xi_max     # TODO shouldn't this be 2*xi_max since it applies to both sides?
         oy_max = min(oy_q_const, oy_xi_const)
 
         if self.oy_range is not None:

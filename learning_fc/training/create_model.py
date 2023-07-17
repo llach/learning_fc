@@ -35,7 +35,7 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
                     check_freq=timesteps/25e1,
                     total_steps=timesteps,
                     save_path=logdir,
-                    offset=1e3,
+                    offset=int(0.05*timesteps),
                     mean_n=100
                 )
             )
@@ -53,7 +53,7 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
                     env=env, 
                     schedules=schedules, 
                     log_dir=logdir, 
-                    write_freq=timesteps/25e1
+                    write_freq=int(0.01*timesteps)
                 )
             )
     if weights is not None:
