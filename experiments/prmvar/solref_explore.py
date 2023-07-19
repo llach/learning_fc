@@ -9,52 +9,54 @@ from learning_fc.envs import GripperTactileEnv
 from learning_fc.live_vis import TactileVis
 
 with_vis = 0
-trials   = 10
-steps    = 50
+trials   = 5
+steps    = 100
 
-# pname, sidx, values = "stiffness", 0, np.linspace(0, .95, trials)
-pname, sidx, values = "damping", 2, np.linspace(0.0, 0.02, trials)
+STIFF_RANGE = [0.001,0.1]
+DAMP_RANGE  = [0,1]
 
 env = GripperTactileEnv(
     oy_range=[0,0],
-    wo_range=[0.03, 0.03],
+    wo_range=[0.02, 0.02],
     **{"render_mode": "human"} if with_vis else {}
 )
 vis = TactileVis(env) if with_vis else None
 
-# dertermine q delta for a certain velocity
-vdes = 0.15 # m/s
-qdelta = vdes*0.1
-qd = safe_rescale(qdelta, [0,0.045], [-1,1])
+q = np.zeros((trials**2, steps, 2))
+qdes = np.zeros((trials**2, steps, 2))
+forces = np.zeros((trials**2, steps, 2))
 
-q = np.zeros((trials, steps, 2))
-qdes = np.zeros((trials, steps, 2))
-forces = np.zeros((trials, steps))
+params = np.zeros((trials**2, 2))
 
-for i in range(trials):
-    solimp = env.SOLIMP
-    solimp[sidx] = values[i]
-    env.set_solver_parameters(solimp=solimp)
+i=0
+for stiff in np.linspace(*STIFF_RANGE, trials):
+    for damp in np.linspace(*DAMP_RANGE,  trials):
+        params[i]=[stiff, damp]
+        env.set_solver_parameters(solref=params[i])
 
-    env.reset()
-    if vis: vis.reset()
+        env.reset()
+        if vis: vis.reset()
 
-    for j in range(steps):
-        action = safe_rescale(
-            np.clip(env.q - qdelta, 0, 0.045),
-            [0, 0.045],
-            [-1,1]
-        )
-        action=[-1,-1]
-        obs, r, _, _, _ = env.step(action)
-        if vis: vis.update_plot(action=action, reward=r)
+        for j in range(steps):
+            action = [-1,-1]
+            obs, r, _, _, _ = env.step(action)
+            if vis: vis.update_plot(action=action, reward=r)
 
-        forces[i,j]=env.force[0]
-        qdes[i,j]=env.qdes
-        q[i,j]=env.q
+            q[i,j]=env.q
+            qdes[i,j]=env.qdes
+            forces[i,j]=env.force
+        i += 1
+
 env.close()
 
-plt.figure(figsize=(9,6))
+fig, axes = plt.subplots(nrows=trials, ncols=trials, figsize=(9,6))
+
+xs = np.arange(steps)
+for i, ax in enumerate(axes.flatten()):
+    ax.plot(xs, forces[i])
+fig.tight_layout()
+plt.show()
+exit()
 
 # forces /= 100*env.wo
 

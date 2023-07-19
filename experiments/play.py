@@ -13,7 +13,7 @@ with_vis = 1
 # trial = f"{model_path}/2023-07-09_16-42-39__gripper_tactile__ppo__pos_delta__obs_q-qdot-f-df-inC-hadC__nenv-1__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
-env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis)#, checkpoint="model300000")
+env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="model300000")
 
 def as_cb(env, model, i, results, goal=None, **kw):
     # print(env.obj_v[1], env.r_obj_pos)

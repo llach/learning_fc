@@ -1,10 +1,17 @@
-from learning_fc import model_path
-from learning_fc.enums import ControlMode, ObsConfig, Observation as Obs
+from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
 
 ALG  = "ppo"
-OBS  = ObsConfig.Q_VEL_F_DF_IN_HAD_ACT
+OBS  = [
+    Observation.Pos, 
+    Observation.Vel, 
+    Observation.Force, 
+    Observation.ForceDelta,
+    Observation.InCon,
+    Observation.HadCon,
+    Observation.Action
+]
 CTRL = ControlMode.PositionDelta
 TIME = int(2e6)
 
@@ -15,7 +22,7 @@ if __name__ == "__main__":
         start=0.0, 
         stop=0.5,
         first_value=0.0,
-        final_value=40.0,
+        final_value=10.0,
         total_timesteps=TIME
     )
 
@@ -24,7 +31,7 @@ if __name__ == "__main__":
         start=0.0, 
         stop=0.5,
         first_value=0.0,
-        final_value=15.0,
+        final_value=5.0,
         total_timesteps=TIME
     )
 
@@ -46,15 +53,6 @@ if __name__ == "__main__":
         total_timesteps=TIME
     )
 
-    oy_schedule = ParamSchedule(
-        var_name="oy_range",
-        start=0.0, 
-        stop=0.5,
-        first_value=[0.0, 0.0],
-        final_value=[-0.040, 0.040],
-        total_timesteps=TIME
-    )
-
     train(
         env_name="gripper_tactile", 
         model_name=ALG,
@@ -65,18 +63,18 @@ if __name__ == "__main__":
             control_mode=CTRL, 
             obs_config=OBS, 
             ov_max=0.00005,
-            co_scale=1,
-            rp_scale=1,
+            oy_init=0.0,
+            co_scale=0,
+            rp_scale=0,
             ro_scale=0,
             ra_scale=0,
             rf_scale=3,
         ), 
         frame_stack=1,
         schedules=[
-            ro_schedule,
             ra_schedule,
+            ro_schedule,
             rf_schedule,
             wo_schedule,
-            oy_schedule 
         ]
     )

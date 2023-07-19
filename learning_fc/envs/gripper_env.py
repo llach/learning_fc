@@ -197,6 +197,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             truncated
             info
         """
+        if type(a)==list: a=np.array(a)
+        
         if self.t == 0: self.last_a = a.copy() # avoid penalty on first timestep
         self.ain = a.copy()
         

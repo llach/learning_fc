@@ -167,6 +167,7 @@ class GripperTactileEnv(GripperEnv):
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
+        objgeom.attrib['solref'] = ' '.join(map(str, self.solref))
 
         object_dims    = self.INITIAL_OBJECT_SIZE.copy()
         object_dims[0] = self.wo
@@ -190,7 +191,7 @@ class GripperTactileEnv(GripperEnv):
     def set_solver_parameters(self, solimp=None, solref=None):
         """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters
         """
-        self.solimp = solimp
-        self.solref = solref
+        if solimp is not None: self.solimp = solimp
+        if solref is not None: self.solref = solref
 
     def get_goal(self): return self.fgoal
