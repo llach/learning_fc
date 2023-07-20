@@ -10,10 +10,10 @@ from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 5
 with_vis = 1
-trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
-# trial = find_latest_model_in_path(model_path, filters=["ppo"])
+# trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
+trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
-env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="model300000")
+env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="best")
 
 def as_cb(env, model, i, results, goal=None, **kw):
     return force_after_step_cb(env, model, i, results, goal=None, **kw)
