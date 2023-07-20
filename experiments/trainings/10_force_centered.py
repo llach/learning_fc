@@ -1,3 +1,9 @@
+"""
+based on experiments/trainings/00_force_no_move.py
+
+goal: get MVP for force control on real robot
+→ minimize observations and reward AND assume centered objects
+"""
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
@@ -61,8 +67,6 @@ if __name__ == "__main__":
             obs_config=OBS, 
             ov_max=0.00005,
             oy_init=0.0,
-            co_scale=0,
-            rp_scale=0,
             ro_scale=0,
             ra_scale=0,
             rf_scale=3,

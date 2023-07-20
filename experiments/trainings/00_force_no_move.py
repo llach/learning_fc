@@ -1,4 +1,12 @@
-from learning_fc import model_path
+"""
+first script for force control without object movements.
+O contains basically all we have (minus acceleration)
+r also has components for object proximity and contact, which are likely to be superfluous  .
+
+next steps:
+    * reduce to MVP in terms of reward and observations
+    * still no variation about object stiffness
+"""
 from learning_fc.enums import ControlMode, ObsConfig, Observation as Obs
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
