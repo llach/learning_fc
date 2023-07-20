@@ -5,11 +5,8 @@ from learning_fc.callbacks import ParamSchedule
 ALG  = "ppo"
 OBS  = [
     Observation.Pos, 
-    Observation.Vel, 
     Observation.Force, 
     Observation.ForceDelta,
-    Observation.InCon,
-    Observation.HadCon,
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta

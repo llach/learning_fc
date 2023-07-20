@@ -16,6 +16,7 @@ TACTILE_ENV_MEMBERS = [
     "r_obj_pos",
     "r_obj_prox",
     "r_con",
+    "r_act",
     "obj_v",
     "obj_pos"
 ]
@@ -40,6 +41,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
         in_contact=[[] for _ in range(n_rollouts)],
         r=[[] for _ in range(n_rollouts)],
         cumr=[[] for _ in range(n_rollouts)],
+        eps_rew=[],
         goals=[],
     )
     for i in range(n_rollouts):
@@ -69,6 +71,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
 
             if vis: vis.update_plot(action=action, reward=reward)
             if after_step_cb: results = after_step_cb(env, model, i, results) or results
+        results["eps_rew"].append(results["cumr"][i][-1])
     return results
 
 
@@ -110,7 +113,19 @@ def pos_after_step_cb(env, model, i, results, goal=None, **kw):
     for key in POSITION_ENV_MEMBERS:  results[key][i].append(getattr(env, key))
     return results
 
-def make_eval_env_model(trialdir, with_vis=False, checkpoint="_best_model"):
+def _get_checkpoint(chkp, trialdir):
+    if chkp == "best":
+        return "_best_model"
+    elif chkp == "latest":
+        fn, nstep = [], []
+        for fi in os.listdir(f"{trialdir}/weights"):
+            if fi.endswith(".zip") and "best" not in fi and "model" in fi:
+                fn.append(fi)
+                nstep.append(int(fi[:-4].replace("model", "")))
+        return fn[np.argmax(nstep)]
+    else: return chkp
+
+def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
     # load parameters
     with open(f"{trialdir}/parameters.json", "r") as f:
         params = json.load(f)
@@ -121,10 +136,12 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="_best_model"):
     env, vis, _ = make_env(**params["make_env"])
 
     # set the final values of scheduled parameters
-    for sc in params["train"]["schedules"]:
-        env.set_attr(sc["var_name"], sc["final_value"])
+    if "schedules" in params["train"]:
+        for sc in params["train"]["schedules"]:
+            env.set_attr(sc["var_name"], sc["final_value"])
 
     # same for the model
+    checkpoint = _get_checkpoint(checkpoint, trialdir)
     params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/{checkpoint}")
     params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
     params["make_model"]["logdir"] = trialdir # in case folder was renamed 
@@ -179,6 +196,7 @@ def plot_rollouts(env, res, plot_title):
     r_con = np.concatenate(res["r_con"]).reshape((-1,))
     cumr = np.concatenate(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
+    eps_rew = np.array(res["eps_rew"]).reshape((-1,))
 
     x = np.arange(q.shape[0])
 
@@ -217,10 +235,14 @@ def plot_rollouts(env, res, plot_title):
     axes[2,0].plot(x, r_obj_pos, lw=1, label="r_obj_pos", c="orange")
     axes[2,0].plot(x, r_obj_prox, lw=1, label="r_obj_prox", c="red")
     axes[2,0].plot(x, r_con, lw=1, label="r_con", c="yellow")
+    axes[2,0].plot(x, r_con, lw=1, label="r_act", c="green")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
     axes[2,1].plot(x, cumr, c="red")
+
+    ty = 0.9*np.max(eps_rew)
+    for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), eps_rew): axes[2,1].text(tx, ty, int(epsr))
 
     # axes[3,0].set_title("object velocity")
 
@@ -307,15 +329,17 @@ def plot_results(
     plt.tight_layout()
 
 
-def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5):
-    env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
+def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5, checkpoint="best"):
+    env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis, checkpoint=checkpoint)
     if trial_name is None: trial_name = params["train"]["trial_name"]
 
     # recover relevant parameters
-    prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
+    prefix = f"{checkpoint}/"+"__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
     timesteps = int(params["train"]["timesteps"])
     trial_name = params["train"]["trial_name"]
-    plot_title = f'{plot_title or "Force Control"}\n{trial_name}'
+    plot_title = f'{plot_title or "Force Control"} |{checkpoint.upper()}|\n{trial_name}'
+    os.makedirs(f"{trialdir}/{checkpoint}/", exist_ok=True)
+
 
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(11.5, 6.8))
