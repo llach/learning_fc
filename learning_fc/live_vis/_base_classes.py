@@ -1,6 +1,9 @@
 import pyqtgraph as pg
 
-from PyQt6 import QtWidgets, QtCore
+try: 
+    from PyQt6 import QtWidgets, QtCore
+except:
+    from PyQt5 import QtWidgets, QtCore
 
 class VisBase:
 

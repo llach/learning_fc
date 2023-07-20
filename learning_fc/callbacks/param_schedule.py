@@ -2,7 +2,7 @@ import time
 import json
 import numpy as np
 
-from gym import Env
+from gymnasium import Env
 from learning_fc import CsvWriter
 from learning_fc.callbacks import ProxyBaseCallback
 

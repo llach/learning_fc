@@ -1,7 +1,10 @@
 import platform
 import numpy as np
 
-from PyQt6 import QtCore
+try: 
+    from PyQt6 import QtCore
+except:
+    from PyQt5 import QtCore
 from learning_fc import safe_rescale
 from learning_fc.live_vis import VisBase, PlotItemWrapper as PIWrapper
 

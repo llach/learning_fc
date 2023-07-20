@@ -1,5 +1,6 @@
 mujoco
 PyYaml
+imageio
 
 pyqtgraph
 pyqt5
