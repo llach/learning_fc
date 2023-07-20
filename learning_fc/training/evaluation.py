@@ -23,7 +23,7 @@ TACTILE_ENV_MEMBERS = [
 
 POSITION_ENV_MEMBERS = [
     "r_pos",
-    "r_qdot"
+    "r_act"
 ]
 
 def safe_last_cumr(res):
@@ -332,6 +332,8 @@ def plot_results(
 def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5, checkpoint="best"):
     env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis, checkpoint=checkpoint)
     if trial_name is None: trial_name = params["train"]["trial_name"]
+    if plot_title is None: plot_title = params["train"]["plot_title"]
+
 
     # recover relevant parameters
     prefix = f"{checkpoint}/"+"__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
@@ -388,7 +390,7 @@ def plot_pos_rollouts(env, res, plot_title):
     force = np.concatenate(res["force"])
 
     r_pos  = np.concatenate(res[ "r_pos"]).reshape((-1,))
-    r_qdot = np.concatenate(res["r_qdot"]).reshape((-1,))
+    r_act = np.concatenate(res["r_act"]).reshape((-1,))
     
     cumr = np.concatenate(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
@@ -402,14 +404,13 @@ def plot_pos_rollouts(env, res, plot_title):
     q2,  = axes[0,0].plot(x, q[:,1], lw=1)
     qd1, = axes[0,0].plot(x, qdes[:,0], lw=1)
     qd2, = axes[0,0].plot(x, qdes[:,1], lw=1)
-    axes[0,0].legend([(q1, q2), (qd1, qd2)], ['q', 'qdes'],
+    qg,  = axes[0,0].plot(goals, c="grey", label="qgoal")
+    axes[0,0].legend([(q1, q2), (qd1, qd2), (qg,)], ['q', 'qdes', "qgoal"],
                handler_map={tuple: HandlerTuple(ndivide=None)})
 
     axes[0,1].set_title("forces")
     axes[0,1].plot(x, force[:,0], lw=1)
     axes[0,1].plot(x, force[:,1], lw=1)
-    axes[0,1].plot(goals, c="grey", label="fgoal")
-    axes[0,1].legend()
 
     axes[1,0].set_title("joint velocity")
     axes[1,0].plot(x, qdot[:,0], lw=1)
@@ -427,7 +428,7 @@ def plot_pos_rollouts(env, res, plot_title):
 
     axes[2,0].set_title("partial rewards")
     axes[2,0].plot(x, r_pos,  lw=1, label="r_pos",  c="cyan")
-    axes[2,0].plot(x, r_qdot, lw=1, label="r_qdot", c="orange")
+    axes[2,0].plot(x, r_act, lw=1, label="r_act", c="orange")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
@@ -447,9 +448,10 @@ def plot_pos_rollouts(env, res, plot_title):
     plt.tight_layout()
 
 
-def pos_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5):
-    env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis)
+def pos_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, training=True, nrollouts=5, checkpoint="best"):
+    env, model, vis, params = make_eval_env_model(trialdir, with_vis=with_vis, checkpoint=checkpoint)
     if trial_name is None: trial_name = params["train"]["trial_name"]
+    if plot_title is None: plot_title = params["train"]["plot_title"]
 
     # recover relevant parameters
     prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)

@@ -96,9 +96,6 @@ class GripperTactileEnv(GripperEnv):
         # return self.total_object_movement
         return 1 if np.abs(self.obj_v[1]) > self.ov_max else 0
     
-    def _action_penalty(self):
-        return np.sum(np.abs(self.last_a - self.ain))
-    
     def _force_reward(self):
         deltaf = self.fgoal - self.force
         

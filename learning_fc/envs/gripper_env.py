@@ -136,6 +136,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def _qdot_penalty(self):
         vnorm = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax
         return np.sum(vnorm)
+    
+    def _action_penalty(self):
+        return np.sum(np.abs(self.last_a - self.ain))
 
     def _is_done(self): raise NotImplementedError
     def _get_reward(self): raise NotImplementedError

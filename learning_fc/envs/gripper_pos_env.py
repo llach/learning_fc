@@ -12,16 +12,13 @@ class GripperPosEnv(GripperEnv):
     def __init__(self, 
                  obs_config=ObsConfig.Q_DQ, 
                  max_steps=50, 
-                 rv_scale=0.0,
+                 ra_scale=0.0,
                  rp_scale=1.0,
-                 eps=0.0005, 
                  control_mode=ControlMode.Position, 
                  **kwargs
         ):
         self.rp_scale = rp_scale
-        self.rv_scale = rv_scale
-        self.eps = eps              # radius ε for rewards with fixed ε
-        self.max_steps = max_steps  # #steps to terminate after  
+        self.ra_scale = ra_scale
 
         self.qgoal_range    = [0.0, 0.045]
 
@@ -47,15 +44,14 @@ class GripperPosEnv(GripperEnv):
             safe_rescale(self.q_deltas, [-0.045, 0.045]) if Observation.PosDelta in self.obs_config else [],
         ])
     
-    # IV.2) no ε-env, linear velocity penalty
     def _get_reward(self):
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
         deltaq = np.abs(self.qgoal - self.q)
         
         self.r_pos  =   self.rp_scale * np.sum(1-(deltaq/delta))
-        self.r_qdot = - self.rv_scale * self._qdot_penalty()
+        self.r_act  = - self.ra_scale * self._action_penalty()
 
-        return self.r_pos + self.r_qdot
+        return self.r_pos + self.r_act
     
     def _is_done(self): return False
 

@@ -4,10 +4,10 @@ from learning_fc.training import tactile_eval, pos_eval
 
 trial  = "2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
 latest = f"{model_path}/{trial}"
-# latest = find_latest_model_in_path(model_path, filters=["ppo"])
+latest = find_latest_model_in_path(model_path, filters=["ppo"])
 
 # tactile_eval(latest, nrollouts=10, with_vis=0, training=False, checkpoint="best")
-# pos_eval(latest, nrollouts=10, with_vis=0, training=False)
+pos_eval(latest, nrollouts=10, with_vis=0, training=False, checkpoint="best")
 
 import os
 # for x in os.listdir(model_path):
