@@ -1,0 +1,5 @@
+gripper_position_controller:
+  type: position_controllers/JointGroupPositionController
+  joints:
+    - gripper_right_finger_joint
+    - gripper_left_finger_joint

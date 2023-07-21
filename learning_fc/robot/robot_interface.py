@@ -1,7 +1,8 @@
 import rospy
+import threading
 import numpy as np
 
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 
 from learning_fc.utils import safe_rescale
@@ -26,7 +27,9 @@ class RobotInterface:
         self.js_idx = [None, None]
 
         rospy.init_node("model_robot_interface")
+
         self.r = rospy.Rate(self.freq)
+        self.qpub = rospy.Publisher("/gripper_position_controller/command", Float64MultiArray, queue_size=1)
 
         self._setup_subscribers()
         self.reset()
@@ -51,7 +54,7 @@ class RobotInterface:
         print("setting up subscribers ...")
         self.js_sub = rospy.Subscriber("/joint_states", JointState, self._js_cb)
         if self.control_mode == ControlTask.Force:
-            self.force_sub = rospy.Subscriber("/ta11", Float32MultiArray, self.force_cb)
+            self.force_sub = rospy.Subscriber("/ta11", Float64MultiArray, self.force_cb)
     
     def _goal_delta(self): 
         if self.task == ControlTask.Force:
@@ -62,8 +65,6 @@ class RobotInterface:
             assert False, f"unknown ControlTask {self.task}"
 
     def _enum2obs(self, on):
-        # TODO normalize!
-
         if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Vel: return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
         if on == Observation.Force: return safe_rescale(self.force, [0, self.env.fmax])
@@ -80,7 +81,15 @@ class RobotInterface:
         for on in self.obs_config: obs.append(self._enum2obs(on))
         return np.concatenate(obs)
     
-    def actuate(self, action): pass
+    def actuate(self, action): self.qpub.publish(Float64MultiArray(data=action))
+
+    def set_goal(self, g):
+        if self.task == ControlTask.Position:
+            self.goal = np.clip(g, 0.0, 0.045)
+        elif self.task == ControlTask.Force:
+            self.goal = np.clip(g, 0, self.env.fmax)
+        else:
+            assert False, f"unknown ControlTask {self.task}"
 
     def reset(self): 
         """ initialize observation arrays
@@ -104,7 +113,7 @@ class RobotInterface:
 
 
         if self.control_mode == ControlMode.Position:
-            self.last_a = self.q.copy() # TODO normalize
+            self.last_a = safe_rescale(self.q, [0.0, 0.045])
         elif self.control_mode == ControlMode.PositionDelta:
             self.last_a  = np.array([0,0])
 
@@ -112,8 +121,6 @@ class RobotInterface:
 
     def step(self): 
         obs = self._get_obs()
-        print(obs)
-
         raw_action, _ = self.model.predict(obs)
 
         if self.control_mode == ControlMode.Position:
@@ -122,16 +129,27 @@ class RobotInterface:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             ain = np.clip(self.q+ain, 0, 0.045)
 
-        print(raw_action, ain)
-        # self.actuate(action)
+        self.actuate(ain)
 
         self.last_a = raw_action
 
+    def stop(self): 
+        print("killing thread ...")
+        self.active = False
+        self.exec_thread.join()
+        print("done")
+
     def run(self): 
         print("running model ...")
-        while not rospy.is_shutdown() and self.active:
-            self.step()
-            self.r.sleep()
+
+        def _step_loop():
+            while not rospy.is_shutdown() and self.active:
+                self.step()
+                self.r.sleep()
+            print("_step_loop() finished")
+        
+        self.exec_thread = threading.Thread(target=_step_loop)
+        self.exec_thread.start()
 
 
 if __name__ == "__main__":
@@ -146,5 +164,37 @@ if __name__ == "__main__":
     from learning_fc.models import PosModel
     model = PosModel(env)
 
-    ri = RobotInterface(model, env)
+    ri = RobotInterface(model, env, goal=0.0)
     ri.run()
+
+    while not rospy.is_shutdown():
+        inp = input("q = kill; st = stop; gXXX = goal; aXXX = actuate\n")
+        if inp == "q":
+            ri.stop()
+            break
+
+        elif inp == "st":
+            ri.stop()
+
+        elif inp[0]=="g":
+            goal = inp[1:]
+            try:
+                goal = float(goal)
+                ri.set_goal(goal)
+                print(f"new goal: {goal}")
+            except Exception as e:
+                print(f"can't convert {goal} to a number:\n{e}")
+                continue
+            if not ri.active: ri.reset(); ri.run()
+
+        elif inp[0]=="a":
+            ri.stop()
+
+            goal = inp[1:]
+            try:
+                goal = float(goal)
+                print(f"actuate: {goal}")
+                ri.actuate(2*[goal])
+            except:
+                print(f"can't convert {goal} to a number")
+                continue
