@@ -24,7 +24,7 @@ env_eval_fn = dict(
 def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame_stack):
     # get date and env params
     datestr = datetime.utcnow().strftime(datefmt)
-    epar = get_constructor_params(envname2cls[env_name]) | env_kw
+    epar = {**get_constructor_params(envname2cls[env_name]), **env_kw}
 
     # build name and plot title lists
     _name  = [
@@ -46,7 +46,7 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
 
 def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path, weights=None, schedules=[]):
     # build training parameters dict, store locals
-    tkw = model_defaults[model_name] | train_kw
+    tkw = {**model_defaults[model_name], **train_kw}
 
     # build trial name and dir
     trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, nenv=nenv, frame_stack=frame_stack, env_kw=env_kw,)

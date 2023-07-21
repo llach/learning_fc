@@ -3,7 +3,7 @@ import mujoco as mj
 import learning_fc
 import mujoco_viewer
 
-with_vis = 0
+with_vis = 1
 model = mj.MjModel.from_xml_path(learning_fc.__path__[0]+"/assets/franka_force.xml")
 data = mj.MjData(model)
 

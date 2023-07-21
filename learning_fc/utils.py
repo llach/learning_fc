@@ -4,7 +4,7 @@ import mujoco
 import inspect
 import numpy as np
 
-from typing import Any
+from typing import Any, List
 from datetime import datetime
 from learning_fc import datefmt
 
@@ -56,7 +56,7 @@ def get_constructor_params(cls, obj=None):
     cparams = dict()
     for k in init_args:
         p = obj.__getattribute__(k) if obj and hasattr(obj, k) else objparams[k].default
-        if is_jsonable(p): cparams |= {k: p}
+        if is_jsonable(p): cparams = {**cparams, k: p}
     return cparams
 
 def safe_unwrap(e):
@@ -113,7 +113,7 @@ def get_pad_forces(model, data):
 
 class CsvWriter:
 
-    def __init__(self, file: str, headers: list[str]):
+    def __init__(self, file: str, headers: List[str]):
         self.file = file
         self.headers = headers
 
@@ -123,7 +123,7 @@ class CsvWriter:
         self.file_handler.write(f'{self.headers_line}\n')
         self.file_handler.flush()
 
-    def write(self, vals: list[Any]):
+    def write(self, vals: List[Any]):
         self.file_handler.write(f"{','.join([str(v) for v in vals])}\n")
         self.file_handler.flush()
 

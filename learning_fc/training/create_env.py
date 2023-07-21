@@ -35,11 +35,11 @@ def make_env(env_name, logdir=None, env_kw={}, max_steps=250, nenv=1, frame_stac
     ecls = envname2cls[env_name]
 
     # prepare environment arguments
-    if with_vis: env_kw |= dict(render_mode="human")
+    if with_vis: env_kw = {**env_kw, **dict(render_mode="human")}
 
     def _make_env():
         # instantiate environment and wrap
-        env = ecls(**default_env_kw[env_name] | env_kw)
+        env = ecls(**{**default_env_kw[env_name], **env_kw})
         env = TimeLimit(env, max_episode_steps=max_steps)
         if frame_stack > 1:
             env = FrameStack(env=env, num_stack=frame_stack, lz4_compress=False)
@@ -57,6 +57,6 @@ def make_env(env_name, logdir=None, env_kw={}, max_steps=250, nenv=1, frame_stac
 
     # get environment creation parameters to replicate the environment config while testing
     init_params = get_constructor_params(ecls, safe_unwrap(env))
-    params = fn_params | dict(init_params=init_params)
+    params = {**fn_params, **dict(init_params=init_params)}
 
     return env, vis, params

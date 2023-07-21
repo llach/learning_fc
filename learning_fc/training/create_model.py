@@ -22,7 +22,7 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
     mcls = modelname2cls[model_name]
 
     # build model arguments and instantiate model
-    mkw = model_default_params | model_kw
+    mkw = {**model_default_params, **model_kw}
     model = mcls(env=env, **mkw)
 
     # either we train a model and create its callbacks, or we load weights for evaluation
@@ -61,6 +61,6 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
 
     # get model creation parameters to replicate the environment config while testing
     init_params = get_constructor_params(mcls, model)
-    params = fn_params | dict(init_params=init_params) | dict(mkw=mkw)
+    params = {**fn_params, **dict(init_params=init_params), **dict(mkw=mkw)}
 
     return model, callbacks, params

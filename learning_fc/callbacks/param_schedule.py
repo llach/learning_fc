@@ -2,6 +2,7 @@ import time
 import json
 import numpy as np
 
+from typing import List
 from gymnasium import Env
 from learning_fc import CsvWriter
 from learning_fc.callbacks import ProxyBaseCallback
@@ -42,7 +43,7 @@ class ParamSchedule:
 
 class ParamScheduleCallback(ProxyBaseCallback):
 
-    def __init__(self, env: Env, schedules: list[ParamSchedule], log_dir: str, write_freq: int, verbose: bool = True):
+    def __init__(self, env: Env, schedules: List[ParamSchedule], log_dir: str, write_freq: int, verbose: bool = True):
         super(ParamScheduleCallback, self).__init__(env, verbose=verbose)
 
         self.schedules = schedules

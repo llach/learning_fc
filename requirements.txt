@@ -3,4 +3,4 @@ PyYaml
 imageio
 
 pyqtgraph
-pyqt5
+pyqt6

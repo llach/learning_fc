@@ -9,7 +9,7 @@ from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, 
 from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 5
-with_vis = 0
+with_vis = 1
 # trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
@@ -23,7 +23,7 @@ def as_cb(env, model, i, results, goal=None, **kw):
 # res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=as_cb)
 # print(np.array(res["cumr"])[:,-1])
 
-
+model = PosModel()
 for i in range(N_GOALS):
     obs, _ = env.reset()
     if isinstance(model, ForcePI): model.reset()

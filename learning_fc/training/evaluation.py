@@ -131,8 +131,8 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
         params = json.load(f)
 
     # modify env creation parameters for eval and create
-    params["make_env"] |= dict(training=False, nenv=1, with_vis=with_vis)
-    params["make_env"]["env_kw"] = params["make_env"].pop("init_params") | params["make_env"]["env_kw"]
+    params["make_env"] = {**params["make_env"], **dict(training=False, nenv=1, with_vis=with_vis)}
+    params["make_env"]["env_kw"] = {**params["make_env"].pop("init_params"), **params["make_env"]["env_kw"]}
     env, vis, _ = make_env(**params["make_env"])
 
     # set the final values of scheduled parameters
@@ -142,8 +142,8 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
 
     # same for the model
     checkpoint = _get_checkpoint(checkpoint, trialdir)
-    params["make_model"] |= dict(training=False, weights=f"{trialdir}/weights/{checkpoint}")
-    params["make_model"]["model_kw"] |= params["make_model"].pop("init_params") | params["make_model"].pop("mkw")
+    params["make_model"] = {**params["make_model"] , **dict(training=False, weights=f"{trialdir}/weights/{checkpoint}")}
+    params["make_model"]["model_kw"] = {**params["make_model"]["model_kw"], **params["make_model"].pop("init_params") , **params["make_model"].pop("mkw")}
     params["make_model"]["logdir"] = trialdir # in case folder was renamed 
     model, _, _ = make_model(env, **params["make_model"])
 
