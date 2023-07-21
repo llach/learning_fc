@@ -1,5 +1,9 @@
 from enum import Enum
 
+class ControlTask(str, Enum):
+    Force="force"
+    Position="position"
+
 class ControlMode(str, Enum):
     Position="pos"
     PositionDelta="pos_delta"

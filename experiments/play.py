@@ -9,7 +9,7 @@ from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, 
 from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 5
-with_vis = 1
+with_vis = 0
 # trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
@@ -31,16 +31,12 @@ for i in range(N_GOALS):
     if vis: vis.reset()
 
     cumrew = 0
-
-    obvs = []
     for j in range(200):
         action, _ = model.predict(obs)
         # action    = np.array([-1,-1])
 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
-
-        obvs.append(np.abs(env.obj_v[1]))
 
         cumrew += r
     print(cumrew)
