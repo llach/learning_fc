@@ -8,6 +8,7 @@ from sensor_msgs.msg import JointState
 from learning_fc.utils import safe_rescale
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlTask, ControlMode, Observation
+from learning_fc.models import BaseModel
 
 class RobotInterface:
 
@@ -79,7 +80,7 @@ class RobotInterface:
     def _get_obs(self):
         obs = []
         for on in self.obs_config: obs.append(self._enum2obs(on))
-        return np.concatenate(obs)
+        return np.concatenate(obs).astype(np.float32)
     
     def actuate(self, action): self.qpub.publish(Float64MultiArray(data=action))
 
@@ -162,9 +163,9 @@ if __name__ == "__main__":
     env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
 
     from learning_fc.models import PosModel
-    model = PosModel(env)
+    # model = PosModel(env)
 
-    ri = RobotInterface(model, env, goal=0.0)
+    ri = RobotInterface(model, env, freq=100, goal=0.01)
     ri.run()
 
     while not rospy.is_shutdown():
