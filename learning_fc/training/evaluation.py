@@ -334,7 +334,6 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     if trial_name is None: trial_name = params["train"]["trial_name"]
     if plot_title is None: plot_title = params["train"]["plot_title"]
 
-
     # recover relevant parameters
     prefix = f"{checkpoint}/"+"__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
     timesteps = int(params["train"]["timesteps"])
