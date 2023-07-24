@@ -4,6 +4,7 @@ from learning_fc.models import BaseModel
 class PosModel(BaseModel):
 
     def predict(self, obs, **kwargs):
+        # stack env: newest observation is right-most
         q = safe_rescale(obs[:2], [-1,1], [0, 0.045])
         deltaq = safe_rescale(obs[2:4], [-1,1], [-0.045, 0.045])
 

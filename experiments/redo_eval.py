@@ -7,7 +7,7 @@ latest = f"{model_path}/{trial}"
 latest = find_latest_model_in_path(model_path, filters=["ppo"])
 
 # tactile_eval(latest, nrollouts=10, with_vis=0, training=False, checkpoint="best")
-pos_eval(latest, nrollouts=10, with_vis=0, training=False, checkpoint="best")
+pos_eval(latest, nrollouts=2, with_vis=0, training=False, checkpoint="best")
 
 import os
 # for x in os.listdir(model_path):

@@ -7,54 +7,16 @@ from learning_fc.models import ForcePI, StaticModel
 from learning_fc.training import make_env
 
 import matplotlib.pyplot as plt
-from scipy.signal import butter, lfilter
 
-def analyze_freqs(signal, dt=1.):
-    nfreqs = int((len(signal)/2)+1)
-
-    freqs = np.fft.fftfreq(len(signal), dt)[:nfreqs]
-    mags  = np.abs(np.fft.fft(signal))[:nfreqs]
-
-    return freqs, mags
-
-def moving_average(a, n=3) :
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
-
-def butter_lowpass(cutoff, fs, order=5):
-    return butter(order, cutoff, fs=fs, btype='low', analog=False)
-
-def butter_lowpass_filter(data, cutoff, fs, order=5):
-    b, a = butter_lowpass(cutoff, fs, order=order)
-    y = lfilter(b, a, data)
-    return y
-
-def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
-    pad_width = window_size - 1
-    padded_data = np.pad(data, (pad_width, 0), mode='constant')
-    filtered_data = np.zeros_like(data)
-
-    # Define the Butterworth filter parameters
-    nyquist_freq = 0.5 * cutoff_freq
-    b, a = butter(order, nyquist_freq, fs=fs, btype='low', analog=False, output='ba')
-
-    # Apply the Butterworth filter on each window of the padded data
-    for i in range(len(data)):
-        window = padded_data[i:i+window_size]
-        filtered_window = lfilter(b, a, window)
-        filtered_data[i] = filtered_window[-1]
-
-    return filtered_data
 
 N_GOALS  = 5
 with_vis = 0
 env, vis, _ = make_env(
-    env_name="gripper_tactile", 
+    env_name="gripper_pos", 
     training=False, 
     with_vis=with_vis, 
     max_steps=250,
-    env_kw=dict(control_mode=ControlMode.Position, obs_config=ObsConfig.Q_DQ, max_contact_steps=100)
+    env_kw=dict(control_mode=ControlMode.PositionDelta, obs_config=ObsConfig.Q_DQ)
 )
 model = ForcePI(env, verbose=0)
 # model = StaticModel(0.0)

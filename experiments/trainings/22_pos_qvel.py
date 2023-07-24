@@ -20,12 +20,12 @@ TIME = int(1e6)
 
 if __name__ == "__main__": 
 
-    ra_schedule = ParamSchedule(
-        var_name="ra_scale",
+    rv_schedule = ParamSchedule(
+        var_name="rv_scale",
         start=0.0, 
-        stop=0.1,
+        stop=0.5,
         first_value=0.0,
-        final_value=0.2,
+        final_value=3.0,
         total_timesteps=TIME
     )
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         model_name=ALG,
         nenv=6,
         train_kw=dict(timesteps=TIME),
-        max_steps=100,
+        max_steps=200,
         env_kw=dict(
             control_mode=CTRL, 
             obs_config=OBS,
@@ -43,11 +43,11 @@ if __name__ == "__main__":
         ), 
         model_kw=dict(
             policy_kwargs=dict(
-                net_arch=[40,40]
+                net_arch=[10,10]
             )
         ),
         frame_stack=1,
         schedules=[
-            ra_schedule
+            rv_schedule
         ]
     )

@@ -13,12 +13,14 @@ class GripperPosEnv(GripperEnv):
                  obs_config=ObsConfig.Q_DQ, 
                  max_steps=50, 
                  ra_scale=0.0,
+                 rv_scale=0.0,
                  rp_scale=1.0,
                  control_mode=ControlMode.Position, 
                  **kwargs
         ):
         self.rp_scale = rp_scale
         self.ra_scale = ra_scale
+        self.rv_scale = rv_scale
 
         self.qgoal_range    = [0.0, 0.045]
 
@@ -48,10 +50,11 @@ class GripperPosEnv(GripperEnv):
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
         deltaq = np.abs(self.qgoal - self.q)
         
-        self.r_pos  =   self.rp_scale * np.sum(1-(deltaq/delta))
+        self.r_pos  =   self.rp_scale * np.sum(1-np.round((deltaq/delta), 3))
         self.r_act  = - self.ra_scale * self._action_penalty()
+        self.r_vel  = - self.rv_scale * self._qdot_penalty()
 
-        return self.r_pos + self.r_act
+        return self.r_pos + self.r_act + self.r_vel
     
     def _is_done(self): return False
 

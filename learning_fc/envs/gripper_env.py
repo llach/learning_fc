@@ -105,7 +105,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.q = np.array([
             self.data.joint("finger_joint_l").qpos[0],
             self.data.joint("finger_joint_r").qpos[0]
-        ])
+        ]) + np.random.normal(0.0, 0.00001, (2,))
         self.qdot = np.array([
             self.data.joint("finger_joint_l").qvel[0],
             self.data.joint("finger_joint_r").qvel[0]
