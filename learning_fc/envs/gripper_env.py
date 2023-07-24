@@ -123,15 +123,21 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def _get_obs(self):
         """ concatenate internal state as observation
         """
-        return np.concatenate([
-                safe_rescale(self.q,     [0, 0.045]) if Observation.Pos in self.obs_config else [], 
-                safe_rescale(self.force, [0, self.fmax]) if Observation.Force in self.obs_config else [], 
-                safe_rescale(self.qdot, [-self.vmax, self.vmax]) if Observation.Vel in self.obs_config else [],
-                safe_rescale(self.qacc, [-self.amax, self.amax]) if Observation.Acc in self.obs_config else [],
-                self.in_contact  if Observation.InCon  in self.obs_config else [],
-                self.had_contact if Observation.HadCon in self.obs_config else [],
-                self.ain if Observation.Action in self.obs_config else [],
-            ])
+        def _enum2obs(on):
+            if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
+            if on == Observation.Vel: return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
+            if on == Observation.Force: return safe_rescale(self.force, [0, self.env.fmax])
+            if on == Observation.Action: return self.ain
+            if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
+            if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
+            if on == Observation.InCon: return self.in_con
+            if on == Observation.HadCon: return self.had_con
+
+            assert False, f"unknown Observation {on}"
+
+        obs = []
+        for on in self.obs_config: obs.append(_enum2obs(on))
+        return np.concatenate(obs).astype(np.float32)
     
     def _qdot_penalty(self):
         vnorm = np.clip(np.abs(self.qdot), 0, self.vmax)/self.vmax

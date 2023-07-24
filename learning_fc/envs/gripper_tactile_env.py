@@ -81,15 +81,6 @@ class GripperTactileEnv(GripperEnv):
 
         # force deltas to goal
         self.force_deltas = self.fgoal - self.force
-
-    def _get_obs(self):
-        """ concatenate internal state as observation
-        """
-        _obs = super()._get_obs()
-        return np.concatenate([
-            _obs,
-            safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal]) if Observation.ForceDelta in self.obs_config else [],
-        ])
     
     def _object_pos_penalty(self):
         # self.total_object_movement += np.abs(self.obj_v[1])

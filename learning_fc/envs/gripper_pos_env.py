@@ -36,15 +36,6 @@ class GripperPosEnv(GripperEnv):
         """
         super()._update_state()
         self.q_deltas = self.qgoal - self.q
-
-    def _get_obs(self):
-        """ concatenate internal state as observation
-        """ 
-        _obs = super()._get_obs()
-        return np.concatenate([
-            _obs,
-            safe_rescale(self.q_deltas, [-0.045, 0.045]) if Observation.PosDelta in self.obs_config else [],
-        ])
     
     def _get_reward(self):
         delta  = max(self.qgoal_range[1]-self.qgoal, self.qgoal-self.qgoal_range[0])
