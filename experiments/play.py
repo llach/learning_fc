@@ -65,7 +65,7 @@ def as_cb(env, model, i, results, goal=None, **kw):
 # res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=as_cb)
 # print(np.array(res["cumr"])[:,-1])
 
-model = PosModel(env)
+# model = PosModel(env)
 
 n_actions = 10
 
@@ -80,7 +80,7 @@ for i in range(N_GOALS):
     for _ in range(n_actions): actions.append([0,0])
 
     for j in range(300):
-        ain, _ = model.predict(obs)
+        ain, _ = model.predict(obs, deterministic=True)
         actions.append(ain)
 
         clean = butter_lowpass_filter(np.array(actions), 10, fs=100)
