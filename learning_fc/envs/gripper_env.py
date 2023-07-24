@@ -126,7 +126,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         def _enum2obs(on):
             if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
             if on == Observation.Vel: return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
-            if on == Observation.Force: return safe_rescale(self.force, [0, self.env.fmax])
+            if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
             if on == Observation.Action: return self.ain
             if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
             if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])

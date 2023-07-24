@@ -1,10 +1,11 @@
+import time
 import rospy
 import threading
 import numpy as np
 
-from collections import deque
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
+from ta11_readout.msg import ModelDebug
 
 from learning_fc.utils import safe_rescale
 from learning_fc.envs import GripperTactileEnv
@@ -15,27 +16,50 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50, n_action_avg=1):
+    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50):
         self.env = env
         self.fth = fth
         self.goal = goal
         self.freq = freq
         self.model = model
-        self.actions = deque(maxlen=n_action_avg)
 
         self.task = ControlTask.Force if isinstance(env.unwrapped, GripperTactileEnv) else ControlTask.Position
         self.obs_config = env.obs_config
         self.control_mode = env.control_mode
 
+        self.active = False
         self.js_idx = [None, None]
 
         rospy.init_node("model_robot_interface")
 
         self.r = rospy.Rate(self.freq)
         self.qpub = rospy.Publisher("/gripper_position_controller/command", Float64MultiArray, queue_size=1)
+        self.dpub = rospy.Publisher("/model_debug", ModelDebug, queue_size=1)
 
         self._setup_subscribers()
         self.reset()
+
+        self.initialized = True
+        self.dpub_thread = threading.Thread(target=self._debug_pub)
+        self.dpub_thread.start()
+
+    def __del__(self):
+        self.initialized = False
+        self.dpub_thread.join()
+
+    def _debug_pub(self):
+        while not rospy.is_shutdown() and self.initialized:
+            try:
+                m = ModelDebug()
+                if self.task == ControlTask.Force:
+                    m.vals = list(self.force.copy())
+                elif self.task == ControlTask.Position:
+                    m.vals = self.q.copy()
+                m.goal = float(self.goal)
+                self.dpub.publish(m)
+            except Exception as e:
+                print(e)
+                print(m.vals)
 
     def _js_cb(self, msg):
         # first callback -> store joint indices
@@ -56,7 +80,7 @@ class RobotInterface:
     def _setup_subscribers(self): 
         print("setting up subscribers ...")
         self.js_sub = rospy.Subscriber("/joint_states", JointState, self._js_cb)
-        if self.control_mode == ControlTask.Force:
+        if self.task == ControlTask.Force:
             self.force_sub = rospy.Subscriber("/ta11", Float64MultiArray, self.force_cb)
     
     def _goal_delta(self): 
@@ -105,8 +129,6 @@ class RobotInterface:
         self.in_con  = np.array([0,0])
         self.had_con = np.array([0,0])
 
-        self.active = True
-
         print("waiting for joint states ...")
         while not rospy.is_shutdown() and np.any(self.q==None): self.r.sleep()
 
@@ -114,19 +136,16 @@ class RobotInterface:
             print("waiting for forces ...")
             while not rospy.is_shutdown() and np.any(self.force==None): self.r.sleep()
 
-
         if self.control_mode == ControlMode.Position:
             self.last_a = safe_rescale(self.q, [0.0, 0.045])
         elif self.control_mode == ControlMode.PositionDelta:
             self.last_a  = np.array([0,0])
-        
-        for _ in range(self.actions.maxlen): self.actions.append(self.last_a.copy())
 
         print("reset done!")
 
     def step(self): 
         obs = self._get_obs()
-        raw_action, _ = self.model.predict(obs)
+        raw_action, _ = self.model.predict(obs, deterministic=True)
 
         if self.control_mode == ControlMode.Position:
             ain = safe_rescale(raw_action, [-1, 1], [0.0, 0.045])
@@ -134,23 +153,22 @@ class RobotInterface:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             ain = np.clip(self.q+ain, 0, 0.045)
 
-        self.actions.append(ain)
-        ain_avg = np.mean(self.actions, axis=0)
-
-        self.actuate(ain_avg)
+        self.actuate(ain)
 
         self.last_a = raw_action
 
     def stop(self): 
-        print("killing thread ...")
-        self.active = False
-        self.exec_thread.join()
-        print("done")
+        if self.active:
+            print("killing thread ...")
+            self.active = False
+            self.exec_thread.join()
+            print("done")
 
     def run(self): 
         print("running model ...")
 
         def _step_loop():
+            self.active=True
             while not rospy.is_shutdown() and self.active:
                 self.step()
                 self.r.sleep()
@@ -168,13 +186,16 @@ if __name__ == "__main__":
 
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     trial = f"{model_path}/2023-07-21_10-01-57__gripper_pos__ppo__pos_delta__obs_q-dq__nenv-6__k-1"
+    trial = f"{model_path}/2023-07-24_10-58-00__gripper_tactile__ppo__pos_delta__obs_q-f-df-act__nenv-6__k-1"
     env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
 
     from learning_fc.models import PosModel
     # model = PosModel(env)
 
-    ri = RobotInterface(model, env, freq=100, goal=0.01, n_action_avg=1)
-    ri.run()
+    ri = RobotInterface(model, env, freq=100, goal=0.01)
+
+    time.sleep(1.0)
+    ri.actuate([0.045, 0.045])
 
     while not rospy.is_shutdown():
         inp = input("q = kill; st = stop; gXXX = goal; aXXX = actuate\n")
@@ -184,6 +205,10 @@ if __name__ == "__main__":
 
         elif inp == "st":
             ri.stop()
+
+        elif inp=="o":
+            ri.stop()
+            ri.actuate([0.045, 0.045])
 
         elif inp[0]=="g":
             goal = inp[1:]
