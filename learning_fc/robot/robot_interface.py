@@ -2,6 +2,7 @@ import rospy
 import threading
 import numpy as np
 
+from collections import deque
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 
@@ -14,12 +15,13 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50):
+    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50, n_action_avg=1):
         self.env = env
         self.fth = fth
         self.goal = goal
         self.freq = freq
         self.model = model
+        self.actions = deque(maxlen=n_action_avg)
 
         self.task = ControlTask.Force if isinstance(env.unwrapped, GripperTactileEnv) else ControlTask.Position
         self.obs_config = env.obs_config
@@ -117,6 +119,8 @@ class RobotInterface:
             self.last_a = safe_rescale(self.q, [0.0, 0.045])
         elif self.control_mode == ControlMode.PositionDelta:
             self.last_a  = np.array([0,0])
+        
+        for _ in range(self.actions.maxlen): self.actions.append(self.last_a.copy())
 
         print("reset done!")
 
@@ -130,7 +134,10 @@ class RobotInterface:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             ain = np.clip(self.q+ain, 0, 0.045)
 
-        self.actuate(ain)
+        self.actions.append(ain)
+        ain_avg = np.mean(self.actions, axis=0)
+
+        self.actuate(ain_avg)
 
         self.last_a = raw_action
 
@@ -159,13 +166,14 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    trial = find_latest_model_in_path(model_path, filters=["ppo"])
+    # trial = find_latest_model_in_path(model_path, filters=["ppo"])
+    trial = f"{model_path}/2023-07-21_10-01-57__gripper_pos__ppo__pos_delta__obs_q-dq__nenv-6__k-1"
     env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
 
     from learning_fc.models import PosModel
     # model = PosModel(env)
 
-    ri = RobotInterface(model, env, freq=100, goal=0.01)
+    ri = RobotInterface(model, env, freq=100, goal=0.01, n_action_avg=1)
     ri.run()
 
     while not rospy.is_shutdown():

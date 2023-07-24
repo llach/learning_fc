@@ -70,9 +70,7 @@ class PlotItemWrapper:
 
     def draw_line(self, name, **lnargs):
         if name in self.lines: self._remove_line(name)
-        self.lines |= {
-            name: pg.InfiniteLine(**lnargs)
-        }
+        self.lines = {**self.lines, name: pg.InfiniteLine(**lnargs)}
         self.plot.addItem(self.lines[name])
 
     def draw_ticks(self, ticks, axis="left"):
