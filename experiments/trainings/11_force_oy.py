@@ -80,6 +80,11 @@ if __name__ == "__main__":
             ra_scale=0,
             rf_scale=3,
         ), 
+        model_kw=dict(
+            policy_kwargs=dict(
+                net_arch=[50,50]
+            )
+        ),
         frame_stack=1,
         schedules=[
             ra_schedule,

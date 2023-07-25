@@ -53,7 +53,7 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 N_GOALS  = 5
 with_vis = 1
 # trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
-trial = find_latest_model_in_path(model_path, filters=["gripper_pos"])
+trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
 env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="best")
 

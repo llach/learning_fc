@@ -27,7 +27,7 @@ if __name__ == "__main__":
         ), 
         model_kw=dict(
             policy_kwargs=dict(
-                net_arch=[10,10]
+                net_arch=[2]
             ),
         ),
         frame_stack=1,
