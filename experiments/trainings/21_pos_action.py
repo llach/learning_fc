@@ -23,9 +23,9 @@ if __name__ == "__main__":
     ra_schedule = ParamSchedule(
         var_name="ra_scale",
         start=0.0, 
-        stop=0.1,
+        stop=0.5,
         first_value=0.0,
-        final_value=0.2,
+        final_value=0.1,
         total_timesteps=TIME
     )
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         ), 
         model_kw=dict(
             policy_kwargs=dict(
-                net_arch=[40,40]
+                net_arch=[10,10]
             )
         ),
         frame_stack=1,

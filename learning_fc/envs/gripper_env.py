@@ -29,12 +29,26 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
-    def __init__(self, obs_config=ObsConfig.Q_F_DF, model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", vmax=0.02, amax=1.0, qinit_range=[0.045, 0.045], dq_max=0.002, fmax=1.0, ftheta=0.001, control_mode=ControlMode.Position, **kwargs):
+    def __init__(
+            self, 
+            amax=1.0, 
+            fmax=1.0, 
+            vmax=0.02, 
+            dq_max=0.002, 
+            ftheta=0.001, 
+            noise_q=0.00002,
+            qinit_range=[0.045, 0.045], 
+            obs_config=ObsConfig.Q_F_DF, 
+            control_mode=ControlMode.Position, 
+            model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", 
+            **kwargs
+        ):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
         self.fmax = fmax        # maximum contact force
-        self.dq_max = dq_max
+        self.dq_max = dq_max    # limits of action space for position delta control mode
         self.ftheta = ftheta    # contact force noise threshold
+        self.noise_q = noise_q  # std of normally distributed noise added to joint positions
         self.obs_config = obs_config    # contents of observation space    
         self.qinit_range = qinit_range
         self.control_mode = control_mode
@@ -105,7 +119,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.q = np.array([
             self.data.joint("finger_joint_l").qpos[0],
             self.data.joint("finger_joint_r").qpos[0]
-        ]) + np.random.normal(0.0, 0.00001, (2,))
+        ]) + np.random.normal(0.0, self.noise_q, (2,))
         self.qdot = np.array([
             self.data.joint("finger_joint_l").qvel[0],
             self.data.joint("finger_joint_r").qvel[0]

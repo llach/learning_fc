@@ -152,7 +152,7 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
 def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after_step_cb=None, plot=True, plot_title="", trialdir=None):
 
     print("baseline evaluation")
-    # oracle_results = deterministic_eval(env, oracle, vis, goals, reset_cb=reset_cb, after_step_cb=after_step_cb)
+    oracle_results = deterministic_eval(env, oracle, vis, goals, reset_cb=reset_cb, after_step_cb=after_step_cb)
 
     print("policy evaluation")
     agent_results = deterministic_eval(env, agent, vis, goals, reset_cb=reset_cb, after_step_cb=after_step_cb)
