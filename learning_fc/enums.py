@@ -21,6 +21,8 @@ class Observation(str, Enum):
     InCon="inC"
     HadCon="hadC"
 
+    ObjVel="obj_vel"
+
 class ObsConfig:
     Q_DQ   = [
         Observation.Pos,

@@ -44,7 +44,7 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
 
     return "__".join(_name), " | ".join(_title)
 
-def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path, weights=None, schedules=[]):
+def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, max_steps=250, env_kw={}, model_kw={}, train_kw={}, logdir=model_path, weights=None, save_periodic=None, save_on_best=1, schedules=[]):
     # build training parameters dict, store locals
     tkw = {**model_defaults[model_name], **train_kw}
 
@@ -67,10 +67,29 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
     os.makedirs(trialdir, exist_ok=True)
 
     # environment setup
-    env, _, eparams = make_env(env_name=env_name, logdir=trialdir, max_steps=max_steps, env_kw=env_kw, with_vis=False, training=True, nenv=nenv, frame_stack=frame_stack)
+    env, _, eparams = make_env(
+        env_name=env_name, 
+        logdir=trialdir, 
+        max_steps=max_steps, 
+        env_kw=env_kw, 
+        with_vis=False, 
+        training=True, 
+        nenv=nenv, 
+        frame_stack=frame_stack
+    )
 
     # model setup
-    model, callbacks, mparams = make_model(env=env, model_name=model_name, logdir=trialdir, model_kw=model_kw, timesteps=timesteps, save_periodic=timesteps/20, weights=weights, schedules=schedules)
+    model, callbacks, mparams = make_model(
+        env=env, 
+        model_name=model_name, 
+        logdir=trialdir, 
+        model_kw=model_kw, 
+        timesteps=timesteps, 
+        save_on_best=save_on_best,
+        save_periodic=save_periodic or timesteps/20, 
+        weights=weights, 
+        schedules=schedules
+    )
     
     # store parameters
     with open(f"{trialdir}/parameters.json", "w") as f:
@@ -92,8 +111,20 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
 
     # create evaluation plots
     if env_name in env_eval_fn: 
-        agent_rew, base_rew = env_eval_fn[env_name](trialdir, trial_name=trial_name, plot_title=plot_title, with_vis=False, checkpoint="best")
-        _, _ = env_eval_fn[env_name](trialdir, trial_name=trial_name, plot_title=plot_title, with_vis=False, checkpoint="latest")
+        agent_rew, base_rew = env_eval_fn[env_name](
+            trialdir, 
+            trial_name=trial_name, 
+            plot_title=plot_title, 
+            with_vis=False, 
+            checkpoint="best"
+        )
+        _, _ = env_eval_fn[env_name](
+            trialdir, 
+            trial_name=trial_name, 
+            plot_title=plot_title, 
+            with_vis=False, 
+            checkpoint="latest"
+        )
 
         if platform == "darwin": # macOS gets notifications
             import pync

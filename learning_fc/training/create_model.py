@@ -12,7 +12,7 @@ modelname2cls = dict(
 
 model_default_params = dict(policy="MlpPolicy", verbose=1) # default parameters for all policies, regardless of the algorithm
 
-def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, save_on_best=True, save_periodic=-1, weights=None, schedules=[]):
+def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, save_on_best=1, save_periodic=-1, weights=None, schedules=[]):
     # store function params, remove non-hashable ones
     fn_params = locals()
     fn_params.pop("env")
@@ -28,14 +28,19 @@ def make_model(env, model_name, logdir, timesteps, model_kw={}, training=True, s
     # either we train a model and create its callbacks, or we load weights for evaluation
     callbacks = []
     if training:
-        if save_on_best:
+        if save_on_best>0:
+            if save_on_best == 1:
+                offset = int(0.05*timesteps)
+            else:
+                offset = save_on_best
+
             callbacks.append(
                 SaveOnBestTrainingRewardCallback(
                     env=env,
                     check_freq=timesteps/25e1,
                     total_steps=timesteps,
                     save_path=logdir,
-                    offset=int(0.05*timesteps),
+                    offset=offset,
                     mean_n=100
                 )
             )

@@ -18,6 +18,12 @@ DEFAULT_CAMERA_CONFIG = {
     "lookat": [-0.00099796, -0.00137387, 0.04537828]
 }
 
+def obs_space_shape(obs_conf):
+    def _obs2len(on):
+        if on == Observation.ObjVel: return 1
+        return 2
+    return (np.sum([_obs2len(o) for o in obs_conf]),)
+
 class GripperEnv(MujocoEnv, utils.EzPickle):
 
     metadata = {
@@ -58,7 +64,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         observation_space = Box(
             low=np.float32(-1.), 
             high=np.float32(1.), 
-            shape=(2*len(obs_config),), 
+            shape=obs_space_shape(obs_conf=obs_config), 
             dtype=np.float32
         )
 
@@ -134,23 +140,24 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.in_contact  = self.force > self.ftheta
         self.had_contact = self.in_contact | self.had_contact
 
+    def _enum2obs(self, on):
+        if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
+        if on == Observation.Vel: return safe_rescale(self.qdot, [-self.vmax, self.vmax])
+        if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
+        if on == Observation.Action: return self.ain
+        if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
+        if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
+        if on == Observation.InCon: return self.in_contact
+        if on == Observation.HadCon: return self.had_contact
+
+        assert False, f"unknown Observation {on}"
+
     def _get_obs(self):
         """ concatenate internal state as observation
         """
-        def _enum2obs(on):
-            if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
-            if on == Observation.Vel: return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
-            if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
-            if on == Observation.Action: return self.ain
-            if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
-            if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
-            if on == Observation.InCon: return self.in_con
-            if on == Observation.HadCon: return self.had_con
-
-            assert False, f"unknown Observation {on}"
 
         obs = []
-        for on in self.obs_config: obs.append(_enum2obs(on))
+        for on in self.obs_config: obs.append(self._enum2obs(on))
         return np.concatenate(obs).astype(np.float32)
     
     def _qdot_penalty(self):

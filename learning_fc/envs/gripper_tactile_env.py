@@ -13,6 +13,8 @@ class GripperTactileEnv(GripperEnv):
     QY_SGN_r =  1
     INITIAL_OBJECT_POS  = np.array([0, 0, 0.05])
     INITIAL_OBJECT_SIZE = np.array([0.02, 0.05])
+
+    OBJ_V_MAX = 0.0025
     
     SOLREF = [0.02, 1] # default: [0.02, 1]
     SOLIMP = [0.5, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
@@ -83,23 +85,14 @@ class GripperTactileEnv(GripperEnv):
         self.force_deltas = self.fgoal - self.force
     
     def _object_pos_penalty(self):
-        # self.total_object_movement += np.abs(self.obj_v[1])
-        # return self.total_object_movement
         return 1 if np.abs(self.obj_v[1]) > self.ov_max else 0
     
     def _force_reward(self):
-        deltaf = self.fgoal - self.force
-        
-        rforce = 0
-        for df in deltaf: 
-            if df <= 0: # overshooting
-                rforce += 1-(np.clip(np.abs(df), 0.0, self.fram)/self.fram)
-            elif df > 0:
-                rforce += 1-(np.clip(df, 0.0, self.fram)/self.fram)
-        return rforce
+        total_deltaf = np.sum(np.abs(self.fgoal - self.force))
+        return 1 - np.tanh(total_deltaf)
     
     def _contact_reward(self):
-        return np.sum(self.had_contact)
+        return np.sum(self.in_contact)
 
     def _object_proximity_reward(self):
         """ fingers don't move towards the object sometimes → encourage them with small, positive rewards
@@ -116,9 +109,9 @@ class GripperTactileEnv(GripperEnv):
 
     def _get_reward(self):
         self.r_force    =   self.rf_scale * self._force_reward()
-        self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_con      =   self.co_scale * self._contact_reward()
         self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
+        self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_act      = - self.ra_scale * self._action_penalty()
         self.r_qvel     = 0# - self.rv_scale * self._qdot_penalty()
 
@@ -126,6 +119,11 @@ class GripperTactileEnv(GripperEnv):
     
     def _is_done(self): 
         if self.max_contact_steps != -1 and self.t_since_force_closure >= self.max_contact_steps: return True
+
+    def _enum2obs(self, on):
+        if on == Observation.ObjVel: return safe_rescale([self.obj_v[1]], [0.0, self.OBJ_V_MAX])
+
+        return super()._enum2obs(on)
 
     def _reset_model(self, root):
         """ reset data, set joints to initial positions and randomize
@@ -137,7 +135,7 @@ class GripperTactileEnv(GripperEnv):
 
         # oy sampling constraints
         oy_q_const  = (0.97*0.045)-self.wo      # qmax-wo
-        oy_xi_const = self.wo - self.xi_max     # TODO shouldn't this be 2*xi_max since it applies to both sides?
+        oy_xi_const = self.wo - 2*self.xi_max
         oy_max = min(oy_q_const, oy_xi_const)
 
         if self.oy_range is not None:

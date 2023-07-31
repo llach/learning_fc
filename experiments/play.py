@@ -50,25 +50,30 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
     return filtered_data
 
 
-N_GOALS  = 5
-with_vis = 1
-# trial = f"{model_path}/2023-07-19_14-28-19__centered__minimal_reward__nenv-6__k-1"
+N_GOALS  = 10
+with_vis = 0
+# trial = f"{model_path}/2023-07-19_11-28-33__obj_move__reference__nenv-6__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
 env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="best")
 
-def as_cb(env, model, i, results, goal=None, **kw):
-    return force_after_step_cb(env, model, i, results, goal=None, **kw)
-
 # model = ForcePI(env)
 # model = StaticModel(-1)
-# res = deterministic_eval(env, model, vis, np.linspace(*env.fgoal_range, N_GOALS), reset_cb=force_reset_cb, after_step_cb=as_cb)
-# print(np.array(res["cumr"])[:,-1])
-
 # model = PosModel(env)
+
+# env.set_attr("ro_scale", 3.0)
+# env.set_attr("oy_range", [0.045, 0.045])
+# env.set_attr("wo_range", [0.025, 0.025])
+
+
+# env.set_attr("ra_scale", 0)
+# env.set_attr("rf_scale", 1)
+# env.set_attr("co_scale", 0)
+# env.set_attr("rp_scale", 0)
 
 n_actions = 10
 
+cumrews = np.zeros((N_GOALS,))
 for i in range(N_GOALS):
     obs, _ = env.reset()
     if isinstance(model, ForcePI): model.reset()
@@ -79,7 +84,7 @@ for i in range(N_GOALS):
     actions = deque(maxlen=n_actions)
     for _ in range(n_actions): actions.append([0,0])
 
-    for j in range(300):
+    for j in range(250):
         ain, _ = model.predict(obs, deterministic=True)
         actions.append(ain)
 
@@ -92,8 +97,10 @@ for i in range(N_GOALS):
         obs, r, _, _, _ = env.step(ain)
         if vis: vis.update_plot(action=ain, reward=r)
 
-        cumrew += r
-    print(cumrew)
+        cumrews[i] += r
+    print(cumrews[i])
+
+print(f"{np.mean(cumrews):.0f}±{np.std(cumrews):.1f}")
 env.close()
 
 
