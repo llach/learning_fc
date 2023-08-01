@@ -51,7 +51,7 @@ def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
 
 
 N_GOALS  = 10
-with_vis = 0
+with_vis = 1;
 # trial = f"{model_path}/2023-07-19_11-28-33__obj_move__reference__nenv-6__k-1"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
