@@ -2,18 +2,25 @@
 TODO:
 
 - ent_coef
-- ra schedule necessary?
 - plot entropy and value function
 
 """
-from learning_fc.enums import ControlMode, ObsConfig, Observation as Obs
+from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
 
 ALG  = "ppo"
-OBS  = ObsConfig.Q_VEL_F_DF_IN_HAD_ACT
+OBS  = [
+    Observation.Pos, 
+    Observation.Des, 
+    Observation.Force, 
+    Observation.ForceDelta,
+    Observation.InCon,
+    Observation.HadCon,
+    Observation.Action
+]
 CTRL = ControlMode.PositionDelta
-TIME = int(4e6)
+TIME = int(25e5)
 STOP = int(15e5)
 
 if __name__ == "__main__": 

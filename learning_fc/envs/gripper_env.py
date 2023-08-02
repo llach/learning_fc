@@ -60,6 +60,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.control_mode = control_mode
 
         self.ain = np.array([0, 0])
+        self.last_vel = np.array([0, 0])
 
         observation_space = Box(
             low=np.float32(-1.), 
@@ -142,6 +143,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
     def _enum2obs(self, on):
         if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
+        if on == Observation.Des: return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel: return safe_rescale(self.qdot, [-self.vmax, self.vmax])
         if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
         if on == Observation.Action: return self.ain
@@ -209,9 +211,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
                 v.model = self.model
                 v.data = self.data
 
+        self.qdes = np.array([self.qinit_l, self.qinit_r])
+        self.ain = np.array([0, 0])
+        self.last_vel = np.array([0, 0])
         self.had_contact = np.array([0, 0], dtype=bool)
-        self.t_since_force_closure = 0
+        
         self.t = 0
+        self.t_since_force_closure = 0
 
         self._update_state()
         return self._get_obs()
@@ -229,7 +235,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         """
         if type(a)==list: a=np.array(a)
         
-        if self.t == 0: self.last_a = a.copy() # avoid penalty on first timestep
+        if self.t == 0: 
+            self.last_a = a.copy() # avoid penalty on first timestep
         self.ain = a.copy()
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation

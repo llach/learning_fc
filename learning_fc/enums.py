@@ -11,6 +11,7 @@ class ControlMode(str, Enum):
 class Observation(str, Enum):
     Pos="q"
     Vel="qdot"
+    Des="qdes"
     Acc="qacc"
     Force="f"
     Action="act"
