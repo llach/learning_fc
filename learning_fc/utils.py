@@ -7,6 +7,7 @@ import numpy as np
 from typing import Any, List
 from datetime import datetime
 from learning_fc import datefmt
+from scipy.signal import butter, lfilter
 
 """ evaluation
 """
@@ -110,6 +111,49 @@ def get_pad_forces(model, data):
 
     return np.array([fl, fr])
 
+""" filtering
+"""
+
+def analyze_freqs(signal, dt=1.):
+    nfreqs = int((len(signal)/2)+1)
+
+    freqs = np.fft.fftfreq(len(signal), dt)[:nfreqs]
+    mags  = np.abs(np.fft.fft(signal))[:nfreqs]
+
+    return freqs, mags
+
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+def butter_lowpass(cutoff, fs, order=5):
+    return butter(order, cutoff, fs=fs, btype='low', analog=False)
+
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+def rolling_butterworth_filter(data, window_size, cutoff_freq, fs, order=2):
+    pad_width = window_size - 1
+    padded_data = np.pad(data, (pad_width, 0), mode='constant')
+    filtered_data = np.zeros_like(data)
+
+    # Define the Butterworth filter parameters
+    nyquist_freq = 0.5 * cutoff_freq
+    b, a = butter(order, nyquist_freq, fs=fs, btype='low', analog=False, output='ba')
+
+    # Apply the Butterworth filter on each window of the padded data
+    for i in range(len(data)):
+        window = padded_data[i:i+window_size]
+        filtered_window = lfilter(b, a, window)
+        filtered_data[i] = filtered_window[-1]
+
+    return filtered_data
+
+""" reading and writing CSVs 
+"""
 
 class CsvWriter:
 
