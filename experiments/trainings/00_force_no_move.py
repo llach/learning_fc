@@ -1,10 +1,3 @@
-"""
-TODO:
-
-- ent_coef
-- plot entropy and value function
-
-"""
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
@@ -15,7 +8,6 @@ OBS  = [
     Observation.Des, 
     Observation.Force, 
     Observation.ForceDelta,
-    Observation.InCon,
     Observation.HadCon,
     Observation.Action
 ]
