@@ -43,6 +43,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             dq_max=0.002, 
             ftheta=0.001, 
             noise_q=0.00002,
+            noise_f=0.01,
             qinit_range=[0.045, 0.045], 
             obs_config=ObsConfig.Q_F_DF, 
             control_mode=ControlMode.Position, 
@@ -55,6 +56,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.dq_max = dq_max    # limits of action space for position delta control mode
         self.ftheta = ftheta    # contact force noise threshold
         self.noise_q = noise_q  # std of normally distributed noise added to joint positions
+        self.noise_f = noise_f  # std of normally distributed noise added to contact forces
         self.obs_config = obs_config    # contents of observation space    
         self.qinit_range = qinit_range
         self.control_mode = control_mode
@@ -137,7 +139,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ])
 
         # contact force and binary in_contact state
-        self.force = get_pad_forces(self.model, self.data)
+        self.force = get_pad_forces(self.model, self.data) + np.random.normal(0.0, self.noise_f, (2,))
         self.in_contact  = self.force > self.ftheta
         self.had_contact = self.in_contact | self.had_contact
 
