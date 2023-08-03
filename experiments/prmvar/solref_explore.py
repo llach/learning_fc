@@ -10,14 +10,15 @@ from learning_fc.live_vis import TactileVis
 
 with_vis = 0
 trials   = 5
-steps    = 100
+steps    = 25
 
-STIFF_RANGE = [0.001,0.1]
-DAMP_RANGE  = [0,1]
+STIFF_RANGE = [0.008,0.05]
+DAMP_RANGE  = [0.8,1.1]
 
 env = GripperTactileEnv(
     oy_range=[0,0],
     wo_range=[0.02, 0.02],
+    dq_max=0.01,
     **{"render_mode": "human"} if with_vis else {}
 )
 vis = TactileVis(env) if with_vis else None
@@ -31,7 +32,7 @@ params = np.zeros((trials**2, 2))
 i=0
 for stiff in np.linspace(*STIFF_RANGE, trials):
     for damp in np.linspace(*DAMP_RANGE,  trials):
-        params[i]=[stiff, damp]
+        params[i] = [stiff, damp]
         env.set_solver_parameters(solref=params[i])
 
         env.reset()
@@ -54,6 +55,13 @@ fig, axes = plt.subplots(nrows=trials, ncols=trials, figsize=(9,6))
 xs = np.arange(steps)
 for i, ax in enumerate(axes.flatten()):
     ax.plot(xs, forces[i])
+
+for i, stiff in enumerate(np.linspace(*STIFF_RANGE, trials)):
+    for j, damp in enumerate(np.linspace(*DAMP_RANGE,  trials)):
+        if i == 0: 
+            axes[i,j].xaxis.set_label_position('top') 
+            axes[i,j].set_xlabel(f"d={damp:.2f}")
+        if j == 0: axes[i,j].set_ylabel(f"s={stiff:.4f}")
 fig.tight_layout()
 plt.show()
 exit()

@@ -9,19 +9,20 @@ from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlMode
 from learning_fc.live_vis import TactileVis
 
-with_vis = 1
+with_vis = 0
 trials   = 10
-steps    = 50
+steps    = 200
 
-pname, sidx, values = "dmin", 0, np.linspace(0.5, .5, trials)
-# pname, sidx, values = "width", 2, np.linspace(0.0, 0.01, trials)
-# pname, sidx, values = "midpoint", 3, np.linspace(0, 1, trials)
-# pname, sidx, values = "power", 4, np.arange(10)+1
+pname, sidx, values = "dmin", 0, np.linspace(0.4, 0.9, trials)
+# pname, sidx, values = "width", 2, np.linspace(0.0, 0.015, trials)
+# pname, sidx, values = "midpoint", 3, np.linspace(0, 0.55, trials)
+# pname, sidx, values = "power", 4, np.arange(2)+1
 
 env = GripperTactileEnv(
     oy_init=0,
     wo_range=[0.03, 0.03],
-    control_mode=ControlMode.Position,
+    # dq_max=0.002,
+    control_mode=ControlMode.PositionDelta,
     **{"render_mode": "human"} if with_vis else {}
 )
 vis = TactileVis(env) if with_vis else None
@@ -32,24 +33,20 @@ forces = np.zeros((trials, steps))
 dp = 0.005
 dp = 0.03
 
+env.set_solver_parameters(solref=[0.05, 1.2])
+SOLIMP = [0.4, 0.95, 0.015, 0.5, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+
 for i in range(trials):
-    solimp = env.SOLIMP
+    solimp = SOLIMP
     solimp[sidx] = values[i]
     env.set_solver_parameters(solimp=solimp)
 
     env.reset()
-    qdes = env.wo-dp
+    qdes = env.wo-env.dq_max
     if vis: vis.reset()
 
     for j in range(steps):
-        action = safe_rescale(
-            2*[qdes],
-            [0, 0.045],
-            [-1,1]
-        )
-
-        # action = [-.1,-.1] if j < steps/2 else [1,1]
-
+        action = [-1,-1] 
         obs, r, _, _, _ = env.step(action)
         if vis: vis.update_plot(action=action, reward=r)
 
@@ -72,9 +69,13 @@ for i, (v, ftraj, dp) in enumerate(zip(values, forces, dps)):
     labels.append(f"{v:.4f}|{dp:.4f}")
 ax1.set_ylabel("f(t) [left]")
 ax1.set_xlabel("t")
-l = plt.axhline(1.0, ls="dashed", c="cyan", lw=1)
+l = ax1.axhline(1.0, ls="dashed", c="cyan", lw=1)
 curves.append(tuple([l]))
 labels.append("f final")
+
+l = ax2.axhline(env.wo-env.xi_max, ls="dashed", c="green", lw=1)
+curves.append(tuple([l]))
+labels.append("xi max")
 
 for i, qs in enumerate(q):
     c = ax2.plot(qs[:,0])

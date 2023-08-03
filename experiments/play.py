@@ -9,7 +9,7 @@ from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 10
 with_vis = 1;
-# trial = f"{model_path}/2023-07-19_11-28-33__obj_move__reference__nenv-6__k-1"
+trial = f"{model_path}/30_base"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
 env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="best")
@@ -17,6 +17,10 @@ env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="b
 # model = ForcePI(env)
 # model = StaticModel(-1)
 # model = PosModel(env)
+
+# env.set_attr("sample_solref", True)
+
+env.set_solver_parameters(solref=[0.05, 1.1])
 
 cumrews = np.zeros((N_GOALS,))
 for i in range(N_GOALS):
