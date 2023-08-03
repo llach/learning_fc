@@ -19,6 +19,8 @@ class GripperTactileEnv(GripperEnv):
     SOLREF = [0.02, 1] # default: [0.02, 1]
     SOLIMP = [0.5, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
+    SOLREF_RANGE = ([0.008, 0.8], [0.05, 1.1]) # sampling range for solref parameters
+
     def __init__(
             self,      
             fgoal_range=[0.05, 0.9], 
@@ -33,6 +35,7 @@ class GripperTactileEnv(GripperEnv):
             rp_scale=0.0, 
             co_scale=0.0,
             ov_max=0.0001,
+            sample_solref = False,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             max_contact_steps=-1,
@@ -49,6 +52,7 @@ class GripperTactileEnv(GripperEnv):
         self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
+        self.sample_solref = sample_solref  # toggle solref sampling
         self.max_contact_steps = max_contact_steps
 
         if oy_init is not None:
@@ -150,6 +154,8 @@ class GripperTactileEnv(GripperEnv):
 
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, self.obj_pos))
+
+        if self.sample_solref: self.solref = np.random.uniform(*self.SOLREF_RANGE)
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
