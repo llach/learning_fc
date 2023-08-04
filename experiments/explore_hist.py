@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from learning_fc import model_path
 
-file_path = f"{model_path}/data/2023-08-04_11-00-23__glue.pkl"
+file_path = f"{model_path}/data/2023-08-04_11-15-06__wood.pkl"
 with open(file_path, "rb") as f:
     data = pickle.load(f)
 
@@ -27,7 +27,7 @@ axes[0].set_ylim(-0.001, 0.049)
 
 axes[1].plot(xs, force)
 axes[1].plot(xs, goal)
-axes[1].set_ylim(-0.05, 1.0)
+axes[1].set_ylim(-0.05, 2.0)
 
 axes[2].plot(xs, act)
 axes[2].set_ylim(-1,1)

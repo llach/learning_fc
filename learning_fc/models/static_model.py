@@ -1,4 +1,4 @@
-from learning_fc import safe_rescale
+import numpy as np
 
 class StaticModel:
 
@@ -6,4 +6,4 @@ class StaticModel:
         self.q = q
 
     def predict(self, *args, **kwargs):
-        return safe_rescale(2*[self.q], [0.0, 0.045]), {}
+        return np.array(2*[self.q]), {}

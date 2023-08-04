@@ -21,7 +21,7 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50):
+    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50, control_mode=None):
         self.env = env
         self.fth = fth
         self.goal = goal
@@ -30,7 +30,7 @@ class RobotInterface:
 
         self.task = ControlTask.Force if isinstance(env.unwrapped, GripperTactileEnv) else ControlTask.Position
         self.obs_config = env.obs_config
-        self.control_mode = env.control_mode
+        self.control_mode = control_mode or env.control_mode
 
         self.active = False
         self.js_idx = [None, None]
@@ -242,8 +242,9 @@ if __name__ == "__main__":
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
 
-    from learning_fc.models import PosModel
+    from learning_fc.models import PosModel, StaticModel
     # model = PosModel(env)
+    # model = StaticModel(-1)
 
     ri = RobotInterface(model, env, freq=50, goal=0.01)
 
