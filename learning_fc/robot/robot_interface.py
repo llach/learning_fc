@@ -69,6 +69,7 @@ class RobotInterface:
                     m.vals = self.q.copy()
                 m.goal = float(self.goal)
                 self.dpub.publish(m)
+                self.r.sleep()
             except Exception as e:
                 print(e)
                 print(m.vals)
@@ -105,26 +106,26 @@ class RobotInterface:
             assert False, f"unknown ControlTask {self.task}"
 
     def _enum2obs_raw(self, on):
-        if on == Observation.Pos:           return self.q
-        if on == Observation.Des:           return self.qdes
-        if on == Observation.Vel:           return self.qdot
-        if on == Observation.Force:         return self.force
-        if on == Observation.Action:        return self.last_a
+        if on == Observation.Pos:           return self.q.copy()
+        if on == Observation.Des:           return self.qdes.copy()
+        if on == Observation.Vel:           return self.qdot.copy()
+        if on == Observation.Force:         return self.force.copy()
+        if on == Observation.Action:        return self.last_a.copy()
         if on == Observation.PosDelta:      return self._goal_delta()
         if on == Observation.ForceDelta:    return self._goal_delta()
-        if on == Observation.InCon:         return self.in_con
-        if on == Observation.HadCon:        return self.had_con
+        if on == Observation.InCon:         return self.in_con.copy()
+        if on == Observation.HadCon:        return self.had_con.copy()
 
     def _enum2obs(self, on):
         if on == Observation.Pos:           return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Des:           return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel:           return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
         if on == Observation.Force:         return safe_rescale(self.force, [0, self.env.fmax])
-        if on == Observation.Action:        return self.last_a
+        if on == Observation.Action:        return self.last_a.copy()
         if on == Observation.PosDelta:      return safe_rescale(self._goal_delta(), [-0.045, 0.045])
         if on == Observation.ForceDelta:    return safe_rescale(self._goal_delta(), [-self.goal, self.goal])
-        if on == Observation.InCon:         return self.in_con
-        if on == Observation.HadCon:        return self.had_con
+        if on == Observation.InCon:         return self.in_con.copy()
+        if on == Observation.HadCon:        return self.had_con.copy()
 
         assert False, f"unknown Observation {on}"
 
@@ -173,6 +174,7 @@ class RobotInterface:
     def step(self): 
         obs = self._get_obs()
         obs_ = {on: self._enum2obs_raw(on) for on in self.obs_config} # for history
+
         raw_action, _ = self.model.predict(obs, deterministic=True)
 
         if self.control_mode == ControlMode.Position:
@@ -180,7 +182,7 @@ class RobotInterface:
         elif self.control_mode == ControlMode.PositionDelta:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             self.qdes = np.clip(self.q+ain, 0, 0.045)
-
+        
         self.actuate(self.qdes)
         self.last_a = raw_action
 
@@ -190,6 +192,7 @@ class RobotInterface:
         self.hist["qdes"].append(self.qdes)
         self.hist["net_out"].append(raw_action)
         self.hist["goal"].append(self.goal)
+        self.hist["timestamps"].append(datetime.utcnow())
 
     def stop(self): 
         if self.active:
@@ -207,14 +210,16 @@ class RobotInterface:
         with open(file_path, "wb") as f:
             pickle.dump(self.hist, f)
 
-    def run(self): 
+    def run(self):
         print("running model ...")
 
         self.hist = dict(
             obs={on: [] for on in self.obs_config},
             qdes=[],
             net_out=[],
-            goal=[]
+            goal=[],
+            timestamps=[],
+            dq_max=self.env.dq_max,
         )
 
         def _step_loop():
@@ -240,7 +245,7 @@ if __name__ == "__main__":
     from learning_fc.models import PosModel
     # model = PosModel(env)
 
-    ri = RobotInterface(model, env, freq=100, goal=0.01)
+    ri = RobotInterface(model, env, freq=50, goal=0.01)
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])
