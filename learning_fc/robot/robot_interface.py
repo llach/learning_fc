@@ -1,12 +1,17 @@
+import os 
 import time
 import rospy
+import pickle
 import threading
 import numpy as np
+
+from datetime import datetime
 
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 from ta11_readout.msg import ModelDebug
 
+from learning_fc import model_path, datefmt
 from learning_fc.utils import safe_rescale
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlTask, ControlMode, Observation
@@ -30,6 +35,10 @@ class RobotInterface:
         self.active = False
         self.js_idx = [None, None]
 
+        self.data_dir = f"{model_path}/data/"
+        os.makedirs(self.data_dir, exist_ok=True)
+
+        ### ROS init
         rospy.init_node("model_robot_interface")
 
         self.r = rospy.Rate(self.freq)
@@ -45,11 +54,14 @@ class RobotInterface:
 
     def __del__(self):
         self.initialized = False
+        self.dpub.unregister()
         self.dpub_thread.join()
-
+        
     def _debug_pub(self):
         while not rospy.is_shutdown() and self.initialized:
             try:
+                if np.any(self.force==None) or np.any(self.q==None): continue
+
                 m = ModelDebug()
                 if self.task == ControlTask.Force:
                     m.vals = list(self.force.copy())
@@ -60,6 +72,7 @@ class RobotInterface:
             except Exception as e:
                 print(e)
                 print(m.vals)
+                break
 
     def _js_cb(self, msg):
         # first callback -> store joint indices
@@ -91,15 +104,27 @@ class RobotInterface:
         else:
             assert False, f"unknown ControlTask {self.task}"
 
+    def _enum2obs_raw(self, on):
+        if on == Observation.Pos:           return self.q
+        if on == Observation.Des:           return self.qdes
+        if on == Observation.Vel:           return self.qdot
+        if on == Observation.Force:         return self.force
+        if on == Observation.Action:        return self.last_a
+        if on == Observation.PosDelta:      return self._goal_delta()
+        if on == Observation.ForceDelta:    return self._goal_delta()
+        if on == Observation.InCon:         return self.in_con
+        if on == Observation.HadCon:        return self.had_con
+
     def _enum2obs(self, on):
-        if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
-        if on == Observation.Vel: return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
-        if on == Observation.Force: return safe_rescale(self.force, [0, self.env.fmax])
-        if on == Observation.Action: return self.last_a
-        if on == Observation.PosDelta: return safe_rescale(self._goal_delta(), [-0.045, 0.045])
-        if on == Observation.ForceDelta: return safe_rescale(self._goal_delta(), [-self.goal, self.goal])
-        if on == Observation.InCon: return self.in_con
-        if on == Observation.HadCon: return self.had_con
+        if on == Observation.Pos:           return safe_rescale(self.q, [0.0, 0.045])
+        if on == Observation.Des:           return safe_rescale(self.qdes, [0.0, 0.045])
+        if on == Observation.Vel:           return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
+        if on == Observation.Force:         return safe_rescale(self.force, [0, self.env.fmax])
+        if on == Observation.Action:        return self.last_a
+        if on == Observation.PosDelta:      return safe_rescale(self._goal_delta(), [-0.045, 0.045])
+        if on == Observation.ForceDelta:    return safe_rescale(self._goal_delta(), [-self.goal, self.goal])
+        if on == Observation.InCon:         return self.in_con
+        if on == Observation.HadCon:        return self.had_con
 
         assert False, f"unknown Observation {on}"
 
@@ -141,21 +166,30 @@ class RobotInterface:
         elif self.control_mode == ControlMode.PositionDelta:
             self.last_a  = np.array([0,0])
 
+        self.qdes = self.q.copy()
+
         print("reset done!")
 
     def step(self): 
         obs = self._get_obs()
+        obs_ = {on: self._enum2obs_raw(on) for on in self.obs_config} # for history
         raw_action, _ = self.model.predict(obs, deterministic=True)
 
         if self.control_mode == ControlMode.Position:
-            ain = safe_rescale(raw_action, [-1, 1], [0.0, 0.045])
+            self.qdes = safe_rescale(raw_action, [-1, 1], [0.0, 0.045])
         elif self.control_mode == ControlMode.PositionDelta:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
-            ain = np.clip(self.q+ain, 0, 0.045)
+            self.qdes = np.clip(self.q+ain, 0, 0.045)
 
-        self.actuate(ain)
-
+        self.actuate(self.qdes)
         self.last_a = raw_action
+
+        # update history
+        for k, v in obs_.items():
+            self.hist["obs"][k].append(v)
+        self.hist["qdes"].append(self.qdes)
+        self.hist["net_out"].append(raw_action)
+        self.hist["goal"].append(self.goal)
 
     def stop(self): 
         if self.active:
@@ -164,8 +198,24 @@ class RobotInterface:
             self.exec_thread.join()
             print("done")
 
+    def save_hist(self, name=None):
+        fname = f"{datetime.utcnow().strftime(datefmt)}"
+        if name is not None: fname += f"__{name}"
+        file_path = f"{self.data_dir}{fname}.pkl"
+
+        print(f"storing {file_path}")
+        with open(file_path, "wb") as f:
+            pickle.dump(self.hist, f)
+
     def run(self): 
         print("running model ...")
+
+        self.hist = dict(
+            obs={on: [] for on in self.obs_config},
+            qdes=[],
+            net_out=[],
+            goal=[]
+        )
 
         def _step_loop():
             self.active=True
@@ -179,14 +229,12 @@ class RobotInterface:
 
 
 if __name__ == "__main__":
-
-    from learning_fc import model_path
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
+    trial = f"{model_path}/2023-08-04_09-24-00__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1" # 00_no_move
+    trial = f"{model_path}/2023-08-04_08-09-17__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1" # 01_vary_stiffness
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
-    trial = f"{model_path}/2023-07-21_10-01-57__gripper_pos__ppo__pos_delta__obs_q-dq__nenv-6__k-1"
-    trial = f"{model_path}/2023-07-24_10-58-00__gripper_tactile__ppo__pos_delta__obs_q-f-df-act__nenv-6__k-1"
     env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
 
     from learning_fc.models import PosModel
@@ -198,9 +246,10 @@ if __name__ == "__main__":
     ri.actuate([0.045, 0.045])
 
     while not rospy.is_shutdown():
-        inp = input("q = kill; st = stop; gXXX = goal; aXXX = actuate\n")
+        inp = input("q = kill; sa = save; st = stop; o = open; gXXX = goal; aXXX = actuate\n")
         if inp == "q":
             ri.stop()
+            del ri
             break
 
         elif inp == "st":
@@ -214,6 +263,7 @@ if __name__ == "__main__":
             goal = inp[1:]
             try:
                 goal = float(goal)
+                assert goal > 0, "goal > 0"
                 ri.set_goal(goal)
                 print(f"new goal: {goal}")
             except Exception as e:
@@ -232,3 +282,9 @@ if __name__ == "__main__":
             except:
                 print(f"can't convert {goal} to a number")
                 continue
+
+        elif inp[:2]=="sa":
+            ri.stop()
+            
+            name = inp.split(" ")[1] if " " in inp else None
+            ri.save_hist(name)
