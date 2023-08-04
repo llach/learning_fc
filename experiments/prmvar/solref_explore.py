@@ -13,7 +13,7 @@ trials   = 5
 steps    = 25
 
 STIFF_RANGE = [0.008,0.05]
-DAMP_RANGE  = [0.8,1.1]
+DAMP_RANGE  = [0.8,1.2]
 
 env = GripperTactileEnv(
     oy_range=[0,0],

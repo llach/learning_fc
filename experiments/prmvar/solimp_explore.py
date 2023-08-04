@@ -18,6 +18,10 @@ pname, sidx, values = "dmin", 0, np.linspace(0.4, 0.9, trials)
 # pname, sidx, values = "midpoint", 3, np.linspace(0, 0.55, trials)
 # pname, sidx, values = "power", 4, np.arange(2)+1
 
+
+[0.4, 0.9, 0.0, 0.0, 2] 
+[0.9, 0.95, 0.015, 0.55, 2] 
+
 env = GripperTactileEnv(
     oy_init=0,
     wo_range=[0.03, 0.03],
@@ -34,7 +38,7 @@ dp = 0.005
 dp = 0.03
 
 env.set_solver_parameters(solref=[0.05, 1.2])
-SOLIMP = [0.4, 0.95, 0.015, 0.5, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+SOLIMP = [0.4, 0.5, 0.015, 0.5, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
 for i in range(trials):
     solimp = SOLIMP

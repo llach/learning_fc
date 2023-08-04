@@ -82,6 +82,9 @@ if __name__ == "__main__":
         ), 
         model_kw=dict(
             learning_rate=6e-4,
+            policy_kwargs=dict(
+                net_arch=[60,60]
+            )
         ),
         frame_stack=1,
         schedules=[

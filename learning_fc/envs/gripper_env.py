@@ -41,7 +41,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             fmax=1.0, 
             vmax=0.02, 
             dq_max=0.002, 
-            ftheta=0.001, 
+            ftheta=0.05, 
             noise_q=0.00002,
             noise_f=0.01,
             qinit_range=[0.045, 0.045], 
