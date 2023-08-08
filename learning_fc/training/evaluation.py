@@ -125,7 +125,7 @@ def _get_checkpoint(chkp, trialdir):
         return fn[np.argmax(nstep)]
     else: return chkp
 
-def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
+def make_eval_env_model(trialdir, with_vis=False, env_override={}, checkpoint="best"):
     # load parameters
     with open(f"{trialdir}/parameters.json", "r") as f:
         params = json.load(f)
@@ -133,6 +133,7 @@ def make_eval_env_model(trialdir, with_vis=False, checkpoint="best"):
     # modify env creation parameters for eval and create
     params["make_env"] = {**params["make_env"], **dict(training=False, nenv=1, with_vis=with_vis)}
     params["make_env"]["env_kw"] = {**params["make_env"].pop("init_params"), **params["make_env"]["env_kw"]}
+    params["make_env"]["env_kw"] = {**params["make_env"]["env_kw"], **env_override}
     env, vis, _ = make_env(**params["make_env"])
 
     # set the final values of scheduled parameters

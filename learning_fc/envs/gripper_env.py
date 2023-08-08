@@ -38,7 +38,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def __init__(
             self, 
             amax=1.0, 
-            fmax=1.0, 
+            fmax=0.65, 
             vmax=0.02, 
             dq_max=0.002, 
             ftheta=0.05, 
@@ -139,7 +139,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ])
 
         # contact force and binary in_contact state
-        self.force = get_pad_forces(self.model, self.data) + np.random.normal(0.0, self.noise_f, (2,))
+        self.force = 3*get_pad_forces(self.model, self.data) + np.random.normal(0.0, self.noise_f, (2,))
         self.in_contact  = self.force > self.ftheta
         self.had_contact = self.in_contact | self.had_contact
 

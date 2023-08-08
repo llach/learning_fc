@@ -1,4 +1,5 @@
 import numpy as np
+import learning_fc
 import matplotlib.pyplot as plt
 
 from learning_fc import model_path
@@ -13,14 +14,22 @@ with_vis = 1;
 trial = f"{model_path}/2023-08-03_17-09-24__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1"
 # trial = find_latest_model_in_path(model_path, filters=["ppo"])
 
-env, model, vis, _ = make_eval_env_model(trial, with_vis=with_vis, checkpoint="best")
+env, model, vis, _ = make_eval_env_model(
+    trial, 
+    with_vis=with_vis, 
+    checkpoint="best", 
+    env_override = dict(
+        model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    )
+)
 
 # model = ForcePI(env, Kp=0.1, Ki=0.5)
 # model = StaticModel(-1)
 # model = PosModel(env)
 
-env.set_attr("sample_solref", True)
-env.set_attr("sample_solimp", True)
+env.set_attr("fgoal_range", [0.05, 0.6])
+env.set_attr("sample_solref", False)
+env.set_attr("sample_solimp", False)
 
 env.set_solver_parameters(solref=[0.05, 1.1])
 

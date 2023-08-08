@@ -1,37 +1,104 @@
+import os
 import pickle
+import learning_fc
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from learning_fc import model_path
+from learning_fc.enums import ControlMode
+from learning_fc.envs import GripperTactileEnv
 
-file_path = f"{model_path}/data/2023-08-04_11-15-06__wood.pkl"
-with open(file_path, "rb") as f:
-    data = pickle.load(f)
+from matplotlib.legend_handler import HandlerTuple
 
-q = np.array(data["obs"]["q"])
-force = np.array(data["obs"]["f"])
+ftheta = 0.0075
+oname = "sponge_mid"
+grasp_type = "dq"
+# grasp_type = "power"
+files_dir = f"{model_path}/data/{grasp_type}/"
 
-qdes = np.array(data["obs"]["qdes"])
-act = np.array(data["obs"]["act"])
-goal = np.array(data["goal"])
+tg = []
+wo = []
+fmax = []
+forces = []
+qs = []
+dts = []
+
+for fi in os.listdir(files_dir):
+    if oname not in fi: continue 
+
+    with open(f"{files_dir}{fi}", "rb") as f:
+        data = pickle.load(f)
+    
+    t = np.array(data["timestamps"])
+    q = np.array(data["obs"]["q"])
+    f = np.array(data["obs"]["f"])
+
+    tg.append(np.argmax(np.all(f>ftheta, axis=1)))
+    fmax.append(np.mean(np.max(f, axis=0)))
+    wo.append(np.abs(np.sum(q[tg[-1]])))
+
+    qs.append(q)
+    forces.append(f)
+
+    dts.append(np.array([
+        [(t[i]-t[i-1]).total_seconds(), (t[i]-t[i-1]).total_seconds()]
+        for i in np.arange(1,len(t))
+    ]))
+
+f_rob = forces[-1]
+q_rob = qs[-1]
+n_steps = len(q_rob)
+wo = np.median(wo)/2
+
+env = GripperTactileEnv(
+    control_mode=ControlMode.PositionDelta,
+    oy_init=0,
+    wo_range=[wo, wo],
+    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    noise_f=0.002,
+)
+
+q_env = []
+f_env = []
+env.reset()
+for _ in range(n_steps):
+    q_env.append(env.q)
+    f_env.append(env.force)
+    env.step ([-1,-1])
+q_env = np.array(q_env)
+f_env = np.array(f_env)
+
+fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 1]}, figsize=(13,8))
+
+xs = np.arange(n_steps)
+
+rq1, rq2 = axes[0,0].plot(xs, q_rob)
+eq1, eq2 = axes[0,0].plot(xs, q_env)
+axes[0,0].set_ylim(-0.001, 0.049)
+axes[0,0].legend([(rq1, rq2), (eq1, eq2)], ['robot', "sim"],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+
+rf1, rf2 = axes[0,1].plot(xs, f_rob)
+ef1, ef2 = axes[0,1].plot(xs, f_env)
+axes[0,1].set_ylim(-0.05, 0.7)
+axes[0,1].axhline(np.max(f_rob), c="red", ls="dashed", lw=0.7)
+axes[0,1].legend([(rf1, rf2), (ef1, ef2)], ['robot', "sim"],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
+
+r1, r2 = axes[1,0].plot(np.arange(n_steps-1), np.diff(q_rob, axis=0)/np.array(dts[-1]))
+e1, e2 = axes[1,0].plot(np.arange(n_steps-1), np.diff(q_env, axis=0)/np.array(dts[-1]))
+axes[0,1].legend([(r1, r2), (e1, e2)], ['robot', "sim"],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
 
 
-fig, axes = plt.subplots(ncols=3)
+r1, r2 = axes[1,1].plot(np.arange(n_steps-1), np.diff(f_rob, axis=0)/dts[-1])
+e1, e2 = axes[1,1].plot(np.arange(n_steps-1), np.diff(f_env, axis=0)/dts[-1])
+axes[1,1].legend([(r1, r2), (e1, e2)], [f'robot {np.max(np.diff(f_rob, axis=0)/dts[-1]):.2f}', f"sim {np.max(np.diff(f_env, axis=0)/dts[-1]):.2f}"],
+               handler_map={tuple: HandlerTuple(ndivide=None)})
 
-xs = np.arange(len(data["obs"]["q"]))
+for ax in axes.flatten():
+    ax.axvline(tg[-1], c="grey", ls="dashed", lw=0.7)
 
-axes[0].plot(xs, q)
-axes[0].plot(xs, qdes)
-axes[0].set_ylim(-0.001, 0.049)
-
-axes[1].plot(xs, force)
-axes[1].plot(xs, goal)
-axes[1].set_ylim(-0.05, 2.0)
-
-axes[2].plot(xs, act)
-axes[2].set_ylim(-1,1)
-ax22 = axes[2].twinx()
-ax22.plot()
-
+fig.tight_layout()
 plt.show()

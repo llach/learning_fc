@@ -16,8 +16,8 @@ class GripperTactileEnv(GripperEnv):
 
     OBJ_V_MAX = 0.0025
     
-    SOLREF = [0.02, 1] # default: [0.02, 1]
-    SOLIMP = [0.5, 0.95, 0.0066, 0.1, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLREF = [0.02, 1.0] # default: [0.02, 1]
+    SOLIMP = [0, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     SOLREF_RANGE = (
         [0.008, 0.8],   # minimum parameter values
@@ -29,9 +29,16 @@ class GripperTactileEnv(GripperEnv):
         [0.9, 0.95, 0.015, 0.55, 2] 
     )# sampling range for solimp parameters
 
+    BIASPRM = [0 -100 -8]
+
+    BIASPRM_RANGE = (
+        [0 -100 -9.5],
+        [0 -100 -6.5]
+    )
+
     def __init__(
             self,      
-            fgoal_range=[0.05, 0.9], 
+            fgoal_range=[0.05, 0.6], 
             wo_range=[0.01, 0.035], 
             oy_init=None, 
             oy_range=None,
@@ -45,6 +52,7 @@ class GripperTactileEnv(GripperEnv):
             ov_max=0.0001,
             sample_solref = False,
             sample_solimp = False,
+            sample_biasprm = False,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             max_contact_steps=-1,
@@ -55,14 +63,13 @@ class GripperTactileEnv(GripperEnv):
         self.rf_scale = rf_scale        # scaling factor for force reward
         self.ro_scale = ro_scale        # scaling factor for object movement penalty
         self.ra_scale = ra_scale        # scaling factor for action difference penalty
-        self.rv_scale = rv_scale        # scaling factor for joint velocity penalty
         self.rp_scale = rp_scale        # scaling factor for object proximity
-        self.co_scale = co_scale        # scaling factor for in-contact reward
         self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.sample_solref = sample_solref  # toggle solref sampling
         self.sample_solimp = sample_solimp  # toggle solimp sampling
+        self.sample_biasprm = sample_biasprm
         self.max_contact_steps = max_contact_steps
 
         if oy_init is not None:
@@ -71,6 +78,9 @@ class GripperTactileEnv(GripperEnv):
         # solver parameters that control object deformation and contact force behavior
         self.solref = self.SOLREF
         self.solimp = self.SOLIMP
+
+        # actuator parameters
+        self.biasprm = self.BIASPRM
 
         assert np.min(wo_range) >= 0.01 and np.max(wo_range)<=0.35, "wo_range has to be in [0.01, 0.035]"
 
@@ -123,13 +133,11 @@ class GripperTactileEnv(GripperEnv):
 
     def _get_reward(self):
         self.r_force    =   self.rf_scale * self._force_reward()
-        self.r_con      =   self.co_scale * self._contact_reward()
         self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
         self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_act      = - self.ra_scale * self._action_penalty()
-        self.r_qvel     = 0# - self.rv_scale * self._qdot_penalty()
 
-        return self.r_force + self.r_obj_pos + self.r_con + self.r_obj_prox + self.r_qvel + self.r_act
+        return self.r_force + self.r_obj_pos + self.r_obj_prox  + self.r_act
     
     def _is_done(self): 
         if self.max_contact_steps != -1 and self.t_since_force_closure >= self.max_contact_steps: return True
