@@ -17,7 +17,7 @@ class GripperTactileEnv(GripperEnv):
     OBJ_V_MAX = 0.0025
     
     SOLREF = [0.02, 1.0] # default: [0.02, 1]
-    SOLIMP = [0, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0.4, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     SOLREF_RANGE = (
         [0.008, 0.8],   # minimum parameter values
@@ -29,12 +29,14 @@ class GripperTactileEnv(GripperEnv):
         [0.9, 0.95, 0.015, 0.55, 2] 
     )# sampling range for solimp parameters
 
-    BIASPRM = [0 -100 -8]
+    BIASPRM = [0, -100, -8]
 
     BIASPRM_RANGE = (
-        [0 -100 -9.5],
-        [0 -100 -6.5]
+        [0, -100, -9.5],
+        [0, -100, -6.5]
     )
+
+    FSCALE_RANGE = [2.2, 3.2]
 
     def __init__(
             self,      
@@ -53,6 +55,7 @@ class GripperTactileEnv(GripperEnv):
             sample_solref = False,
             sample_solimp = False,
             sample_biasprm = False,
+            sample_fscale = False,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             max_contact_steps=-1,
@@ -69,6 +72,7 @@ class GripperTactileEnv(GripperEnv):
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.sample_solref = sample_solref  # toggle solref sampling
         self.sample_solimp = sample_solimp  # toggle solimp sampling
+        self.sample_fscale = sample_fscale
         self.sample_biasprm = sample_biasprm
         self.max_contact_steps = max_contact_steps
 
@@ -187,8 +191,13 @@ class GripperTactileEnv(GripperEnv):
         assert np.abs(self.wo) > np.abs(self.oy), "|wo| > |oy|"
         self.total_object_movement = 0
 
+        act_default = root.findall(".//general[@dyntype='none']")[0]
+        act_default.attrib["biasprm"] = " ".join(map(str, self.biasprm))
+
         # sample goal force
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
+
+        if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
