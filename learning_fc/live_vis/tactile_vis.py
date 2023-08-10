@@ -19,8 +19,8 @@ class TactileVis(VisBase):
         )
 
         # create plots and curves
-        self.plt_force = PIWrapper(self.win, title="Contact Forces", pens=["r", "y"], yrange=[-0.05, 1.2*env.fmax])
-        self.plt_cntct = PIWrapper(self.win, title="In Contact", pens=["r", "y"], yrange=[-0.1, 1.1], ticks=[0,1])
+        self.plt_force = PIWrapper(self.win, title="Contact Forces", pens=["r", "y"], yrange=[-0.05, 1.2*env.fmax*env.FSCALE_RANGE[1]])
+        self.plt_cntct = PIWrapper(self.win, title="Actions", pens=["r", "y"], yrange=[-1.05, 1.05], ticks=[-1,1])
         
         # draw lines at threshold and goal force
         self.draw_goal()
@@ -50,19 +50,19 @@ class TactileVis(VisBase):
         self.win.nextRow()
 
         amax = self.env.amax
-        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"], yrange=[-1.2*amax, 1.2*amax], ticks=[-amax, 0, amax])
+        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"])#, yrange=[-1.2*amax, 1.2*amax], ticks=[-amax, 0, amax])
         self.plt_vobj = PIWrapper(self.win, title="Object Velocity", pens=["r", "g", "b"])
 
-        self.plt_acc.draw_line(
-            name="upper_limit",
-            pos=amax,
-            angle=0
-        )
-        self.plt_acc.draw_line(
-            name="lower_limit",
-            pos=-amax,
-            angle=0
-        )
+        # self.plt_acc.draw_line(
+        #     name="upper_limit",
+        #     pos=amax,
+        #     angle=0
+        # )
+        # self.plt_acc.draw_line(
+        #     name="lower_limit",
+        #     pos=-amax,
+        #     angle=0
+        # )
 
         self.win.nextRow()
 
@@ -104,7 +104,14 @@ class TactileVis(VisBase):
             pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )
 
-        self.plt_force.draw_ticks([0, fgoal, self.env.fmax])
+        self.plt_force.draw_line(
+            name="noise_lower",
+            pos=round(self.env.fmax*self.env.f_scale, 3),
+            angle=0,
+            pen=dict(color="#FF0000", width=1, style=QtCore.Qt.PenStyle.DotLine)
+        )
+
+        self.plt_force.draw_ticks([0, round(fgoal, 2), round(self.env.fmax*self.env.FSCALE_RANGE[1], 2)])
 
     def update_plot(self, action, reward):
         self.t += 1
@@ -112,12 +119,12 @@ class TactileVis(VisBase):
 
         # store new data
         self.plt_force.update(self.env.force)
-        self.plt_cntct.update(self.env.in_contact)
+        self.plt_cntct.update(self.env.last_a)
 
         self.plt_pos.update(np.concatenate([self.env.q, self.env.qdes]))
         self.plt_vel.update(self.env.qdot)
 
-        self.plt_acc.update(self.env.qacc)
+        self.plt_acc.update(self.env.fdot)
         self.plt_vobj.update(np.abs(self.env.obj_v))
 
         self.plt_r.update(reward)

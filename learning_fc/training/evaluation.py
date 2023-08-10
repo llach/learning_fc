@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 from stable_baselines3.common.results_plotter import load_results, window_func, X_TIMESTEPS, EPISODES_WINDOW, ts2xy
 
-from learning_fc.utils import CsvReader
+from learning_fc.envs import GripperTactileEnv
+from learning_fc.utils import CsvReader, safe_unwrap
 from learning_fc.models import ForcePI, PosModel
 from learning_fc.training import make_env, make_model
 
@@ -15,7 +16,6 @@ TACTILE_ENV_MEMBERS = [
     "r_force",
     "r_obj_pos",
     "r_obj_prox",
-    "r_con",
     "r_act",
     "obj_v",
     "obj_pos"
@@ -79,6 +79,10 @@ def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=Non
     n_rollouts = len(goals)
     def set_env_goal(env, model, i, results, **kw):
         env.set_goal(goals[i])
+        if isinstance(safe_unwrap(env), GripperTactileEnv):
+            if env.fgoal > env.f_scale*env.fmax: # if the maximum force is smaller than the goal, raise it
+                env.set_attr("f_scale", (env.fgoal*1.10)/env.fmax)
+
         if reset_cb: results = reset_cb(env, model, i, results, **kw) or results
         return results
 
@@ -194,7 +198,7 @@ def plot_rollouts(env, res, plot_title):
     r_force = np.concatenate(res["r_force"]).reshape((-1,))
     r_obj_pos = np.concatenate(res["r_obj_pos"]).reshape((-1,))
     r_obj_prox = np.concatenate(res["r_obj_prox"]).reshape((-1,))
-    r_con = np.concatenate(res["r_con"]).reshape((-1,))
+    r_act = np.concatenate(res["r_act"]).reshape((-1,))
     cumr = np.concatenate(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
     eps_rew = np.array(res["eps_rew"]).reshape((-1,))
@@ -235,8 +239,7 @@ def plot_rollouts(env, res, plot_title):
     axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
     axes[2,0].plot(x, r_obj_pos, lw=1, label="r_obj_pos", c="orange")
     axes[2,0].plot(x, r_obj_prox, lw=1, label="r_obj_prox", c="red")
-    axes[2,0].plot(x, r_con, lw=1, label="r_con", c="yellow")
-    axes[2,0].plot(x, r_con, lw=1, label="r_act", c="green")
+    axes[2,0].plot(x, r_act, lw=1, label="r_act", c="green")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
@@ -352,7 +355,7 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     # comparison plot
     agent_oracle_comparison(
         env, model, fc, vis, 
-        goals=np.round(np.linspace(*env.fgoal_range, num=20), 4),
+        goals=np.round(np.linspace(*env.fgoal_range_max, num=20), 4),
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb,
         plot=True, trialdir=trialdir, 
         plot_title=plot_title.replace("\n", " - Baseline Comparison\n"))
@@ -361,7 +364,7 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     # plot a few rollouts in more detail
     a_res, o_res = agent_oracle_comparison(
         env, model, fc, vis, plot=False,
-        goals=np.round(np.linspace(*env.fgoal_range, num=nrollouts), 4),
+        goals=np.round(np.linspace(*env.fgoal_range_max, num=nrollouts), 4),
         reset_cb=force_reset_cb, after_step_cb=force_after_step_cb
     )
 

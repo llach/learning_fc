@@ -36,7 +36,7 @@ class GripperTactileEnv(GripperEnv):
         [0, -100, -6.5]
     )
 
-    FSCALE_RANGE = [2.2, 3.2]
+    FSCALE_RANGE = [0.7, 3.1]
 
     def __init__(
             self,      
@@ -54,8 +54,8 @@ class GripperTactileEnv(GripperEnv):
             ov_max=0.0001,
             sample_solref = False,
             sample_solimp = False,
-            sample_biasprm = False,
             sample_fscale = False,
+            sample_biasprm = False,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF, 
             max_contact_steps=-1,
@@ -95,6 +95,7 @@ class GripperTactileEnv(GripperEnv):
             **kwargs,
         )
 
+        self.fgoal_range_max = [0.05, self.fmax*self.FSCALE_RANGE[1]*0.95]
         self.set_goal(0)
 
     def _update_state(self):
@@ -194,10 +195,11 @@ class GripperTactileEnv(GripperEnv):
         act_default = root.findall(".//general[@dyntype='none']")[0]
         act_default.attrib["biasprm"] = " ".join(map(str, self.biasprm))
 
-        # sample goal force
-        self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
-
+        # force-related sampling
         if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
+        self.fgoal_range[1] = self.f_scale * self.fmax * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
+
+        self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 

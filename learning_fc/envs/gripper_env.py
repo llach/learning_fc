@@ -38,7 +38,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     def __init__(
             self, 
             amax=1.0, 
-            fmax=0.65, 
+            fmax=0.22, 
             vmax=0.02, 
             dq_max=0.002, 
             f_scale=1.0,
@@ -64,7 +64,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.control_mode = control_mode
 
         self.ain = np.array([0, 0])
-        self.last_vel = np.array([0, 0])
 
         observation_space = Box(
             low=np.float32(-1.), 
@@ -131,17 +130,17 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             self.data.joint("finger_joint_l").qpos[0],
             self.data.joint("finger_joint_r").qpos[0]
         ]) + np.random.normal(0.0, self.noise_q, (2,))
-        self.qdot = np.array([
-            self.data.joint("finger_joint_l").qvel[0],
-            self.data.joint("finger_joint_r").qvel[0]
-        ])
         self.qacc = np.array([
             self.data.joint("finger_joint_l").qacc[0],
             self.data.joint("finger_joint_r").qacc[0]
-        ])
-
-        # contact force and binary in_contact state
+        ]) 
+        self.qdot = (self.last_q - self.q)/self.dt
+        
+        # contact force and force change
         self.force = self.f_scale * get_pad_forces(self.model, self.data) + np.random.normal(0.0, self.noise_f, (2,))
+        self.fdot = (self.last_f - self.force)/self.dt
+        
+        # binary contact states
         self.in_contact  = self.force > self.ftheta
         self.had_contact = self.in_contact | self.had_contact
 
@@ -150,6 +149,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if on == Observation.Des: return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel: return safe_rescale(self.qdot, [-self.vmax, self.vmax])
         if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
+        if on == Observation.FDot: return safe_rescale(self.force, [0, self.fmax])
         if on == Observation.Action: return self.ain
         if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
         if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
@@ -217,8 +217,11 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         self.qdes = np.array([self.qinit_l, self.qinit_r])
         self.ain = np.array([0, 0])
-        self.last_vel = np.array([0, 0])
         self.had_contact = np.array([0, 0], dtype=bool)
+
+        self.last_a = np.array([0, 0])
+        self.last_q = np.array([self.qinit_l, self.qinit_r])
+        self.last_f = np.array([0, 0])
         
         self.t = 0
         self.t_since_force_closure = 0
@@ -241,6 +244,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         
         if self.t == 0: 
             self.last_a = a.copy() # avoid penalty on first timestep
+
         self.ain = a.copy()
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
@@ -258,8 +262,11 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         don = self._is_done()  # terminated
 
         self.t += 1
+
         self.last_a = a.copy()
-        
+        self.last_q = self.q.copy()
+        self.last_f = self.force.copy()
+
         return (
             obs,
             rew,

@@ -1,3 +1,5 @@
+import learning_fc
+
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
@@ -6,13 +8,15 @@ ALG  = "ppo"
 OBS  = [
     Observation.Pos, 
     Observation.Des, 
+    # Observation.Vel,
     Observation.Force, 
     Observation.ForceDelta,
+    # Observation.FDot,
     Observation.HadCon,
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta
-TIME = int(25e5)
+TIME = int(40e5)
 STOP = int(15e5)
 
 if __name__ == "__main__": 
@@ -74,13 +78,17 @@ if __name__ == "__main__":
             control_mode=CTRL, 
             obs_config=OBS, 
             ov_max=0.0002,
-            sample_solref=True,
-            sample_solimp=True,
-            co_scale=0,
-            rp_scale=0.2,
             ro_scale=0,
             ra_scale=0,
+            rp_scale=0.2,
             rf_scale=0.8,
+            sample_solref=True,
+            sample_solimp=True,
+            sample_fscale=True,
+            sample_biasprm=True,
+            noise_f=0.002,
+            ftheta=0.0075,
+            model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
         ), 
         model_kw=dict(
             learning_rate=6e-4,

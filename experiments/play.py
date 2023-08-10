@@ -19,32 +19,42 @@ env, model, vis, _ = make_eval_env_model(
     with_vis=with_vis, 
     checkpoint="best", 
     env_override = dict(
-        model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
-        f_scale=3.0,
-        sample_fscale=True,
-        fgoal_range=[0.05, 0.6],
-        sample_biasprm=True
+        # model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+        # f_scale=3.0,
+        # sample_fscale=True,
+        # fgoal_range=[0.05, 0.6],
+        # sample_biasprm=True
+        noise_f=0.002,
+        ftheta=0.008,
     )
 )
 
-# model = ForcePI(env, Kp=0.1, Ki=0.5)
+# model = ForcePI(env)#, Kp=0.1, Ki=0.5)
 # model = StaticModel(-1)
 # model = PosModel(env)
 
-env.set_attr("fgoal_range", [0.05, 0.6])
-env.set_attr("sample_solref", False)
+# env.set_attr("fgoal_range", [0.05, 0.6])
+# env.set_attr("sample_solref", False)
 # env.set_attr("sample_solimp", False)
 
 # env.set_solver_parameters(solref=[0.05, 1.1])
 
+
+fscales = np.linspace(*env.FSCALE_RANGE, N_GOALS)
+
+
 cumrews = np.zeros((N_GOALS,))
 for i in range(N_GOALS):
     obs, _ = env.reset()
+
+    env.set_attr("f_scale", fscales[i])
+    env.set_goal((fscales[i]*env.fmax)/2)
+
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()
-    print(env.f_scale)
     
-    for j in range(150):
+    print(env.f_scale, env.fgoal)
+    for j in range(200):
         ain, _ = model.predict(obs, deterministic=True)
 
         obs, r, _, _, _ = env.step(ain)

@@ -14,6 +14,7 @@ class Observation(str, Enum):
     Des="qdes"
     Acc="qacc"
     Force="f"
+    FDot="fdot"
     Action="act"
 
     PosDelta="dq"
