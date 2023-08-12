@@ -35,10 +35,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 50,
     }
 
+    FMAX = 0.22
+    FSCALE_RANGE = [0.7, 3.1]
+
     def __init__(
             self, 
             amax=1.0, 
-            fmax=0.22, 
             vmax=0.02, 
             dq_max=0.002, 
             f_scale=1.0,
@@ -53,7 +55,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
-        self.fmax = fmax        # maximum contact force
         self.dq_max = dq_max    # limits of action space for position delta control mode
         self.ftheta = ftheta    # contact force noise threshold
         self.f_scale = f_scale  # force scaling factor
@@ -81,6 +82,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,
         )
+
+        self.max_fmax = self.FMAX*self.FSCALE_RANGE[1]
+        self.fgoal_range_max = [0.05, 0.95*self.max_fmax]
     
     def _name_2_qpos_id(self, name):
         """ given a joint name, return their `qpos`-array address
@@ -148,8 +152,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Des: return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel: return safe_rescale(self.qdot, [-self.vmax, self.vmax])
-        if on == Observation.Force: return safe_rescale(self.force, [0, self.fmax])
-        if on == Observation.FDot: return safe_rescale(self.force, [0, self.fmax])
+        if on == Observation.Force: return safe_rescale(self.force, [0, self.max_fmax])
+        if on == Observation.FDot: return self.fdot 
         if on == Observation.Action: return self.ain
         if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
         if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])

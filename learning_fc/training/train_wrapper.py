@@ -118,13 +118,6 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
             with_vis=False, 
             checkpoint="best"
         )
-        _, _ = env_eval_fn[env_name](
-            trialdir, 
-            trial_name=trial_name, 
-            plot_title=plot_title, 
-            with_vis=False, 
-            checkpoint="latest"
-        )
 
         if platform == "darwin": # macOS gets notifications
             import pync

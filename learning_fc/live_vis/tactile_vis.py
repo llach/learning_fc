@@ -19,7 +19,7 @@ class TactileVis(VisBase):
         )
 
         # create plots and curves
-        self.plt_force = PIWrapper(self.win, title="Contact Forces", pens=["r", "y"], yrange=[-0.05, 1.2*env.fmax*env.FSCALE_RANGE[1]])
+        self.plt_force = PIWrapper(self.win, title="Contact Forces", pens=["r", "y"], yrange=[-0.05, 1.2*env.max_fmax])
         self.plt_cntct = PIWrapper(self.win, title="Actions", pens=["r", "y"], yrange=[-1.05, 1.05], ticks=[-1,1])
         
         # draw lines at threshold and goal force
@@ -106,12 +106,12 @@ class TactileVis(VisBase):
 
         self.plt_force.draw_line(
             name="noise_lower",
-            pos=round(self.env.fmax*self.env.f_scale, 3),
+            pos=round(self.env.FMAX*self.env.f_scale, 3),
             angle=0,
             pen=dict(color="#FF0000", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )
 
-        self.plt_force.draw_ticks([0, round(fgoal, 2), round(self.env.fmax*self.env.FSCALE_RANGE[1], 2)])
+        self.plt_force.draw_ticks([0, round(fgoal, 2), round(self.env.max_fmax, 2)])
 
     def update_plot(self, action, reward):
         self.t += 1

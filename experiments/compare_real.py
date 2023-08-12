@@ -25,9 +25,9 @@ def get_q_f(env, n_steps):
 
 
 ftheta = 0.0075
-oname = "wood_mid"
-grasp_type = "dq"
-# grasp_type = "power"
+oname = "sponge_mid"
+# grasp_type = "dq"
+grasp_type = "power"
 files_dir = f"{model_path}/data/{grasp_type}/"
 
 tg = []
@@ -65,7 +65,7 @@ n_steps = len(q_rob)
 wo = np.median(wo)/2
 
 env = GripperTactileEnv(
-    control_mode=ControlMode.PositionDelta,
+    control_mode=ControlMode.Position,
     oy_init=0,
     wo_range=[wo, wo],
     model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
@@ -100,6 +100,8 @@ eq1, eq2 = axes[0,0].plot(xs, q_bef)
 axes[0,0].set_ylim(-0.001, 0.049)
 axes[0,0].legend([(rq1, rq2), (eq1, eq2)], ['robot', "sim"],
                handler_map={tuple: HandlerTuple(ndivide=None)})
+axes[0,0].set_title("joint positions")
+axes[0,0].set_ylabel("before adaptation")
 
 rf1, rf2 = axes[0,1].plot(xs, f_rob)
 ef1, ef2 = axes[0,1].plot(xs, f_bef)
@@ -107,16 +109,18 @@ axes[0,1].set_ylim(-0.05, 1.2)
 axes[0,1].axhline(np.max(f_rob), c="red", ls="dashed", lw=0.7)
 axes[0,1].legend([(rf1, rf2), (ef1, ef2)], ['robot', "sim"],
                handler_map={tuple: HandlerTuple(ndivide=None)})
+axes[0,1].set_title("forces")
 
 """ second row
 """
 
 rq1, rq2 = axes[1,0].plot(xs, q_rob)
 eq1, eq2 = axes[1,0].plot(xs, q_env)
-axes[1,0].fill_between(xs, np.min(q_low, axis=1), np.max(q_high, axis=1), color="red", alpha=0.2)
+pa = axes[1,0].fill_between(xs, np.min(q_low, axis=1), np.max(q_high, axis=1), color="red", alpha=0.2)
 axes[1,0].set_ylim(-0.001, 0.049)
-axes[1,0].legend([(rq1, rq2), (eq1, eq2)], ['robot', "sim"],
+axes[1,0].legend([(rq1, rq2), (eq1, eq2), (pa,)], ['robot', "sim", "motor variation"],
                handler_map={tuple: HandlerTuple(ndivide=None)})
+axes[1,0].set_ylabel("after adaptation")
 
 rf1, rf2 = axes[1,1].plot(xs, f_rob)
 ef1, ef2 = axes[1,1].plot(xs, f_env)

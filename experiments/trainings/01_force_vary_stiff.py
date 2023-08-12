@@ -8,15 +8,13 @@ ALG  = "ppo"
 OBS  = [
     Observation.Pos, 
     Observation.Des, 
-    # Observation.Vel,
     Observation.Force, 
     Observation.ForceDelta,
-    # Observation.FDot,
     Observation.HadCon,
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta
-TIME = int(40e5)
+TIME = int(50e5)
 STOP = int(15e5)
 
 if __name__ == "__main__": 
@@ -96,7 +94,7 @@ if __name__ == "__main__":
                 net_arch=[60,60]
             )
         ),
-        frame_stack=1,
+        frame_stack=2,
         schedules=[
             ro_schedule,
             ra_schedule,

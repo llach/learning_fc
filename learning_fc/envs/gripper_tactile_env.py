@@ -17,7 +17,7 @@ class GripperTactileEnv(GripperEnv):
     OBJ_V_MAX = 0.0025
     
     SOLREF = [0.02, 1.0] # default: [0.02, 1]
-    SOLIMP = [0.4, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLIMP = [0, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
 
     SOLREF_RANGE = (
         [0.008, 0.8],   # minimum parameter values
@@ -25,7 +25,7 @@ class GripperTactileEnv(GripperEnv):
     ) # sampling range for solref parameters
 
     SOLIMP_RANGE = (
-        [0.4, 0.9,  0.0,   0.0,  2],
+        [0.0, 0.9,  0.0,   0.0,  2],
         [0.9, 0.95, 0.015, 0.55, 2] 
     )# sampling range for solimp parameters
 
@@ -35,8 +35,6 @@ class GripperTactileEnv(GripperEnv):
         [0, -100, -9.5],
         [0, -100, -6.5]
     )
-
-    FSCALE_RANGE = [0.7, 3.1]
 
     def __init__(
             self,      
@@ -95,7 +93,7 @@ class GripperTactileEnv(GripperEnv):
             **kwargs,
         )
 
-        self.fgoal_range_max = [0.05, self.fmax*self.FSCALE_RANGE[1]*0.95]
+        
         self.set_goal(0)
 
     def _update_state(self):
@@ -197,18 +195,17 @@ class GripperTactileEnv(GripperEnv):
 
         # force-related sampling
         if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
-        self.fgoal_range[1] = self.f_scale * self.fmax * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
+        self.fgoal_range[1] = self.f_scale * self.FMAX * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
 
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
     def set_goal(self, x): 
-        # set goal force and calculate interval sizes above and below goal force
         self.fgoal = x
-        self.frange_upper = self.fmax - self.fgoal
-        self.frange_lower = self.fgoal # fmin is 0
-        self.fram = min([self.frange_lower, self.frange_upper])
+        if self.fgoal > self.f_scale*self.FMAX: # if the maximum force is smaller than the goal, raise it
+            self.f_scale = (self.fgoal*1.10)/self.FMAX
+            print(f"adjusted f_scale to {self.f_scale}")
 
     def set_solver_parameters(self, solimp=None, solref=None):
         """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters

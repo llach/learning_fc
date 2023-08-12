@@ -18,7 +18,8 @@ TACTILE_ENV_MEMBERS = [
     "r_obj_prox",
     "r_act",
     "obj_v",
-    "obj_pos"
+    "obj_pos",
+    "f_scale",
 ]
 
 POSITION_ENV_MEMBERS = [
@@ -38,6 +39,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
         qdot=[[] for _ in range(n_rollouts)],
         qacc=[[] for _ in range(n_rollouts)],
         force=[[] for _ in range(n_rollouts)],
+        actions=[[] for _ in range(n_rollouts)],
         in_contact=[[] for _ in range(n_rollouts)],
         r=[[] for _ in range(n_rollouts)],
         cumr=[[] for _ in range(n_rollouts)],
@@ -57,7 +59,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
 
             action, _ = model.predict(obs, deterministic=True)
 
-            obs, reward, terminated, truncated, _ = env.step(action)
+            obs, reward, terminated, truncated, _ = env.step(action.copy())
             done = terminated or truncated
 
             results["q"][i].append(env.q)
@@ -68,6 +70,7 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
             results["in_contact"][i].append(env.in_contact)
             results["r"][i].append(reward)
             results["cumr"][i].append(sum(results["r"][i]))
+            results["actions"][i].append(action)
 
             if vis: vis.update_plot(action=action, reward=reward)
             if after_step_cb: results = after_step_cb(env, model, i, results) or results
@@ -79,9 +82,6 @@ def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=Non
     n_rollouts = len(goals)
     def set_env_goal(env, model, i, results, **kw):
         env.set_goal(goals[i])
-        if isinstance(safe_unwrap(env), GripperTactileEnv):
-            if env.fgoal > env.f_scale*env.fmax: # if the maximum force is smaller than the goal, raise it
-                env.set_attr("f_scale", (env.fgoal*1.10)/env.fmax)
 
         if reset_cb: results = reset_cb(env, model, i, results, **kw) or results
         return results
@@ -199,6 +199,7 @@ def plot_rollouts(env, res, plot_title):
     r_obj_pos = np.concatenate(res["r_obj_pos"]).reshape((-1,))
     r_obj_prox = np.concatenate(res["r_obj_prox"]).reshape((-1,))
     r_act = np.concatenate(res["r_act"]).reshape((-1,))
+    actions = np.concatenate(res["actions"])
     cumr = np.concatenate(res["cumr"]).reshape((-1,))
     goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
     eps_rew = np.array(res["eps_rew"]).reshape((-1,))
@@ -228,12 +229,12 @@ def plot_rollouts(env, res, plot_title):
     axes[1,0].axhline(-env.vmax, lw=0.7, ls="dashed", c="grey")
     axes[1,0].axhline(env.vmax, lw=0.7, ls="dashed", c="grey")
 
-    axes[1,1].set_title("joint acceleration")
-    axes[1,1].plot(x, qacc[:,0], lw=1)
-    axes[1,1].plot(x, qacc[:,1], lw=1)
-    axes[1,1].set_ylim(-1.1*env.amax, 1.1*env.amax)
-    axes[1,1].axhline(-env.amax, lw=0.7, ls="dashed", c="grey")
-    axes[1,1].axhline(env.amax, lw=0.7, ls="dashed", c="grey")
+    axes[1,1].set_title("actions")
+    axes[1,1].plot(x, actions, lw=1)
+    axes[1,1].set_ylim(-1.5, 1.05)
+    axes[1,1].axhline(-1, lw=0.7, ls="dashed", c="grey")
+    axes[1,1].axhline(1, lw=0.7, ls="dashed", c="grey")
+    axes[1,1].axhline(0, lw=0.7, ls="dashed", c="grey")
 
     axes[2,0].set_title("partial rewards")
     axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
@@ -339,12 +340,11 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     if plot_title is None: plot_title = params["train"]["plot_title"]
 
     # recover relevant parameters
-    prefix = f"{checkpoint}/"+"__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
+    prefix = "__".join(trial_name.split("__")[2:])+"__" # cut off first two name components (date and env name)
     timesteps = int(params["train"]["timesteps"])
     trial_name = params["train"]["trial_name"]
     plot_title = f'{plot_title or "Force Control"} |{checkpoint.upper()}|\n{trial_name}'
-    os.makedirs(f"{trialdir}/{checkpoint}/", exist_ok=True)
-
+    os.makedirs(f"{trialdir}/", exist_ok=True)
 
     # learning curve
     plot_results([trialdir], timesteps, X_TIMESTEPS, task_name=plot_title.replace("\n", " - Learning Curve\n"), figsize=(11.5, 6.8))
@@ -374,12 +374,79 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     plot_rollouts(env, o_res, plot_title=plot_title.replace("\n", " - BASELINE\n"))
     plt.savefig(f"{trialdir}/{prefix}rollouts_baseline.png")
 
+    print("stiffness eval policy")
+    stiffness_var_plot(env, model, vis, 5, 6, plot_title.replace("\n", " - POLICY\n"))
+    plt.savefig(f"{trialdir}/{prefix}stiff_var_policy.png")
+
+    print("stiffness eval baseline")
+    stiffness_var_plot(env, fc, vis, 5, 6, plot_title.replace("\n", " - BASELINE\n"))
+    plt.savefig(f"{trialdir}/{prefix}stiff_var_baseline.png")
+
     cumr_a = np.mean(safe_last_cumr(a_res))
     cumr_o = np.mean(safe_last_cumr(o_res))
 
     print("tactile eval done!")
 
     return cumr_a, cumr_o
+
+def stiffness_var_plot(env, model, vis, n_goals, n_trials, plot_title):
+    sfc = env.sample_fscale
+    env.set_attr("sample_fscale", False)
+
+    reses = []
+    fscales = np.linspace(*env.FSCALE_RANGE, n_goals)
+    for fs in fscales:
+        fmax = env.FMAX*fs
+        env.set_attr("f_scale", fs)
+
+        reses.append(
+            deterministic_eval(
+                env, 
+                model, 
+                vis, 
+                np.linspace(0.05*fmax, 0.95*fmax, n_trials),
+                reset_cb=force_reset_cb,
+                after_step_cb=force_after_step_cb
+            )
+        )
+    env.set_attr("sample_fscale", sfc)
+
+    fig, axes = plt.subplots(nrows=n_goals, ncols=2, figsize=(10, 0.5+n_goals*2.5)) 
+
+    for i, (res, fs) in enumerate(zip(reses, fscales)):
+        n_steps  = len(res["q"][0])
+        fmax = env.FMAX*fs
+
+        eps_rew = np.array(res["eps_rew"]).reshape((-1,))
+        force = np.concatenate(res["force"])
+        actions = np.concatenate(res["actions"])
+        goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
+
+        x = np.arange(force.shape[0])
+
+        axes[i,0].plot(x, force)
+        axes[i,0].plot(x, goals)
+        axes[i,0].set_ylabel(f"f_alpha {fs:.2f} | f_max {fmax:.2f}")
+        axes[i,0].set_ylim(-0.02, fmax*1.13)
+        axes[i,0].axhline(fmax, lw=.7, ls="dashed", c="red")
+
+        ty = 1.03*fmax
+        for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), eps_rew): 
+            axes[i,0].text(tx, ty, int(epsr))
+
+        axes[i,1].plot(x, actions)
+        axes[i,1].set_ylim(-1.05, 0.2)
+
+        axes[0,0].set_title("forces")
+        axes[0,1].set_title("actions")
+
+    reset_lines = ((np.arange(n_trials)+1)*n_steps)[:-1]
+    for ax in axes.flatten():
+        for rl in reset_lines:
+            ax.axvline(rl, lw=.7, ls="dashed", c="grey")
+
+    fig.suptitle(plot_title)
+    fig.tight_layout()
 
 
 def plot_pos_rollouts(env, res, plot_title):

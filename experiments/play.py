@@ -11,8 +11,9 @@ from learning_fc.utils import find_latest_model_in_path
 N_GOALS  = 10
 with_vis = 1;
 # trial = f"{model_path}/30_base"
-# trial = f"{model_path}/2023-08-03_17-09-24__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1"
-trial = find_latest_model_in_path(model_path, filters=["ppo"])
+trial = f"{model_path}/2023-08-11_17-38-07__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-3"
+# trial = find_latest_model_in_path(model_path, filters=["ppo"])
+print(trial)
 
 env, model, vis, _ = make_eval_env_model(
     trial, 
@@ -48,12 +49,12 @@ for i in range(N_GOALS):
     obs, _ = env.reset()
 
     env.set_attr("f_scale", fscales[i])
-    env.set_goal((fscales[i]*env.fmax)/2)
+    # env.set_goal((fscales[i]*env.FMAX)/2)
+    env.set_goal(np.random.uniform(0.05, fscales[i]*env.FMAX))
 
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()
     
-    print(env.f_scale, env.fgoal)
     for j in range(200):
         ain, _ = model.predict(obs, deterministic=True)
 
