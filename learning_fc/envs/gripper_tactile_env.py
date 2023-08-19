@@ -195,6 +195,7 @@ class GripperTactileEnv(GripperEnv):
 
         # force-related sampling
         if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
+        self.fgoal_range[0] = self.f_scale * self.FMAX * 0.05
         self.fgoal_range[1] = self.f_scale * self.FMAX * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
 
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))

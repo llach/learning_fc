@@ -21,7 +21,7 @@ env_eval_fn = dict(
     gripper_pos=pos_eval
 )
 
-def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame_stack):
+def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame_stack, model_kw={}):
     # get date and env params
     datestr = datetime.utcnow().strftime(datefmt)
     epar = {**get_constructor_params(envname2cls[env_name]), **env_kw}
@@ -31,11 +31,15 @@ def generate_trial_name_and_plot_title(env_name, env_kw, model_name, nenv, frame
         datestr, 
         env_name, 
         model_name, 
-        epar["control_mode"], 
-        f"obs_{'-'.join(epar['obs_config'])}",
-        f"nenv-{nenv}",
+        # epar["control_mode"], 
+        # f"obs_{'-'.join(epar['obs_config'])}",
+        # f"nenv-{nenv}",
         f"k-{frame_stack}"
     ]
+    if "vf_coef" in model_kw: _name.append(f"vf-{model_kw['vf_coef']}")
+    if "ent_coef" in model_kw: _name.append(f"ent-{model_kw['ent_coef']}")
+    if "learning_rate" in model_kw: _name.append(f"lr-{model_kw['learning_rate']}")
+
     _title = [
         model_name.upper(),
         f"{str(epar['control_mode']).replace('.', ': ')}", 
@@ -49,7 +53,7 @@ def train(env_name="gripper_tactile", model_name="ppo", nenv=1, frame_stack=1, m
     tkw = {**model_defaults[model_name], **train_kw}
 
     # build trial name and dir
-    trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, nenv=nenv, frame_stack=frame_stack, env_kw=env_kw,)
+    trial_name, plot_title = generate_trial_name_and_plot_title(env_name=env_name, model_name=model_name, nenv=nenv, frame_stack=frame_stack, env_kw=env_kw, model_kw=model_kw)
     trialdir = f"{logdir}/{trial_name}/"
 
     print( "##########################")

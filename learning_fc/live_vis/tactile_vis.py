@@ -30,6 +30,17 @@ class TactileVis(VisBase):
                 angle=0
             )
 
+        self.plt_cntct.draw_line(
+            name="a_min",
+            pos=-1,
+            angle=0
+        )
+        self.plt_cntct.draw_line(
+            name="a_max",
+            pos=1,
+            angle=0
+        )
+        
         self.win.nextRow()
 
         self.plt_pos = PIWrapper(self.win, title="Joint Positions", pens=["r", "y", "c", "b"], yrange=[-0.005, 0.05], ticks=[0.045, 0.02, 0.0])
