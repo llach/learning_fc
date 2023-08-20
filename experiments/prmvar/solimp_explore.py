@@ -62,7 +62,7 @@ env.close()
 
 
 set_rcParams(usetex=True)
-fig, ax = plt.subplots(figsize=(7.8, 5.5))
+fig, ax = plt.subplots(figsize=(1.5*7.8, 1.5*5.5))
 
 lines = []
 stable_tresh = 6

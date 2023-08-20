@@ -4,13 +4,14 @@ import learning_fc
 import numpy as np
 import matplotlib.pyplot as plt
 
-from learning_fc.plotting import grey, purple, green, set_rcParams, setup_axis, finish_fig
+from learning_fc.plotting import grey, purple, green, set_rcParams, setup_axis, finish_fig, PLOTMODE, FIGTYPE
 
 with open(f"{learning_fc.__path__[0]}/../forces.pkl", "rb") as f:
     forces = pickle.load(f)
 
-set_rcParams(usetex=True)
-fig, ax = plt.subplots(figsize=(7.8, 5.5))
+mode = PLOTMODE.camera_ready
+set_rcParams(mode=mode, ftype=FIGTYPE.single)
+fig, ax = plt.subplots()
 
 lines = []
 stable_tresh = 7
@@ -31,10 +32,8 @@ legend_items =[
 
 setup_axis(
     ax, 
-    xlabel=r"$t$", 
-    ylabel=r"$f_\text{left}$", 
-    # xlabel=r"t", 
-    # ylabel=r"f", 
+    xlabel=r"$t$" if mode == PLOTMODE.camera_ready else "t", 
+    ylabel=r"$f^\text{left}$" if mode == PLOTMODE.camera_ready else "force", 
     xlim=[0, 200], 
     ylim=[0, 0.3],
     legend_items=legend_items,
@@ -42,4 +41,5 @@ setup_axis(
 )
 
 finish_fig(fig)
-plt.show()
+plt.savefig(f"test")
+if mode == PLOTMODE.debug: plt.show()
