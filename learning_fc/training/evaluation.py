@@ -195,21 +195,22 @@ def plot_rollouts(env, res, plot_title):
     res["qdot"] = np.concatenate(res["qdot"])
     res["qacc"] = np.concatenate(res["qacc"])
     res["force"] = np.concatenate(res["force"])
+    res["actions"] = np.concatenate(res["actions"])
+    res["obj_pos"] = np.concatenate(res["obj_pos"])
+    res["in_contact"] = np.array(res["in_contact"])
+
 
     res["r_force"] = np.concatenate(res["r_force"]).reshape((-1,))
     res["r_obj_pos"] = np.concatenate(res["r_obj_pos"]).reshape((-1,))
     res["r_obj_prox"] = np.concatenate(res["r_obj_prox"]).reshape((-1,))
     res["r_act"] = np.concatenate(res["r_act"]).reshape((-1,))
-    res["actions"] = np.concatenate(res["actions"])
-    res["obj_pos"] = np.concatenate(res["obj_pos"])
     res["obj_v"] = np.concatenate(res["obj_v"]).reshape((-1,))
     res["f_scale"] = np.concatenate(res["f_scale"]).reshape((-1,))
     res["cumr"] = np.concatenate(res["cumr"]).reshape((-1,))
-    res["goals"] = np.repeat(np.array(res["goals"]).reshape((-1,)), 200)
     res["r"] = np.array(res["r"]).reshape((-1,))
     res["eps_rew"] = np.array(res["eps_rew"]).reshape((-1,))
-    res["in_contact"] = np.array(res["in_contact"])
-
+   
+    res["goals"] = np.repeat(np.array(res["goals"]).reshape((-1,)), 200)
     x = np.arange(q.shape[0])
 
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))

@@ -6,22 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from learning_fc import model_path
+from learning_fc.utils import get_q_f
 from learning_fc.enums import ControlMode
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
-
-def get_q_f(env, n_steps):
-    q_env = []
-    f_env = []
-    env.reset()
-    for _ in range(n_steps):
-        q_env.append(env.q)
-        f_env.append(env.force)
-        env.step ([-1,-1])
-    q_env = np.array(q_env)
-    f_env = np.array(f_env)
-    return q_env, f_env
-
 
 oname = "wood_mid"
 files_dir = f"{model_path}/data/dq/"

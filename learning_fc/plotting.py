@@ -22,6 +22,10 @@ class Colors(str, Enum):
     act_var_mean = "#05A143"
     act_var_var = "#03692C"
 
+    solimp_var = "#691639"
+    solref_var = "#762255"
+    fscale_var = "#951981"
+
     """ blue / orange pairs
     """
     tab10_0 = "#0192F8"

@@ -31,6 +31,20 @@ def find_latest_model_in_path(path, filters=[]):
     assert trial_name is not None, f"could not find a trial under {path} with filters {filters}"
     return trial_name
 
+def get_q_f(env, n_steps):
+    """ quick rollouts for gripper closing
+    """
+    q_env = []
+    f_env = []
+    env.reset()
+    for _ in range(n_steps):
+        q_env.append(env.q)
+        f_env.append(env.force)
+        env.step ([-1,-1])
+    q_env = np.array(q_env)
+    f_env = np.array(f_env)
+    return q_env, f_env
+
 """ model / env creation
 """
 

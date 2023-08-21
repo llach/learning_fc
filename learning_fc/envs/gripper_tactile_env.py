@@ -27,12 +27,12 @@ class GripperTactileEnv(GripperEnv):
         [0.025, 1.1]     # maximum parameter values
     ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.99, 0.99, 0.001, 0.0, 1]
+    SOLIMP_HARD = [0.00, 0.99, 0.001, 0.0, 1]
     SOLIMP_SOFT = [0.00, 0.99, 0.015, 0.5, 3]
 
     SOLIMP_RANGE = (
-        [0.00, 0.90, 0.001, 0.0, 1],
-        [0.99, 0.99, 0.015, 0.5, 3] 
+        [0.00, 0.90, 0.001, 0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
+        [0.00, 0.99, 0.015, 0.5, 3] 
     )# sampling range for solimp parameters
 
     BIASPRM = [0, -100, -8]
