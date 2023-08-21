@@ -16,17 +16,20 @@ class GripperTactileEnv(GripperEnv):
 
     OBJ_V_MAX = 0.0025
     
-    SOLREF = [0.02, 1.0] # default: [0.02, 1]
-    SOLIMP = [0.9, 0.95, 0.01, 0.2, 1] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+    SOLREF = [0.02, 1.0]
+    SOLIMP = [0.9, 0.95, 0.091, 0.5, 1]
 
     SOLREF_RANGE = (
         [0.008, 0.8],   # minimum parameter values
         [0.05, 1.1]     # maximum parameter values
     ) # sampling range for solref parameters
 
+    SOLIMP_HARD = [0.99, 0.99, 0.001, 0.0, 1]
+    SOLIMP_SOFT = [0.00, 0.99, 0.015, 0.5, 3]
+
     SOLIMP_RANGE = (
-        [0.0, 0.9,  0.0,   0.0,  2],
-        [0.9, 0.95, 0.015, 0.55, 2] 
+        [0.00, 0.90, 0.001, 0.0, 1],
+        [0.99, 0.99, 0.015, 0.5, 3] 
     )# sampling range for solimp parameters
 
     BIASPRM = [0, -100, -8]
@@ -42,21 +45,18 @@ class GripperTactileEnv(GripperEnv):
             wo_range=[0.01, 0.035], 
             oy_init=None, 
             oy_range=None,
-            xi_max=0.005,
+            xi_max=0.006,
             rf_scale=1.0, 
             ro_scale=1.0, 
             ra_scale=0.0,
-            rv_scale=0.0, 
             rp_scale=0.0, 
-            co_scale=0.0,
             ov_max=0.0001,
             sample_solref = False,
             sample_solimp = False,
             sample_fscale = False,
             sample_biasprm = False,
             control_mode=ControlMode.Position, 
-            obs_config=ObsConfig.F_DF, 
-            max_contact_steps=-1,
+            obs_config=ObsConfig.F_DF,
             **kwargs
         ):
         self.ov_max   = ov_max
@@ -72,7 +72,6 @@ class GripperTactileEnv(GripperEnv):
         self.sample_solimp = sample_solimp  # toggle solimp sampling
         self.sample_fscale = sample_fscale
         self.sample_biasprm = sample_biasprm
-        self.max_contact_steps = max_contact_steps
 
         if oy_init is not None:
             self.oy_range = [oy_init, oy_init]
@@ -92,7 +91,6 @@ class GripperTactileEnv(GripperEnv):
             control_mode=control_mode,
             **kwargs,
         )
-
         
         self.set_goal(0)
 
@@ -142,8 +140,7 @@ class GripperTactileEnv(GripperEnv):
 
         return self.r_force + self.r_obj_pos + self.r_obj_prox  + self.r_act
     
-    def _is_done(self): 
-        if self.max_contact_steps != -1 and self.t_since_force_closure >= self.max_contact_steps: return True
+    def _is_done(self): return False
 
     def _enum2obs(self, on):
         if on == Observation.ObjVel: return safe_rescale([self.obj_v[1]], [0.0, self.OBJ_V_MAX])

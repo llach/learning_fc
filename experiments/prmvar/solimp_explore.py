@@ -8,16 +8,15 @@ from learning_fc import safe_rescale
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlMode
 from learning_fc.live_vis import TactileVis
-from learning_fc.plotting import grey, purple, green, set_rcParams, setup_axis, finish_fig
 
 with_vis = 0
 trials   = 10
 steps    = 200
 
-# pname, sidx, values = "dmin", 0, np.linspace(0.4, 0.9, trials)
-pname, sidx, values = "width", 2, np.linspace(0.005, 0.05, trials)
+pname, sidx, values = "dmin", 0, np.linspace(0.0, 0.9, trials)
+# pname, sidx, values = "width", 2, np.linspace(0.005, 0.05, trials)
 # pname, sidx, values = "midpoint", 3, np.linspace(0, 1.1, trials)
-# pname, sidx, values = "power", 4, np.arange(2)+1
+# pname, sidx, values = "power", 4, np.arange(10)+1
 
 
 [0.4, 0.9, 0.0, 0.0, 2] 
@@ -37,15 +36,14 @@ vis = TactileVis(env) if with_vis else None
 q = np.zeros((trials, steps, 2))
 forces = np.zeros((trials, steps))
 
-dp = 0.005
-dp = 0.03
+SOLIMP = [0.0, 0.99, 0.025, 0.6, 3]
 
-# env.set_solver_parameters(solref=[0.05, 1.2])
-SOLIMP = [0.0, 0.99, 0.026, 0.5, 2] # default: [0.9, 0.95, 0.001, 0.5, 2] [0, 0.95, 0.01, 0.5, 2] 
+SOLIMP_HARD = [0.99, 0.99, 0.001, 0, 1]
+SOLIMP_SOFT = [0.0, 0.99, 0.015, 0.5, 3]
 
 for i in range(trials):
-    solimp = SOLIMP
-    solimp[sidx] = values[i]
+    solimp = SOLIMP_SOFT
+    # solimp[sidx] = values[i]
     env.set_solver_parameters(solimp=solimp)
 
     env.reset()
@@ -59,46 +57,6 @@ for i in range(trials):
         forces[i,j]=env.force[0]
         q[i,j]=env.q
 env.close()
-
-
-set_rcParams(usetex=True)
-fig, ax = plt.subplots(figsize=(1.5*7.8, 1.5*5.5))
-
-lines = []
-stable_tresh = 6
-for i, f in enumerate(forces):
-    c = grey if i<stable_tresh else purple
-    lw = 1.8 if i<stable_tresh else 2.0
-
-    # peaks are scaled down to make things clearer
-    if i == 9: f = np.where(f>0.25, 0.5*f, f)
-
-    line, = ax.plot(f, lw=lw, color=c)
-    lines.append(line)
-
-legend_items =[
-    [(lines[0],), (lines[-1],)],
-    ["stable", "instable"]
-]
-
-setup_axis(
-    ax, 
-    xlabel=r"$t$", 
-    ylabel=r"$f^\text{left}$", 
-    # xlabel=r"t", 
-    # ylabel=r"f", 
-    xlim=[0, 200], 
-    ylim=[0, 0.25],
-    legend_items=legend_items,
-    legend_loc="upper left",
-)
-
-finish_fig(fig)
-plt.savefig(f"solimp_{pname}.png")
-plt.show()
-
-
-exit()
 
 """ PLOTTING
 """
