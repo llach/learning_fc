@@ -25,7 +25,7 @@ def get_q_f(env, n_steps):
 
 
 ftheta = 0.0075
-oname = "sponge_mid"
+oname = "wood_mid"
 grasp_type = "dq"
 # grasp_type = "power"
 files_dir = f"{model_path}/data/{grasp_type}/"
@@ -88,7 +88,7 @@ q_env_diff = np.diff(q_env, axis=0)/np.array(dts[-1])
 q_low_diff = np.min(np.diff(q_high, axis=0)/np.array(dts[-1]), axis=1)
 q_high_diff = np.max(np.diff(q_low, axis=0)/np.array(dts[-1]), axis=1)
 
-fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 1]}, figsize=(13,8))
+fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 2]}, figsize=(13,8))
 
 xs = np.arange(n_steps)
 
