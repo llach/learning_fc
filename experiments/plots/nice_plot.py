@@ -9,7 +9,7 @@ from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIG
 with open(f"{learning_fc.__path__[0]}/../forces.pkl", "rb") as f:
     forces = pickle.load(f)
 
-mode = PLOTMODE.debug
+mode = PLOTMODE.camera_ready
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, ax = plt.subplots()
 

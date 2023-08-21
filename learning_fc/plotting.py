@@ -8,12 +8,19 @@ class Colors(str, Enum):
     grey   = "#656565"
     davy_grey = "#5C5B5C"
     timberwolf = "#B3B3B3"
+    onyx = "#3B3B3B"
 
     # instable trajectories colors
     purple = "#bf2dd2"
     green  = "#74BB44"
 
     fgoal = "#11922B"
+
+    mean_r = "#3465d6"
+    sigma_r = "#517ADB"
+
+    act_var_mean = "#05A143"
+    act_var_var = "#03692C"
 
     """ blue / orange pairs
     """
@@ -22,6 +29,7 @@ class Colors(str, Enum):
 
     actions0 = "#6B9CFF", # cornflower
     actions1 = "#E37C22" # sunglow
+
 
 class PLOTMODE(str, Enum):
     debug="debug"
@@ -36,6 +44,12 @@ EPS_SEP_LINE_KW = dict(
     lw=.7, 
     ls="dashed",
     c="grey"
+)
+
+SEND_LINE_KW = dict(
+    color=Colors.onyx,
+    ls="dashed",
+    lw=1.2
 )
 
 def set_rcParams(mode: PLOTMODE = PLOTMODE.debug, ftype: FIGTYPE = FIGTYPE.single, nrows=None):
@@ -96,6 +110,8 @@ def setup_axis(
         ylabel=None,
         xticks=None,
         yticks=None,
+        xticklabels=None,
+        yticklabels=None,
         legend_items=[],
         legend_loc=None,
         remove_xticks=False,
@@ -109,11 +125,13 @@ def setup_axis(
 
     if xticks is not None:
         ax.set_xticks(xticks) 
-        ax.set_xticklabels([str(ti) for ti in xticks])
+        lbls = xticklabels or [str(ti) for ti in xticks]
+        ax.set_xticklabels(lbls)
 
     if yticks is not None:
         ax.set_yticks(yticks) 
-        ax.set_yticklabels([str(ti) for ti in yticks])
+        lbls = yticklabels or [str(ti) for ti in yticks]
+        ax.set_yticklabels(lbls)
 
     if remove_first_ytick: 
         labels = ax.get_yticklabels()
