@@ -55,7 +55,7 @@ env.wo_range = 2*[0.0255]
 env.f_scale = 2.6
 _, e_sponge = get_q_f(env, nsteps)
 
-mode = PLOTMODE.camera_ready
+mode = PLOTMODE.debug
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 2]}, figsize=(13,8))
 xs = np.arange(nsteps)

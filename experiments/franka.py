@@ -3,8 +3,9 @@ import mujoco as mj
 import learning_fc
 import mujoco_viewer
 
-with_vis = 1
-model = mj.MjModel.from_xml_path(learning_fc.__path__[0]+"/assets/franka_force.xml")
+with_vis = 0
+model = mj.MjModel.from_xml_path(learning_fc.__path__[0]+"/assets/pal_new.xml")
+# model = mj.MjModel.from_xml_path(learning_fc.__path__[0]+"/assets/pal_force.xml")
 data = mj.MjData(model)
 
 if with_vis:
@@ -19,7 +20,7 @@ if with_vis:
 data.joint("finger_joint_l").qpos = 0.045
 data.joint("finger_joint_r").qpos = 0.045
 
-steps = 300
+steps = 150
 forces_l = np.zeros((5,steps)) # collect all individual pad forces, summation is done below
 forces_r = np.zeros((5,steps))
 

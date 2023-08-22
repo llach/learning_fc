@@ -18,19 +18,19 @@
       <default class="collision">
         <geom type="mesh" group="3"/>
         <default class="fingertip_pad_collision_1">
-          <geom type="box" size="0.0085 0.004 0.0085" pos="0 0.0055 0.0445"/>
+          <geom type="box" size="0.0085 0.004 0.0085" pos="0 0.0055 0.0445" rgba="1 0 0 1"/>
         </default>
         <default class="fingertip_pad_collision_2">
-          <geom type="box" size="0.003 0.002 0.003" pos="0.0055 0.002 0.05"/>
+          <geom type="box" size="0.003 0.002 0.003" pos="0.0055 0.002 0.05" rgba="1 0 1 1"/>
         </default>
         <default class="fingertip_pad_collision_3">
-          <geom type="box" size="0.003 0.002 0.003" pos="-0.0055 0.002 0.05"/>
+          <geom type="box" size="0.003 0.002 0.003" pos="-0.0055 0.002 0.05" rgba="1 0 1 1"/>
         </default>
         <default class="fingertip_pad_collision_4">
-          <geom type="box" size="0.003 0.002 0.0035" pos="0.0055 0.002 0.0395"/>
+          <geom type="box" size="0.003 0.002 0.0035" pos="0.0055 0.002 0.0395" rgba="1 0 1 1"/>
         </default>
         <default class="fingertip_pad_collision_5">
-          <geom type="box" size="0.003 0.002 0.0035" pos="-0.0055 0.002 0.0395"/>
+          <geom type="box" size="0.003 0.002 0.0035" pos="-0.0055 0.002 0.0395" rgba="1 0 1 1"/>
         </default>
       </default>
     </default>
@@ -39,7 +39,7 @@
   <asset>
     <material class="panda" name="white" rgba="1 0.55 0 1"/>
     <material class="panda" name="off_white" rgba="1 0.47 0 1"/>
-    <material class="panda" name="black" rgba="0.4 0.4 0.4 1"/>
+    <material class="panda" name="grey" rgba="0.4 0.4 0.4 1"/>
 
     <!-- Collision meshes -->
     <mesh name="hand_c" file="hand.stl"/>
@@ -58,17 +58,17 @@
   <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
   <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
 
-  <body name="object" pos="0 1 0.05">
+  <body name="object" pos="0 0 0.05">
     <freejoint name="object_joint" />
     <inertial mass="0.1" pos="0 0 0" diaginertia="0.0001 0.00025 0.00017"/>
-    <geom name="object" type="cylinder" size="0.02 0.05" priority="1" solimp="0.9 0.95 0.001 0.5 2" />  
+    <geom name="object" type="cylinder" size="0.02 0.05" priority="1" solimp="0.00 0.99 0.015 0.5 3" />  
   </body> 
   
   <body name="hand" childclass="panda" pos="-0.1 0 0.05" quat="0 0.7071068 0 0.7071068" >
     <inertial mass="0.73" pos="-0.01 0 0.03" diaginertia="0.001 0.0025 0.0017"/>
     <geom mesh="hand_0" material="off_white" class="visual" />
-    <geom mesh="hand_1" material="black" class="visual"     />
-    <geom mesh="hand_2" material="black" class="visual"     />
+    <geom mesh="hand_1" material="grey" class="visual"      />
+    <geom mesh="hand_2" material="grey" class="visual"      />
     <geom mesh="hand_3" material="white" class="visual"     />
     <geom mesh="hand_4" material="off_white" class="visual" />
     <geom mesh="hand_c" class="collision" name="hand_c"/>
@@ -76,7 +76,7 @@
       <inertial mass="0.015" pos="0 0 0" diaginertia="2.375e-6 2.375e-6 7.5e-7"/>
       <joint name="finger_joint_l" class="finger"/>
       <geom mesh="finger_0" material="off_white" class="visual"/>
-      <geom mesh="finger_1" material="black" class="visual"/>
+      <geom mesh="finger_1" material="grey" class="visual"/>
       <geom mesh="finger_0" class="collision"/> 
 
       <geom class="fingertip_pad_collision_1" name="pad_1_l"/>
@@ -89,7 +89,7 @@
       <inertial mass="0.015" pos="0 0 0" diaginertia="2.375e-6 2.375e-6 7.5e-7"/>
       <joint name="finger_joint_r" class="finger"/>
       <geom mesh="finger_0" material="off_white" class="visual"/>
-      <geom mesh="finger_1" material="black" class="visual"/>
+      <geom mesh="finger_1" material="grey" class="visual"/>
       <geom mesh="finger_0" class="collision"/>
 
       <geom class="fingertip_pad_collision_1" name="pad_1_r"/>
