@@ -60,18 +60,18 @@ tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 2]}, figsize=(13,8))
 xs = np.arange(nsteps)
 
-rw0, = axes[0,0].plot(xs, r_wood[:,0])
-rw1, = axes[0,0].plot(xs, r_wood[:,1])
-ew0, = axes[0,0].plot(xs, e_wood[:,0])
-ew1, = axes[0,0].plot(xs, e_wood[:,1])
+rw0, = axes[0,0].plot(xs, r_wood[:,0], c=Colors.tab10_0)
+rw1, = axes[0,0].plot(xs, r_wood[:,1], c=Colors.tab10_1)
+ew0, = axes[0,0].plot(xs, e_wood[:,0], c=Colors.tab10_2)
+ew1, = axes[0,0].plot(xs, e_wood[:,1], c=Colors.tab10_3)
 
 rwend = np.max(r_wood[-1])
 ewend = np.max(e_wood[-1])
 
-rs0, = axes[0,1].plot(xs, r_sponge[:,0])
-rs1, = axes[0,1].plot(xs, r_sponge[:,1])
-es0, = axes[0,1].plot(xs, e_sponge[:,0])
-es1, = axes[0,1].plot(xs, e_sponge[:,1])
+rs0, = axes[0,1].plot(xs, r_sponge[:,0], c=Colors.tab10_0)
+rs1, = axes[0,1].plot(xs, r_sponge[:,1], c=Colors.tab10_1)
+es0, = axes[0,1].plot(xs, e_sponge[:,0], c=Colors.tab10_2)
+es1, = axes[0,1].plot(xs, e_sponge[:,1], c=Colors.tab10_3)
 
 rsend = np.max(r_sponge[-1])
 esend = np.max(e_sponge[-1])
@@ -87,8 +87,8 @@ setup_axis(
     legend_items=[
         [(rw0, rw1), (ew0, ew1)],
         [
-            f"real  | f(T)={rwend:.2f}",
-            f"sim  | f(T)={ewend:.2f}",
+            f"real  | $\\bar f(T)={rwend:.2f}$",
+            f"sim  | $\\bar f(T)={ewend:.2f}$",
         ]
     ]
 )
@@ -104,8 +104,8 @@ setup_axis(
     legend_items=[
         [(rs0, rs1), (es0, es1)],
         [
-            f"real  | f(T)={rsend:.2f}",
-            f"sim  | f(T)={esend:.2f}",
+            f"real  | $\\bar f(T)={rsend:.2f}$",
+            f"sim  | $\\bar f(T)={esend:.2f}$",
         ]
     ]
 )
@@ -116,18 +116,18 @@ dr_sponge = diff_traj(r_sponge, env.dt)
 de_wood = diff_traj(e_wood, env.dt)
 de_sponge = diff_traj(e_sponge, env.dt)
 
-drw0, = axes[1,0].plot(xs, dr_wood[:,0])
-drw1, = axes[1,0].plot(xs, dr_wood[:,1])
-dew0, = axes[1,0].plot(xs, de_wood[:,0])
-dew1, = axes[1,0].plot(xs, de_wood[:,1])
+drw0, = axes[1,0].plot(xs, dr_wood[:,0], c=Colors.tab10_0)
+drw1, = axes[1,0].plot(xs, dr_wood[:,1], c=Colors.tab10_1)
+dew0, = axes[1,0].plot(xs, de_wood[:,0], c=Colors.tab10_2)
+dew1, = axes[1,0].plot(xs, de_wood[:,1], c=Colors.tab10_3)
 
 drwmax = np.max(dr_wood)
 dewmax = np.max(de_wood)
 
-drs0, = axes[1,1].plot(xs, dr_sponge[:,0])
-drs1, = axes[1,1].plot(xs, dr_sponge[:,1])
-des0, = axes[1,1].plot(xs, de_sponge[:,0])
-des1, = axes[1,1].plot(xs, de_sponge[:,1])
+drs0, = axes[1,1].plot(xs, dr_sponge[:,0], c=Colors.tab10_0)
+drs1, = axes[1,1].plot(xs, dr_sponge[:,1], c=Colors.tab10_1)
+des0, = axes[1,1].plot(xs, de_sponge[:,0], c=Colors.tab10_2)
+des1, = axes[1,1].plot(xs, de_sponge[:,1], c=Colors.tab10_3)
 
 drsmax = np.max(dr_sponge)
 desmax = np.max(de_sponge)
@@ -135,14 +135,14 @@ desmax = np.max(de_sponge)
 setup_axis(
     axes[1,0], 
     xlabel=r"$t$" if tex else "t",
-    ylabel=r"$\partial f_i / \partial t$" if tex else "df/dt", 
+    ylabel=r"$\frac{\partial f_i}{\partial t}$" if tex else "df/dt", 
     xlim=[0, 130], 
     ylim=[-1,10],
     legend_items=[
         [(drw0, drw1), (dew0, dew1)],
         [
-            f"real | max(df/dt)={drwmax:.1f}",
-            f"sim | max(df/dt)={dewmax:.1f}",
+            f"real | $\\max(\\frac{'{'}\\partial f_i{'}{'}\\partial t{'}'})={drwmax:.1f}$" if tex else f"real | max(df/dt)={drwmax:.1f}",
+            f"sim | $\\max(\\frac{'{'}\\partial f_i{'}{'}\\partial t{'}'})={dewmax:.1f}$" if tex else f"sim | max(df/dt)={dewmax:.1f}",
         ]
     ]
 )
@@ -156,10 +156,13 @@ setup_axis(
     legend_items=[
         [(drs0, drs1), (des0, des1)],
         [
-            f"real | max(df/dt)={drsmax:.1f}",
-            f"sim | max(df/dt)={desmax:.1f}",
+            f"real | $\\max(\\frac{'{'}\\partial f_i{'}{'}\\partial t{'}'})={drsmax:.1f}$",
+            f"sim | $\\max(\\frac{'{'}\\partial f_i{'}{'}\\partial t{'}'})={desmax:.1f}$",
         ]
     ]
 )
 
-plt.show()
+if mode == PLOTMODE.debug: 
+    plt.show()
+else:
+    plt.savefig("dfdt_compare")

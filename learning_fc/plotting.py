@@ -30,6 +30,8 @@ class Colors(str, Enum):
     """
     tab10_0 = "#0192F8"
     tab10_1 = "#F96801"
+    tab10_2 = "#06BB4E"
+    tab10_3 = "#E80743"
 
     actions0 = "#6B9CFF", # cornflower
     actions1 = "#E37C22" # sunglow
