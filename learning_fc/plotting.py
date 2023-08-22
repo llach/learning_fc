@@ -119,6 +119,7 @@ def setup_axis(
         legend_items=[],
         legend_loc=None,
         remove_xticks=False,
+        remove_yticks=False,
         remove_first_ytick=False,
     ): 
     if xlabel: ax.set_xlabel(xlabel)
@@ -145,6 +146,9 @@ def setup_axis(
 
     if remove_xticks:
         ax.set_xticklabels([])
+    
+    if remove_yticks:
+        ax.set_yticklabels([])
 
     if len(legend_items)>0:
         legend = ax.legend(
