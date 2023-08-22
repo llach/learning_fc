@@ -17,7 +17,7 @@ class GripperTactileEnv(GripperEnv):
     OBJ_V_MAX = 0.0025
     
     SOLREF = [0.02, 1.0]
-    SOLIMP = [0.9, 0.95, 0.001, 0.5, 1]
+    SOLIMP = [0.9, 0.95, 0.001, 0.5, 2]
 
     SOLREF_HARD = [0.008, 0.9]
     SOLREF_SOFT = [0.025, 1.1]
