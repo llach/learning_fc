@@ -104,7 +104,7 @@ def set_rcParams(mode: PLOTMODE = PLOTMODE.debug, ftype: FIGTYPE = FIGTYPE.singl
 
         # use LaTeX
         plt.rcParams['text.usetex'] = True
-        plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+        plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}\usepackage[T1]{fontenc}'
 
     return plt.rcParams['text.usetex']
 
