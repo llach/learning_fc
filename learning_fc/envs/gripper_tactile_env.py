@@ -19,20 +19,20 @@ class GripperTactileEnv(GripperEnv):
     SOLREF = [0.02, 1.0]
     SOLIMP = [0.9, 0.95, 0.001, 0.5, 2]
 
-    SOLREF_HARD = [0.008, 0.9]
-    SOLREF_SOFT = [0.025, 1.1]
+    # SOLREF_HARD = [0.008, 0.9]
+    # SOLREF_SOFT = [0.025, 1.1]
 
-    SOLREF_RANGE = (
-        [0.008, 0.9],   # minimum parameter values
-        [0.025, 1.1]     # maximum parameter values
-    ) # sampling range for solref parameters
+    # SOLREF_RANGE = (
+    #     [0.008, 0.9],   # minimum parameter values
+    #     [0.025, 1.1]     # maximum parameter values
+    # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.00, 0.99, 0.001, 0.0, 1]
-    SOLIMP_SOFT = [0.00, 0.99, 0.015, 0.5, 3]
+    SOLIMP_HARD = [0.00, 0.99, 0.0015,  0.0, 1]
+    SOLIMP_SOFT = [0.00, 0.99, 0.0275, 0.5, 2]
 
     SOLIMP_RANGE = (
-        [0.00, 0.90, 0.001, 0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
-        [0.00, 0.99, 0.015, 0.5, 3] 
+        [0.00, 0.99, 0.001,  0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
+        [0.00, 0.99, 0.0275, 0.5, 2] 
     )# sampling range for solimp parameters
 
     BIASPRM = [0, -100, -8]
@@ -54,7 +54,6 @@ class GripperTactileEnv(GripperEnv):
             ra_scale=0.0,
             rp_scale=0.0, 
             ov_max=0.0001,
-            sample_solref = False,
             sample_solimp = False,
             sample_fscale = False,
             sample_biasprm = False,
@@ -71,7 +70,6 @@ class GripperTactileEnv(GripperEnv):
         self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
-        self.sample_solref = sample_solref  # toggle solref sampling
         self.sample_solimp = sample_solimp  # toggle solimp sampling
         self.sample_fscale = sample_fscale
         self.sample_biasprm = sample_biasprm
@@ -176,8 +174,9 @@ class GripperTactileEnv(GripperEnv):
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, self.obj_pos))
 
-        if self.sample_solref: self.solref = np.random.uniform(*self.SOLREF_RANGE)
-        if self.sample_solimp: self.solimp = np.random.uniform(*self.SOLIMP_RANGE)
+        if self.sample_solimp: 
+            self.solimp = np.random.uniform(*self.SOLIMP_RANGE)
+            self.solimp[-1] = round(self.solimp[-1]) # ensure power is an int. this will only be uniform if power \in {1,2}
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))

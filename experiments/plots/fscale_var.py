@@ -19,18 +19,15 @@ env = GripperTactileEnv(
 
 env.f_scale = env.FSCALE_RANGE[0]
 env.solimp = env.SOLIMP_SOFT
-env.solref = env.SOLREF_SOFT
-_, f_low = get_q_f(env, nsteps)
+q_low, f_low = get_q_f(env, nsteps)
 
 env.f_scale = env.FSCALE_RANGE[1]
 env.solimp = env.SOLIMP_HARD
-env.solref = env.SOLREF_HARD
 _, f_high = get_q_f(env, nsteps)
-print(f"fmax {np.max(f_high)}")
+print(f"fmax {np.max(f_high)} | dpmax {0.035-q_low[-1,0]:.4f}")
 
 env.f_scale = np.mean(env.FSCALE_RANGE)
 env.solimp = np.mean([env.SOLIMP_SOFT, env.SOLIMP_HARD], axis=0)
-env.solref = np.mean([env.SOLREF_SOFT, env.SOLREF_HARD], axis=0)
 _, f_mid = get_q_f(env, nsteps)
 
 

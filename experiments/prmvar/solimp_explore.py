@@ -14,11 +14,11 @@ trials   = 10
 steps    = 200
 
 # pname, sidx, values = "dmin", 0, np.linspace(0.0, 0.9, trials)
-# pname, sidx, values = "width", 2, np.linspace(0.005, 0.05, trials)
-# pname, sidx, values = "midpoint", 3, np.linspace(0, 1.1, trials)
+pname, sidx, values = "width", 2, np.linspace(0.002, 0.05, trials)
+# pname, sidx, values = "midpoint", 3, np.linspace(0, 0.9, trials)
 # pname, sidx, values = "power", 4, np.arange(10)+1
 
-pname, sidx, values = "timeconst", 0, np.linspace(0.008, 0.05, trials)
+# pname, sidx, values = "timeconst", 0, np.linspace(0.008, 0.05, trials)
 # pname, sidx, values = "dampratio", 1, np.linspace(0.9, 1.1, trials)
 
 
@@ -35,23 +35,17 @@ vis = TactileVis(env) if with_vis else None
 q = np.zeros((trials, steps, 2))
 forces = np.zeros((trials, steps))
 
-SOLREF = [0.025, 1.1]
-SOLIMP = [0.0, 0.99, 0.025, 0.6, 3]
-
-SOLREF_HARD = [0.008, 0.9]
-SOLREF_SOFT = [0.025, 1.1]
-
-SOLIMP_HARD = [0.99, 0.99, 0.001, 0, 1]
-SOLIMP_SOFT = [0.0, 0.99, 0.015, 0.5, 3]
+SOLREF = [0.02, 1.0]
+SOLIMP = [0.0, 0.99, 0.0275, 0.5, 2]
 
 for i in range(trials):
-    # solimp = SOLIMP_SOFT
-    # solimp[sidx] = values[i]
-    # env.set_solver_parameters(solimp=solimp)
+    solimp = SOLIMP
+    solimp[sidx] = values[i]
+    env.set_solver_parameters(solimp=solimp)
 
-    solref = SOLREF_SOFT
+    # solref = SOLREF
     # solref[sidx] = values[i]
-    env.set_solver_parameters(solref=solref, solimp=SOLIMP_SOFT)
+    # env.set_solver_parameters(solref=solref, solimp=SOLIMP)
 
     env.reset()
     if vis: vis.reset()

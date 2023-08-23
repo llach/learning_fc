@@ -73,6 +73,6 @@ if __name__ == "__main__":
     mode =  PLOTMODE.debug
 
     # param_trial_plot("dmin", [0.9, 0.0], [0.95, 0.99, 0.001, 0.5, 2], sidx=0, stidx=10, mode=mode)
-    param_trial_plot("width", [0.005, 0.05], [0.0, 0.99, 0.001, 0.5, 2], sidx=2, stidx=6, mode=mode)
-    # param_trial_plot("midpoint", [0.0, 1.1], [0.0, 0.99, 0.015, 0.5, 2], sidx=3, stidx=10, mode=mode)
-    # param_trial_plot("power", [1, 10], [0.0, 0.99, 0.015, 0.5, 2], sidx=4, stidx=10, mode=mode)
+    # param_trial_plot("width", [0.005, 0.055], [0.0, 0.99, 0.001, 0.5, 2], sidx=2, stidx=9, mode=mode)
+    param_trial_plot("midpoint", [0.0, 0.6], [0.0, 0.99, 0.025, 0.5, 2], sidx=3, stidx=9, mode=mode)
+    param_trial_plot("power", [1, 10], [0.0, 0.99, 0.025, 0.55, 2], sidx=4, stidx=10, mode=mode)
