@@ -6,9 +6,11 @@ from learning_fc.training import train
 
 ALG  = "ppo"
 OBS  = [
-    Observation.Pos, 
-    Observation.Force, 
+    Observation.Pos,
+    Observation.Des,
+    Observation.Force,
     Observation.ForceDelta,
+    Observation.Action,
 ]
 
 CTRL = ControlMode.PositionDelta
@@ -19,8 +21,8 @@ ekw = dict(
     obs_config=OBS, 
     ro_scale=0,
     ra_scale=0,
-    rp_scale=0,
-    rf_scale=1.0,
+    rp_scale=0.2,
+    rf_scale=0.8,
     sample_solimp=True,
     sample_fscale=True,
     sample_biasprm=True,
@@ -30,7 +32,7 @@ ekw = dict(
 )
 
 if __name__ == "__main__":
-    for k in [1,3]:
+    for k in [2,3]:
         train(
             env_name="gripper_tactile", 
             model_name=ALG,
@@ -41,9 +43,8 @@ if __name__ == "__main__":
             ),
             env_kw=ekw, 
             model_kw=dict(
-                learning_rate=6e-4,
                 policy_kwargs=dict(
-                    net_arch=[60,60]
+                    net_arch=[80,80]
                 )
             ),
             frame_stack=k,
