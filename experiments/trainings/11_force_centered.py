@@ -32,7 +32,7 @@ ekw = dict(
 )
 
 if __name__ == "__main__":
-    for k in [2,3]:
+    for k in [1,3]:
         train(
             env_name="gripper_tactile", 
             model_name=ALG,

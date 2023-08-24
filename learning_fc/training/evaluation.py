@@ -27,10 +27,14 @@ POSITION_ENV_MEMBERS = [
     "r_act"
 ]
 
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
 def safe_last_cumr(res):
     try: return np.array(res["cumr"])[:,-1]
     except: return np.array([cr[-1] for cr in res["cumr"]])
-
 
 def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=None, after_step_cb=None):
     results = dict(
@@ -54,7 +58,9 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
 
         done = False
         results["goals"].append(env.get_goal())
+        nsteps = 0
         while not done:
+            nsteps +=1
             if before_step_cb: results = before_step_cb(env, model, i, results) or results
 
             action, _ = model.predict(obs, deterministic=True)
@@ -75,7 +81,20 @@ def rollout_model(env, model, vis, n_rollouts, reset_cb=None, before_step_cb=Non
             if vis: vis.update_plot(action=action, reward=reward)
             if after_step_cb: results = after_step_cb(env, model, i, results) or results
         results["eps_rew"].append(results["cumr"][i][-1])
-    return results
+
+    for k, v in results.items():
+        if k in ["goals", "eps_rew"]: continue # goals are a special case, see below the loop
+        if isinstance(v[0], list) and isinstance(v[0][0], np.ndarray):
+            results[k] = np.concatenate(v)
+        else:
+            results[k]  = np.concatenate(v).reshape((-1,))
+
+    results["eps_rew"] = np.array(results["eps_rew"]).reshape((-1,))
+    results["goals"] = np.repeat(np.array(results["goals"]).reshape((-1,)), nsteps)
+    results["nsteps"] = nsteps
+    results["ntrials"] = n_rollouts
+
+    return AttrDict(results)
 
 
 def deterministic_eval(env, model, vis, goals, reset_cb=None, before_step_cb=None, after_step_cb=None):
@@ -162,8 +181,8 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     print("policy evaluation")
     agent_results = deterministic_eval(env, agent, vis, goals, reset_cb=reset_cb, after_step_cb=after_step_cb)
 
-    cumr_a = np.array([cr[-1] for cr in agent_results["cumr"]])
-    cumr_o = np.array([cr[-1] for cr in oracle_results["cumr"]])
+    cumr_a = agent_results.eps_rew
+    cumr_o = oracle_results.eps_rew
 
     print(f"RL   {np.mean(cumr_a):.0f}±{np.std(cumr_a):.1f}")
     print(f"BASE {np.mean(cumr_o):.0f}±{np.std(cumr_o):.1f}")
@@ -185,93 +204,53 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     return agent_results, oracle_results
 
 
-def plot_rollouts(env, res, plot_title):
-    n_trials = len(res["q"])
-    n_steps  = len(res["q"][0])
-
-    # TODO automate this after rollout.
-    # res["q"] = np.concatenate(res["q"])
-    # res["qdes"] = np.concatenate(res["qdes"])
-    # res["qdot"] = np.concatenate(res["qdot"])
-    # res["qacc"] = np.concatenate(res["qacc"])
-    # res["force"] = np.concatenate(res["force"])
-    # res["actions"] = np.concatenate(res["actions"])
-    # res["obj_pos"] = np.concatenate(res["obj_pos"])
-    # res["in_contact"] = np.array(res["in_contact"])
-
-
-    # res["r_force"] = np.concatenate(res["r_force"]).reshape((-1,))
-    # res["r_obj_pos"] = np.concatenate(res["r_obj_pos"]).reshape((-1,))
-    # res["r_obj_prox"] = np.concatenate(res["r_obj_prox"]).reshape((-1,))
-    # res["r_act"] = np.concatenate(res["r_act"]).reshape((-1,))
-    # res["obj_v"] = np.concatenate(res["obj_v"]).reshape((-1,))
-    # res["f_scale"] = np.concatenate(res["f_scale"]).reshape((-1,))
-    # res["cumr"] = np.concatenate(res["cumr"]).reshape((-1,))
-    # res["r"] = np.array(res["r"]).reshape((-1,))
-    # res["eps_rew"] = np.array(res["eps_rew"]).reshape((-1,))
-   
-    # res["goals"] = np.repeat(np.array(res["goals"]).reshape((-1,)), 200)
-
-    q = np.concatenate(res["q"])
-    qdes = np.concatenate(res["qdes"])
-    qdot = np.concatenate(res["qdot"])
-    qacc = np.concatenate(res["qacc"])
-    force = np.concatenate(res["force"])
-    actions = np.concatenate(res["actions"])
-
-    r_force = np.concatenate(res["r_force"]).reshape((-1,))
-    r_obj_pos = np.concatenate(res["r_obj_pos"]).reshape((-1,))
-    r_obj_prox = np.concatenate(res["r_obj_prox"]).reshape((-1,))
-    r_act = np.concatenate(res["r_act"]).reshape((-1,))
-    # r_con = np.concatenate(res["r_con"]).reshape((-1,))
-    cumr = np.concatenate(res["cumr"]).reshape((-1,))
-    goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
-    eps_rew = np.array(res["eps_rew"]).reshape((-1,))
-
-    x = np.arange(q.shape[0])
+def plot_rollouts(env, r, plot_title):
+    n_trials = r.ntrials
+    n_steps  = r.nsteps
+    x = np.arange(r.q.shape[0])
 
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
 
     axes[0,0].set_title("joint position")
-    q1,  = axes[0,0].plot(x, q[:,0], lw=1, label="qdes")
-    q2,  = axes[0,0].plot(x, q[:,1], lw=1)
-    qd1, = axes[0,0].plot(x, qdes[:,0], lw=1)
-    qd2, = axes[0,0].plot(x, qdes[:,1], lw=1)
+    q1,  = axes[0,0].plot(x, r.q[:,0], lw=1, label="qdes")
+    q2,  = axes[0,0].plot(x, r.q[:,1], lw=1)
+    qd1, = axes[0,0].plot(x, r.qdes[:,0], lw=1)
+    qd2, = axes[0,0].plot(x, r.qdes[:,1], lw=1)
     axes[0,0].legend([(q1, q2), (qd1, qd2)], ['q', 'qdes'],
                handler_map={tuple: HandlerTuple(ndivide=None)})
 
     axes[0,1].set_title("forces")
-    axes[0,1].plot(x, force[:,0], lw=1)
-    axes[0,1].plot(x, force[:,1], lw=1)
-    axes[0,1].plot(goals, c="grey", label="fgoal")
+    axes[0,1].plot(x, r.force[:,0], lw=1)
+    axes[0,1].plot(x, r.force[:,1], lw=1)
+    axes[0,1].plot(r.goals, c="grey", label="fgoal")
     axes[0,1].legend()
 
     axes[1,0].set_title("joint velocity")
-    axes[1,0].plot(x, qdot[:,0], lw=1)
-    axes[1,0].plot(x, qdot[:,1], lw=1)
+    axes[1,0].plot(x, r.qdot[:,0], lw=1)
+    axes[1,0].plot(x, r.qdot[:,1], lw=1)
     axes[1,0].set_ylim(-1.1*env.vmax, 1.1*env.vmax)
     axes[1,0].axhline(-env.vmax, lw=0.7, ls="dashed", c="grey")
     axes[1,0].axhline(env.vmax, lw=0.7, ls="dashed", c="grey")
 
     axes[1,1].set_title("actions")
-    axes[1,1].plot(x, actions, lw=1)
+    axes[1,1].plot(x, r.actions, lw=1)
     axes[1,1].set_ylim(-1.5, 1.05)
     axes[1,1].axhline(-1, lw=0.7, ls="dashed", c="grey")
     axes[1,1].axhline(1, lw=0.7, ls="dashed", c="grey")
     axes[1,1].axhline(0, lw=0.7, ls="dashed", c="grey")
 
     axes[2,0].set_title("partial rewards")
-    axes[2,0].plot(x, r_force, lw=1, label="r_force", c="cyan")
-    axes[2,0].plot(x, r_obj_pos, lw=1, label="r_obj_pos", c="orange")
-    axes[2,0].plot(x, r_obj_prox, lw=1, label="r_obj_prox", c="red")
-    axes[2,0].plot(x, r_act, lw=1, label="r_act", c="green")
+    axes[2,0].plot(x, r.r_force, lw=1, label="r_force", c="cyan")
+    axes[2,0].plot(x, r.r_obj_pos, lw=1, label="r_obj_pos", c="orange")
+    axes[2,0].plot(x, r.r_obj_prox, lw=1, label="r_obj_prox", c="red")
+    axes[2,0].plot(x, r.r_act, lw=1, label="r_act", c="green")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
-    axes[2,1].plot(x, cumr, c="red")
+    axes[2,1].plot(x, r.cumr, c="red")
 
-    ty = 0.9*np.max(eps_rew)
-    for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), eps_rew): axes[2,1].text(tx, ty, int(epsr))
+    ty = 0.9*np.max(r.eps_rew)
+    for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), r.eps_rew): axes[2,1].text(tx, ty, int(epsr))
 
     # axes[3,0].set_title("object velocity")
 
@@ -406,8 +385,8 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     stiffness_var_plot(env, fc, vis, 5, 6, plot_title.replace("\n", " - BASELINE\n"))
     plt.savefig(f"{trialdir}/{prefix}stiff_var_baseline.png")
 
-    cumr_a = np.mean(safe_last_cumr(a_res))
-    cumr_o = np.mean(safe_last_cumr(o_res))
+    cumr_a = np.mean(a_res.eps_rew)
+    cumr_o = np.mean(o_res.eps_rew)
 
     print("tactile eval done!")
 
@@ -473,60 +452,47 @@ def stiffness_var_plot(env, model, vis, n_goals, n_trials, plot_title):
     fig.tight_layout()
 
 
-def plot_pos_rollouts(env, res, plot_title):
-    n_trials = len(res["q"])
-    n_steps  = len(res["q"][0])
-
-    q = np.concatenate(res["q"])
-    qdes = np.concatenate(res["qdes"])
-    qdot = np.concatenate(res["qdot"])
-    qacc = np.concatenate(res["qacc"])
-    force = np.concatenate(res["force"])
-
-    r_pos  = np.concatenate(res[ "r_pos"]).reshape((-1,))
-    r_act = np.concatenate(res["r_act"]).reshape((-1,))
-    
-    cumr = np.concatenate(res["cumr"]).reshape((-1,))
-    goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
-
-    x = np.arange(q.shape[0])
+def plot_pos_rollouts(env, r, plot_title):
+    n_trials = len(r.q)
+    n_steps  = len(r.q[0])
+    x = np.arange(r.q.shape[0])
 
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
 
     axes[0,0].set_title("joint position")
-    q1,  = axes[0,0].plot(x, q[:,0], lw=1, label="qdes")
-    q2,  = axes[0,0].plot(x, q[:,1], lw=1)
-    qd1, = axes[0,0].plot(x, qdes[:,0], lw=1)
-    qd2, = axes[0,0].plot(x, qdes[:,1], lw=1)
-    qg,  = axes[0,0].plot(goals, c="grey", label="qgoal")
+    q1,  = axes[0,0].plot(x, r.q[:,0], lw=1, label="qdes")
+    q2,  = axes[0,0].plot(x, r.q[:,1], lw=1)
+    qd1, = axes[0,0].plot(x, r.qdes[:,0], lw=1)
+    qd2, = axes[0,0].plot(x, r.qdes[:,1], lw=1)
+    qg,  = axes[0,0].plot(r.goals, c="grey", label="qgoal")
     axes[0,0].legend([(q1, q2), (qd1, qd2), (qg,)], ['q', 'qdes', "qgoal"],
                handler_map={tuple: HandlerTuple(ndivide=None)})
 
     axes[0,1].set_title("forces")
-    axes[0,1].plot(x, force[:,0], lw=1)
-    axes[0,1].plot(x, force[:,1], lw=1)
+    axes[0,1].plot(x, r.force[:,0], lw=1)
+    axes[0,1].plot(x, r.force[:,1], lw=1)
 
     axes[1,0].set_title("joint velocity")
-    axes[1,0].plot(x, qdot[:,0], lw=1)
-    axes[1,0].plot(x, qdot[:,1], lw=1)
+    axes[1,0].plot(x, r.qdot[:,0], lw=1)
+    axes[1,0].plot(x, r.qdot[:,1], lw=1)
     axes[1,0].set_ylim(-1.1*env.vmax, 1.1*env.vmax)
     axes[1,0].axhline(-env.vmax, lw=0.7, ls="dashed", c="grey")
     axes[1,0].axhline(env.vmax, lw=0.7, ls="dashed", c="grey")
 
     axes[1,1].set_title("joint acceleration")
-    axes[1,1].plot(x, qacc[:,0], lw=1)
-    axes[1,1].plot(x, qacc[:,1], lw=1)
+    axes[1,1].plot(x, r.qacc[:,0], lw=1)
+    axes[1,1].plot(x, r.qacc[:,1], lw=1)
     axes[1,1].set_ylim(-1.1*env.amax, 1.1*env.amax)
     axes[1,1].axhline(-env.amax, lw=0.7, ls="dashed", c="grey")
     axes[1,1].axhline(env.amax, lw=0.7, ls="dashed", c="grey")
 
     axes[2,0].set_title("partial rewards")
-    axes[2,0].plot(x, r_pos,  lw=1, label="r_pos",  c="cyan")
-    axes[2,0].plot(x, r_act, lw=1, label="r_act", c="orange")
+    axes[2,0].plot(x, r.r_pos,  lw=1, label="r_pos",  c="cyan")
+    axes[2,0].plot(x, r.r_act, lw=1, label="r_act", c="orange")
     axes[2,0].legend()
 
     axes[2,1].set_title("cumulative episode reward")
-    axes[2,1].plot(x, cumr, c="red")
+    axes[2,1].plot(x, r.cumr, c="red")
 
     # axes[3,0].set_title("object velocity")
 
