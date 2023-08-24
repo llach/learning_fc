@@ -10,6 +10,7 @@ from learning_fc.envs import GripperTactileEnv
 from learning_fc.utils import CsvReader, safe_unwrap
 from learning_fc.models import ForcePI, PosModel
 from learning_fc.training import make_env, make_model
+from learning_fc.plots import clean_lc, f_act_plot, PLOTMODE
 
 TACTILE_ENV_MEMBERS = [
     "force_deltas", 
@@ -188,18 +189,16 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     print(f"BASE {np.mean(cumr_o):.0f}±{np.std(cumr_o):.1f}")
 
     if plot:
-        plt.clf()
-        plt.figure(figsize=(6.5,7))
+        plt.figure(figsize=(6.5,7), layout="constrained")
 
-        plt.scatter(goals, cumr_a, label=f"π    {np.mean(cumr_a):.0f}±{np.std(cumr_a):.1f}")
-        plt.scatter(goals, cumr_o, label=f"base {np.mean(cumr_o):.0f}±{np.std(cumr_o):.1f}")
+        plt.scatter(goals, cumr_a, label=f"pol  {np.mean(cumr_a):.0f}+-{np.std(cumr_a):.1f}")
+        plt.scatter(goals, cumr_o, label=f"base {np.mean(cumr_o):.0f}+-{np.std(cumr_o):.1f}")
 
         plt.title(plot_title)
         plt.xlabel("target")
         plt.ylabel("cumulative episode reward") 
 
         plt.legend()
-        plt.tight_layout()
 
     return agent_results, oracle_results
 
@@ -209,7 +208,7 @@ def plot_rollouts(env, r, plot_title):
     n_steps  = r.nsteps
     x = np.arange(r.q.shape[0])
 
-    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8))
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(14.5, 8.8), layout="constrained")
 
     axes[0,0].set_title("joint position")
     q1,  = axes[0,0].plot(x, r.q[:,0], lw=1, label="qdes")
@@ -263,7 +262,6 @@ def plot_rollouts(env, r, plot_title):
         ax.set_xlim(0, int(len(x)*1.05))
     
     fig.suptitle(plot_title)
-    plt.tight_layout()
 
 
 def plot_curves(
@@ -388,8 +386,16 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     cumr_a = np.mean(a_res.eps_rew)
     cumr_o = np.mean(o_res.eps_rew)
 
-    print("tactile eval done!")
+    ### clean plots
+    clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=f"{trialdir}/{prefix}")
 
+    goals = np.linspace(*env.fgoal_range, 4)
+    res = deterministic_eval(env, model, None, goals, reset_cb=force_reset_cb, after_step_cb=force_after_step_cb)
+
+    f_act_plot(res, mode=PLOTMODE.camera_ready, prefix=f"{trialdir}/{prefix}")
+
+    print("tactile eval done!")
+    
     return cumr_a, cumr_o
 
 def stiffness_var_plot(env, model, vis, n_goals, n_trials, plot_title):
@@ -416,28 +422,22 @@ def stiffness_var_plot(env, model, vis, n_goals, n_trials, plot_title):
 
     fig, axes = plt.subplots(nrows=n_goals, ncols=2, figsize=(10, 0.5+n_goals*2.5)) 
 
-    for i, (res, fs) in enumerate(zip(reses, fscales)):
-        n_steps  = len(res["q"][0])
+    for i, (r, fs) in enumerate(zip(reses, fscales)):
+        n_steps  = r.nsteps
         fmax = env.FMAX*fs
+        x = np.arange(r.nsteps*r.ntrials)
 
-        eps_rew = np.array(res["eps_rew"]).reshape((-1,))
-        force = np.concatenate(res["force"])
-        actions = np.concatenate(res["actions"])
-        goals = np.repeat(np.array(res["goals"]).reshape((-1,)), n_steps)
-
-        x = np.arange(force.shape[0])
-
-        axes[i,0].plot(x, force)
-        axes[i,0].plot(x, goals)
+        axes[i,0].plot(x, r.force)
+        axes[i,0].plot(x, r.goals)
         axes[i,0].set_ylabel(f"f_alpha {fs:.2f} | f_max {fmax:.2f}")
         axes[i,0].set_ylim(-0.02, fmax*1.13)
         axes[i,0].axhline(fmax, lw=.7, ls="dashed", c="red")
 
         ty = 1.03*fmax
-        for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), eps_rew): 
+        for tx, epsr in zip(np.arange(n_trials)*n_steps+(0.29*n_steps), r.eps_rew): 
             axes[i,0].text(tx, ty, int(epsr))
 
-        axes[i,1].plot(x, actions)
+        axes[i,1].plot(x, r.actions)
         axes[i,1].set_ylim(-1.05, 0.2)
 
         axes[0,0].set_title("forces")
