@@ -27,12 +27,12 @@ class GripperTactileEnv(GripperEnv):
     #     [0.025, 1.1]     # maximum parameter values
     # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.00, 0.99, 0.0015,  0.0, 1]
-    SOLIMP_SOFT = [0.00, 0.99, 0.0275, 0.5, 2]
+    SOLIMP_HARD = [0.0, 0.95, 0.002,  0.0, 1]
+    SOLIMP_SOFT = [0.0, 0.95, 0.0275, 0.5, 2]
 
     SOLIMP_RANGE = (
-        [0.00, 0.99, 0.001,  0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
-        [0.00, 0.99, 0.0275, 0.5, 2] 
+        [0.0, 0.95, 0.002,  0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
+        [0.0, 0.95, 0.0275, 0.5, 2] 
     )# sampling range for solimp parameters
 
     BIASPRM = [0, -100, -8]
@@ -196,7 +196,8 @@ class GripperTactileEnv(GripperEnv):
         if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
         self.fgoal_range[0] = self.f_scale * self.FMAX * 0.05
         self.fgoal_range[1] = self.f_scale * self.FMAX * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
-
+        self.fmax = self.f_scale * self.FMAX
+        
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
