@@ -67,15 +67,16 @@ class RobotInterface:
 
                 m = ModelDebug()
                 if self.task == ControlTask.Force:
-                    m.vals = list(self.force.copy())
+                    m.force = list(self.force.copy())
                 elif self.task == ControlTask.Position:
-                    m.vals = self.q.copy()
+                    m.force = self.q.copy()
                 m.goal = float(self.goal)
+                m.force_deltas = self._goal_delta()
+                m.actions = self.last_a
                 self.dpub.publish(m)
                 self.r.sleep()
             except Exception as e:
                 print(e)
-                print(m.vals)
                 break
 
     def _js_cb(self, msg):
