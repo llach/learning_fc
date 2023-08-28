@@ -103,7 +103,7 @@ def clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=""):
         xlabel="Training Steps", 
         ylabel="Episode Rewards", 
         xlim=[0,total_steps],
-        ylim=[0,225],
+        ylim=[0,200],
         remove_first_ytick=False,
         xticks=xticks,
         xticklabels=xticklabels,

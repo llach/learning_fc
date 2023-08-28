@@ -32,7 +32,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             "rgb_array",
             "depth_array",
         ],
-        "render_fps": 50,
+        "render_fps": 25,
     }
 
     FMAX = 0.22
@@ -77,7 +77,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         MujocoEnv.__init__(
             self,
             model_path=model_path,
-            frame_skip=10,
+            frame_skip=20,
             observation_space=observation_space,
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,

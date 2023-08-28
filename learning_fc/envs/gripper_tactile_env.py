@@ -131,7 +131,7 @@ class GripperTactileEnv(GripperEnv):
                 d = self.wo - np.abs(self.oy_t)
             return 1-np.clip(q-d, 0.0, self.d_o)/self.d_o
 
-        return np.sum([_doi(self.q[0], self.QY_SGN_l), _doi(self.q[1], self.QY_SGN_r)])
+        return np.sum([_doi(self.q[0], self.QY_SGN_l), _doi(self.q[1], self.QY_SGN_r)])/2
 
     def _get_reward(self):
         self.r_force    =   self.rf_scale * self._force_reward()

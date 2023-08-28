@@ -12,8 +12,8 @@ from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, 
 N_GOALS  = 4
 with_vis = 1
 # trial = f"{model_path}/30_base"
-# trial = f"{model_path}/2023-08-11_17-38-07__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-3"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
+# trial = f"{model_path}/_archive/rp_experiments/2023-08-25_08-29-08__gripper_tactile__ppo__k-3"
 print(trial)
 
 env, model, vis, _ = make_eval_env_model(
@@ -33,26 +33,6 @@ env, model, vis, _ = make_eval_env_model(
 
 # goals = np.linspace(*env.fgoal_range, N_GOALS)
 # res = deterministic_eval(env, model, vis, goals, reset_cb=force_reset_cb, after_step_cb=force_after_step_cb)
-
-# res["q"] = np.concatenate(res["q"])
-# res["qdes"] = np.concatenate(res["qdes"])
-# res["qdot"] = np.concatenate(res["qdot"])
-# res["qacc"] = np.concatenate(res["qacc"])
-# res["force"] = np.concatenate(res["force"])
-
-# res["r_force"] = np.concatenate(res["r_force"]).reshape((-1,))
-# res["r_obj_pos"] = np.concatenate(res["r_obj_pos"]).reshape((-1,))
-# res["r_obj_prox"] = np.concatenate(res["r_obj_prox"]).reshape((-1,))
-# res["r_act"] = np.concatenate(res["r_act"]).reshape((-1,))
-# res["actions"] = np.concatenate(res["actions"])
-# res["obj_pos"] = np.concatenate(res["obj_pos"])
-# res["obj_v"] = np.concatenate(res["obj_v"]).reshape((-1,))
-# res["f_scale"] = np.concatenate(res["f_scale"]).reshape((-1,))
-# res["cumr"] = np.concatenate(res["cumr"]).reshape((-1,))
-# res["goals"] = np.repeat(np.array(res["goals"]).reshape((-1,)), 200)
-# res["r"] = np.array(res["r"]).reshape((-1,))
-# res["eps_rew"] = np.array(res["eps_rew"]).reshape((-1,))
-# res["in_contact"] = np.array(res["in_contact"])
 
 # model = ForcePI(env)#, Kp=0.1, Ki=0.5)
 # model = StaticModel(-1)

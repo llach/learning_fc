@@ -1,5 +1,4 @@
 import learning_fc
-import numpy as np
 
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
@@ -21,8 +20,8 @@ ekw = dict(
     obs_config=OBS, 
     ro_scale=0,
     ra_scale=0,
-    rp_scale=0.2,
-    rf_scale=0.8,
+    rp_scale=0.3,
+    rf_scale=0.7,
     sample_solimp=True,
     sample_fscale=True,
     sample_biasprm=True,
@@ -32,20 +31,20 @@ ekw = dict(
 )
 
 if __name__ == "__main__":
-    for k in [1,3]:
-        train(
-            env_name="gripper_tactile", 
-            model_name=ALG,
-            nenv=10,
-            max_steps=200,
-            train_kw=dict(
-                timesteps=TIME,
-            ),
-            env_kw=ekw, 
-            model_kw=dict(
-                policy_kwargs=dict(
-                    net_arch=[80,80]
-                )
-            ),
-            frame_stack=k,
-        )
+    train(
+        env_name="gripper_tactile", 
+        model_name=ALG,
+        nenv=10,
+        max_steps=200,
+        train_kw=dict(
+            timesteps=TIME,
+        ),
+        env_kw=ekw, 
+        model_kw=dict(
+            learning_rate=6e-4,
+            policy_kwargs=dict(
+                net_arch=[100,100]
+            )
+        ),
+        frame_stack=2,
+    )

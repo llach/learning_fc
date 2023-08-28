@@ -10,7 +10,7 @@ from learning_fc.envs import GripperTactileEnv
 from learning_fc.utils import CsvReader, safe_unwrap
 from learning_fc.models import ForcePI, PosModel
 from learning_fc.training import make_env, make_model
-from learning_fc.plots import clean_lc, f_act_plot, PLOTMODE
+from learning_fc.plots import clean_lc, f_act_plot, PLOTMODE, Colors
 
 TACTILE_ENV_MEMBERS = [
     "force_deltas", 
@@ -185,8 +185,14 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
     cumr_a = agent_results.eps_rew
     cumr_o = oracle_results.eps_rew
 
-    print(f"RL   {np.mean(cumr_a):.0f}±{np.std(cumr_a):.1f}")
-    print(f"BASE {np.mean(cumr_o):.0f}±{np.std(cumr_o):.1f}")
+    mean_a = np.mean(cumr_a)
+    mean_o = np.mean(cumr_o)
+
+    std_a = np.std(cumr_a)
+    std_o = np.std(cumr_o)
+
+    print(f"RL   {mean_a:.0f}±{std_a:.1f}")
+    print(f"BASE {mean_o:.0f}±{std_o:.1f}")
 
     if plot:
         plt.figure(figsize=(6.5,7), layout="constrained")
@@ -194,8 +200,15 @@ def agent_oracle_comparison(env, agent, oracle, vis, goals, reset_cb=None, after
         plt.scatter(goals, cumr_a, label=f"pol  {np.mean(cumr_a):.0f}+-{np.std(cumr_a):.1f}")
         plt.scatter(goals, cumr_o, label=f"base {np.mean(cumr_o):.0f}+-{np.std(cumr_o):.1f}")
 
+        plt.axhline(np.mean(cumr_a), c=Colors.tab10_0)
+        plt.axhline(np.mean(cumr_o), c=Colors.tab10_1)
+
+        plt.fill_between(goals, mean_a-std_a, mean_a+std_a, color=Colors.tab10_0, alpha=0.2)
+        plt.fill_between(goals, mean_o-std_o, mean_o+std_o, color=Colors.tab10_1, alpha=0.2)
+
         plt.title(plot_title)
         plt.xlabel("target")
+        plt.ylim(0,200)
         plt.ylabel("cumulative episode reward") 
 
         plt.legend()
@@ -393,6 +406,8 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     res = deterministic_eval(env, model, None, goals, reset_cb=force_reset_cb, after_step_cb=force_after_step_cb)
 
     f_act_plot(res, mode=PLOTMODE.camera_ready, prefix=f"{trialdir}/{prefix}")
+
+    plt.rcParams.update(plt.rcParamsDefault)
 
     print("tactile eval done!")
     
