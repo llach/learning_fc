@@ -11,8 +11,8 @@ from learning_fc.enums import ControlMode
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
 
-oname = "wood_mid"
-files_dir = f"{model_path}/data/dq/"
+oname = "wood_new"
+files_dir = f"{model_path}/data/"
 
 qs = []
 for fi in os.listdir(files_dir):
@@ -32,11 +32,10 @@ env = GripperTactileEnv(
     control_mode=ControlMode.PositionDelta,
     oy_init=0,
     wo_range=[wo, wo],
-    model_path=learning_fc.__path__[0]+"/assets/pal_new.xml",
+    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
     noise_f=0.002,
     f_scale=3.1,
     sample_solimp=False,
-    sample_solref=False,
     sample_biasprm=False
 )
 

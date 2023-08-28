@@ -10,7 +10,7 @@ from learning_fc.enums import ControlMode
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
 
-ntrials = 500
+ntrials = 200
 nsteps  = 70
 wo      = 0.035
 
@@ -33,46 +33,46 @@ fscales = []
 fgoal_abs = []
 fgoal_rel = []
 
-# for _ in range(ntrials):
-#     _, f = get_q_f(env, nsteps)
-#     forces.append(f)
-#     fscales.append(env.f_scale)
-#     fgoal_abs.append(env.get_goal())
-#     fgoal_rel.append(env.get_goal()/env.fmax)
+for _ in range(ntrials):
+    _, f = get_q_f(env, nsteps)
+    forces.append(f)
+    fscales.append(env.f_scale)
+    fgoal_abs.append(env.get_goal())
+    fgoal_rel.append(env.get_goal()/env.fmax)
 
-# with open("traj.pkl", "wb") as f:
-#     pickle.dump(dict(
-#         forces=forces,
-#         fscales=fscales,
-#         fgoal_abs=fgoal_abs,
-#         fgoal_rel=fgoal_rel
-#     ), f)
+with open("traj.pkl", "wb") as f:
+    pickle.dump(dict(
+        forces=forces,
+        fscales=fscales,
+        fgoal_abs=fgoal_abs,
+        fgoal_rel=fgoal_rel
+    ), f)
 # exit(0)
 
-with open("traj.pkl", "rb") as f:
-    data = pickle.load(f)
+# with open("traj.pkl", "rb") as f:
+#     data = pickle.load(f)
 
-forces  = data["forces"]
-fscales = data["fscales"]
-fgoal_abs = data["fgoal_abs"]
-fgoal_rel = data["fgoal_rel"]
+# forces  = data["forces"]
+# fscales = data["fscales"]
+# fgoal_abs = data["fgoal_abs"]
+# fgoal_rel = data["fgoal_rel"]
 
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, ax = plt.subplots()
 
 xs = np.arange(nsteps)
 
-# for force in forces:
-#     ax.plot(xs, force, alpha=0.2, c=Colors.tab10_0)
+for force in forces:
+    ax.plot(xs, force, alpha=0.2, c=Colors.tab10_0)
 
-# setup_axis(
-#     ax, 
-#     xlabel=r"$t$" if tex else "t", 
-#     ylabel=r"$f^\text{left}$" if tex else "force", 
-#     xlim=[0, nsteps], 
-#     ylim=[0, 0.8],
-#     remove_first_ytick=True,
-# )
+setup_axis(
+    ax, 
+    xlabel=r"$t$" if tex else "t", 
+    ylabel=r"$f^\text{left}$" if tex else "force", 
+    xlim=[0, nsteps], 
+    ylim=[0, 0.8],
+    remove_first_ytick=True,
+)
 
 # ax.hist(fgoal_abs, bins=20)
 # setup_axis(

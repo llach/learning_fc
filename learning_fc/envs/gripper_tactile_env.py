@@ -31,15 +31,15 @@ class GripperTactileEnv(GripperEnv):
     SOLIMP_SOFT = [0.0, 0.95, 0.0275, 0.5, 2]
 
     SOLIMP_RANGE = (
-        [0.0, 0.95, 0.002,  0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
-        [0.0, 0.95, 0.0275, 0.5, 2] 
+        [0.0, 0.95, 0.0007, 0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
+        [0.0, 0.95, 0.027,  0.5, 2] 
     )# sampling range for solimp parameters
 
-    BIASPRM = [0, -100, -8]
+    BIASPRM = [0, -100, -15.5]
 
     BIASPRM_RANGE = (
-        [0, -100, -9.5],
-        [0, -100, -6.5]
+        [0, -100, -20],
+        [0, -100, -11]
     )
 
     def __init__(

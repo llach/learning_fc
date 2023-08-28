@@ -14,7 +14,7 @@ trials   = 10
 steps    = 200
 
 # pname, sidx, values = "dmin", 0, np.linspace(0.0, 0.9, trials)
-pname, sidx, values = "width", 2, np.linspace(0.002, 0.05, trials)
+pname, sidx, values = "width", 2, np.linspace(0.0007, 0.05, trials)
 # pname, sidx, values = "midpoint", 3, np.linspace(0, 0.9, trials)
 # pname, sidx, values = "power", 4, np.arange(10)+1
 
