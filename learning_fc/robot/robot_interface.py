@@ -6,6 +6,7 @@ import threading
 import numpy as np
 
 from datetime import datetime
+from collections import deque
 
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
@@ -15,13 +16,14 @@ from learning_fc import model_path, datefmt
 from learning_fc.utils import safe_rescale
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.enums import ControlTask, ControlMode, Observation
-from learning_fc.models import BaseModel
+from learning_fc.models import ForcePI
 
 class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, goal=0.0, fth=0.001, freq=50, control_mode=None):
+    def __init__(self, model, env, k=1, goal=0.0, fth=0.001, freq=25, control_mode=None):
+        self.k = k
         self.env = env
         self.fth = fth
         self.goal = goal
@@ -31,6 +33,7 @@ class RobotInterface:
         self.task = ControlTask.Force if isinstance(env.unwrapped, GripperTactileEnv) else ControlTask.Position
         self.obs_config = env.obs_config
         self.control_mode = control_mode or env.control_mode
+        self.obs_buf = deque(maxlen=self.k)
 
         self.active = False
         self.js_idx = [None, None]
@@ -120,7 +123,7 @@ class RobotInterface:
         if on == Observation.Pos:           return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Des:           return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel:           return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
-        if on == Observation.Force:         return safe_rescale(self.force, [0, self.env.fmax])
+        if on == Observation.Force:         return safe_rescale(self.force, [0, self.env.max_fmax])
         if on == Observation.Action:        return self.last_a.copy()
         if on == Observation.PosDelta:      return safe_rescale(self._goal_delta(), [-0.045, 0.045])
         if on == Observation.ForceDelta:    return safe_rescale(self._goal_delta(), [-self.goal, self.goal])
@@ -140,7 +143,7 @@ class RobotInterface:
         if self.task == ControlTask.Position:
             self.goal = np.clip(g, 0.0, 0.045)
         elif self.task == ControlTask.Force:
-            self.goal = np.clip(g, 0, self.env.fmax)
+            self.goal = np.clip(g, 0, 1.0)
         else:
             assert False, f"unknown ControlTask {self.task}"
 
@@ -154,6 +157,9 @@ class RobotInterface:
         self.force   = np.array([None,None])
         self.in_con  = np.array([0,0])
         self.had_con = np.array([0,0])
+
+        # reset observation buffer
+        self.obs_buf = deque(maxlen=self.k)
 
         print("waiting for joint states ...")
         while not rospy.is_shutdown() and np.any(self.q==None): self.r.sleep()
@@ -174,8 +180,17 @@ class RobotInterface:
     def step(self): 
         obs = self._get_obs()
         obs_ = {on: self._enum2obs_raw(on) for on in self.obs_config} # for history
+        
+        self.obs_buf.append(obs)
+        while len(self.obs_buf) < self.obs_buf.maxlen: 
+            print(f"obs {len(self.obs_buf)}..{self.obs_buf.maxlen}")
+            self.obs_buf.append(obs)
 
-        raw_action, _ = self.model.predict(obs, deterministic=True)
+        if isinstance(self.model, ForcePI):
+            raw_action, _ = self.model.predict(self.q, self.force, self.goal)
+        else:
+            obs = np.asarray(self.obs_buf, dtype=np.float32).flatten()
+            raw_action, _ = self.model.predict(obs, deterministic=True)
 
         if self.control_mode == ControlMode.Position:
             self.qdes = safe_rescale(raw_action, [-1, 1], [0.0, 0.045])
@@ -184,7 +199,7 @@ class RobotInterface:
             self.qdes = np.clip(self.q+ain, 0, 0.045)
         
         self.actuate(self.qdes)
-        self.last_a = raw_action
+        self.last_a = raw_action.copy()
 
         # update history
         for k, v in obs_.items():
@@ -237,16 +252,17 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    trial = f"{model_path}/2023-08-04_09-24-00__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1" # 00_no_move
-    trial = f"{model_path}/2023-08-04_08-09-17__gripper_tactile__ppo__pos_delta__obs_q-qdes-f-df-hadC-act__nenv-10__k-1" # 01_vary_stiffness
+    trial = f"{model_path}/2023-08-28_09-54-35__gripper_tactile__ppo__k-2__lr-0.0006" # 00_no_move
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
-    env, model, _, _ = make_eval_env_model(trial, with_vis=False, checkpoint="best")
+    env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
+    k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
-    from learning_fc.models import PosModel, StaticModel
+    from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
     # model = StaticModel(-1)
 
-    ri = RobotInterface(model, env, freq=50, goal=0.01)
+    model = ForcePI(env)
+    ri = RobotInterface(model, env, k=k, goal=0.01)
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])

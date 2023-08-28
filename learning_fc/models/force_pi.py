@@ -32,7 +32,7 @@ class ForcePI(BaseModel):
 
         self.phase = ControllerPhase.POSITION_CTRL
 
-    def get_q(self, q, f_t):
+    def get_q(self, q, f_t, fgoal):
         delta_qs = np.zeros_like(q)
         delta_q_ = 0
 
@@ -66,7 +66,7 @@ class ForcePI(BaseModel):
                 '''
 
                 # force delta → position delta
-                delta_f = self.env.fgoal - f
+                delta_f = fgoal - f
                 delta_q = delta_f / self.k
 
                 # integrate error TODO clip error integral?
@@ -85,9 +85,9 @@ class ForcePI(BaseModel):
 
         return delta_qs
     
-    def predict(self, *args, **kwargs):
+    def predict(self, q, force, fgoal, *args, **kwargs):
         """
         interface to be compatible with stable baselines' API
         """
-        deltaq = self.get_q(self.env.q, self.env.force)
-        return self._deltaq_to_qdes(self.env.q, deltaq), {}
+        deltaq = self.get_q(q, force, fgoal)
+        return self._deltaq_to_qdes(q, deltaq), {}
