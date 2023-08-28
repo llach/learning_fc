@@ -36,7 +36,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     }
 
     FMAX = 0.22
-    FSCALE_RANGE = [1.0, 3.1]
+    FSCALE_RANGE = [2.1, 3.1]
 
     def __init__(
             self, 
