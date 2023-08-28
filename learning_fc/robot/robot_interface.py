@@ -261,7 +261,7 @@ if __name__ == "__main__":
     # model = PosModel(env)
     # model = StaticModel(-1)
 
-    model = ForcePI(env)
+    # model = ForcePI(env)
     ri = RobotInterface(model, env, k=k, goal=0.01)
 
     time.sleep(1.0)
