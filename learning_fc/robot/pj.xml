@@ -1,49 +1,65 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
- <tabbed_widget parent="main_window" name="Main Window">
-  <Tab containers="1" tab_name="Position">
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab tab_name="Model Overview" containers="1">
    <Container>
     <DockSplitter count="1" sizes="1" orientation="-">
      <DockSplitter count="2" sizes="0.5;0.5" orientation="|">
-      <DockSplitter count="2" sizes="0.5;0.5" orientation="-">
+      <DockSplitter count="2" sizes="0.500401;0.499599" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
-         <range top="0.047000" bottom="0.000000" right="7.965223" left="2.959615"/>
-         <limitY min="0" max="0.047"/>
+        <plot mode="TimeSeries" flip_y="false" style="Lines" flip_x="false">
+         <range bottom="0.000000" top="0.047000" right="49.440919" left="19.459394"/>
+         <limitY max="0.047" min="0"/>
          <curve color="#1f77b4" name="/joint_states/gripper_left_finger_joint/position"/>
          <curve color="#d62728" name="/joint_states/gripper_right_finger_joint/position"/>
          <curve color="#1f77b4" name="/model_debug/goal"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
-         <range top="1.000000" bottom="-1.000000" right="7.965223" left="2.959615"/>
-         <limitY min="-1" max="1"/>
+        <plot mode="TimeSeries" flip_y="false" style="Lines" flip_x="false">
+         <range bottom="-1.000000" top="1.000000" right="49.440919" left="19.459394"/>
+         <limitY max="1" min="-1"/>
          <curve color="#1ac938" name="/model_debug/actions.0"/>
          <curve color="#ff7f0e" name="/model_debug/actions.1"/>
         </plot>
        </DockArea>
       </DockSplitter>
-      <DockSplitter count="2" sizes="0.5;0.5" orientation="-">
+      <DockSplitter count="2" sizes="0.500401;0.499599" orientation="-">
        <DockArea name="...">
-        <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
-         <range top="0.700000" bottom="-0.050000" right="7.965223" left="2.959615"/>
-         <limitY min="-0.05" max="0.7"/>
+        <plot mode="TimeSeries" flip_y="false" style="Lines" flip_x="false">
+         <range bottom="-0.050000" top="0.700000" right="49.440919" left="19.459394"/>
+         <limitY max="0.7" min="-0.05"/>
          <curve color="#1f77b4" name="/model_debug/goal"/>
          <curve color="#f14cc1" name="/model_debug/force.0"/>
          <curve color="#9467bd" name="/model_debug/force.1"/>
         </plot>
        </DockArea>
        <DockArea name="...">
-        <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
-         <range top="0.500000" bottom="-0.500000" right="7.965223" left="2.959615"/>
-         <limitY min="-0.5" max="0.5"/>
+        <plot mode="TimeSeries" flip_y="false" style="Lines" flip_x="false">
+         <range bottom="-0.500000" top="0.500000" right="49.440919" left="19.459394"/>
+         <limitY max="0.5" min="-0.5"/>
          <curve color="#1f77b4" name="/model_debug/force_deltas.0"/>
          <curve color="#d62728" name="/model_debug/force_deltas.1"/>
         </plot>
        </DockArea>
       </DockSplitter>
      </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Desired Position" containers="1">
+   <Container>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockArea name="...">
+      <plot mode="TimeSeries" flip_y="false" style="Lines" flip_x="false">
+       <range bottom="0.010000" top="0.045000" right="49.442632" left="19.453460"/>
+       <limitY max="0.045" min="0.01"/>
+       <curve color="#1f77b4" name="/joint_states/gripper_left_finger_joint/position"/>
+       <curve color="#d62728" name="/gripper_position_controller/command/data.0"/>
+       <curve color="#1ac938" name="/gripper_position_controller/command/data.1"/>
+       <curve color="#ff7f0e" name="/joint_states/gripper_right_finger_joint/position"/>
+      </plot>
+     </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
@@ -54,7 +70,7 @@
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad MCAP"/>
   <plugin ID="DataLoad ROS bags">

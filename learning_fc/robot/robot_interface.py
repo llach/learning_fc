@@ -258,9 +258,11 @@ if __name__ == "__main__":
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
+    env.set_attr("dq_max", 0.003)
+
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
-    # model = StaticModel(-1)
+    model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
     # model = ForcePI(env)
     ri = RobotInterface(model, env, k=k, goal=0.01)
