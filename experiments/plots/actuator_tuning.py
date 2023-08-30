@@ -11,7 +11,7 @@ from learning_fc.enums import ControlMode
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
 
-oname = "wood_new"
+oname = "wood3"
 files_dir = f"{model_path}/data/"
 
 qs = []

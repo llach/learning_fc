@@ -34,7 +34,7 @@ if __name__ == "__main__":
     train(
         env_name="gripper_tactile", 
         model_name=ALG,
-        nenv=10,
+        nenv=1,
         max_steps=200,
         train_kw=dict(
             timesteps=TIME,

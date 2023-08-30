@@ -14,8 +14,8 @@ trials   = 10
 steps    = 200
 
 # pname, sidx, values = "dmin", 0, np.linspace(0.0, 0.9, trials)
-pname, sidx, values = "width", 2, np.linspace(0.0007, 0.05, trials)
-# pname, sidx, values = "midpoint", 3, np.linspace(0, 0.9, trials)
+# pname, sidx, values = "width", 2, np.linspace(0.0007, 0.03, trials)
+pname, sidx, values = "midpoint", 3, np.linspace(0, 0.5, trials)
 # pname, sidx, values = "power", 4, np.arange(10)+1
 
 # pname, sidx, values = "timeconst", 0, np.linspace(0.008, 0.05, trials)
@@ -36,7 +36,7 @@ q = np.zeros((trials, steps, 2))
 forces = np.zeros((trials, steps))
 
 SOLREF = [0.02, 1.0]
-SOLIMP = [0.0, 0.99, 0.0275, 0.5, 2]
+SOLIMP = [0.0, 0.99, 0.026, 0.5, 2]
 
 for i in range(trials):
     solimp = SOLIMP
@@ -98,7 +98,7 @@ ax2.set_ylabel("joint position")
 
 fig.legend(curves, labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc="outside lower center", ncol=5)
 
-si = env.SOLIMP
+si = SOLIMP
 si[sidx] = pname
 fmax=np.max(forces)
 qmin=np.min(q)

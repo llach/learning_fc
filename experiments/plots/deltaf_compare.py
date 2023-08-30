@@ -15,8 +15,9 @@ from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIG
 
 def load_q_f(obj_name):
     qs, fs = [], []
-    files_dir = f"{model_path}/data/dq/"
+    files_dir = f"{model_path}/data/"
     for fi in os.listdir(files_dir):
+        print(fi)
         if obj_name not in fi: continue 
         with open(f"{files_dir}{fi}", "rb") as f:
             data = pickle.load(f)
@@ -29,13 +30,13 @@ def diff_traj(traj, dt):
     return np.concatenate([[tdiff[0]], tdiff])
 
 
-nsteps = 130
+nsteps = 70
 
-_, r_wood   = load_q_f("wood_mid")
-_, r_sponge = load_q_f("sponge_mid")
+_, r_wood   = load_q_f("wood3")
+_, r_sponge = load_q_f("sponge3")
 
-r_wood = r_wood[1][:nsteps]
-r_sponge = r_sponge[1][:nsteps]
+r_wood = r_wood[0][:nsteps]
+r_sponge = r_sponge[0][:nsteps]
 
 env = GripperTactileEnv(
     control_mode=ControlMode.PositionDelta,
@@ -45,14 +46,14 @@ env = GripperTactileEnv(
     f_scale=2.6,
 )
 
-env.solimp = [0.00, 0.99, 0.0016, 0.2, 1]
-env.wo_range = 2*[0.0155]
-env.f_scale = 2.9
+env.solimp = [0.00, 0.99, 0.006, 0.3, 2]
+env.wo_range = 2*[0.0295/2]
+env.f_scale = 3.15
 _, e_wood = get_q_f(env, nsteps)
 
-env.solimp = [0.00, 0.99, 0.0065, 0.5, 3]
+env.solimp = [0.00, 0.99, 0.02, 0.5, 2]
 env.wo_range = 2*[0.0255]
-env.f_scale = 2.6
+env.f_scale = 2.4
 _, e_sponge = get_q_f(env, nsteps)
 
 mode = PLOTMODE.debug
@@ -79,8 +80,8 @@ esend = np.max(e_sponge[-1])
 setup_axis(
     axes[0,0], 
     ylabel=r"$f_i$" if tex else "f", 
-    xlim=[0, 130], 
-    ylim=[-0.005, 0.7],
+    xlim=[0, nsteps], 
+    ylim=[-0.005, 1.0],
     yticks=np.linspace(0,7,8)*0.1,
     yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
     remove_xticks=True,
@@ -95,8 +96,8 @@ setup_axis(
 
 setup_axis(
     axes[0,1], 
-    xlim=[0, 130], 
-    ylim=[-0.005, 0.7],
+    xlim=[0, nsteps], 
+    ylim=[-0.005, 1.0],
     yticks=np.linspace(0,7,8)*0.1,
     yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
     remove_xticks=True,
@@ -136,7 +137,7 @@ setup_axis(
     axes[1,0], 
     xlabel=r"$t$" if tex else "t",
     ylabel=r"$\frac{\partial f_i}{\partial t}$" if tex else "df/dt", 
-    xlim=[0, 130], 
+    xlim=[0, nsteps], 
     ylim=[-1,10],
     legend_items=[
         [(drw0, drw1), (dew0, dew1)],
@@ -150,7 +151,7 @@ setup_axis(
 setup_axis(
     axes[1,1], 
     xlabel=r"$t$" if tex else "t",
-    xlim=[0, 130], 
+    xlim=[0, nsteps], 
     ylim=[-1,10],
     remove_yticks=True,
     legend_items=[

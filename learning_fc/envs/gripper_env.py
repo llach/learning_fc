@@ -35,14 +35,15 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         "render_fps": 25,
     }
 
-    FMAX = 0.22
-    FSCALE_RANGE = [2.1, 3.1]
+    FMAX = 0.315
+    FSCALE_RANGE = [2.1, 3.3]
 
     def __init__(
             self, 
             amax=1.0, 
             vmax=0.02, 
-            dq_max=0.002, 
+            dq_max=0.003,
+            dq_min=0.0003, 
             f_scale=1.0,
             ftheta=0.05, 
             noise_q=0.000027,
@@ -55,6 +56,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         ):
         self.amax = amax        # maximum acceleration 
         self.vmax = vmax        # maximum joint velocity
+        self.dq_min = dq_min    # limits of action space for position delta control mode
         self.dq_max = dq_max    # limits of action space for position delta control mode
         self.ftheta = ftheta    # contact force noise threshold
         self.f_scale = f_scale  # force scaling factor
@@ -116,6 +118,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             self.qdes = np.clip(self.q+ain, 0, 0.045)
         else:
             assert False, f"unknown control mode {self.control_mode}"
+        
+        # motors can't realize arbitrarily small position deltas, so we emulate it here
+        self.qdes = np.where(np.abs(self.q-self.qdes)>self.dq_min, self.qdes, self.q) 
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)

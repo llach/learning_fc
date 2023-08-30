@@ -27,24 +27,24 @@ class GripperTactileEnv(GripperEnv):
     #     [0.025, 1.1]     # maximum parameter values
     # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.0, 0.95, 0.002,  0.0, 1]
-    SOLIMP_SOFT = [0.0, 0.95, 0.0275, 0.5, 2]
+    SOLIMP_HARD = [0.00, 0.99, 0.006, 0.3, 2]
+    SOLIMP_SOFT = [0.00, 0.99, 0.02,  0.5, 2]
 
     SOLIMP_RANGE = (
-        [0.0, 0.95, 0.0007, 0.0, 1], # dmin is zero, otherwise sampling is biased towards hard objects
-        [0.0, 0.95, 0.027,  0.5, 2] 
+        [0.006, 0.3], # dmin is zero, otherwise sampling is biased towards hard objects
+        [0.02,  0.5]
     )# sampling range for solimp parameters
 
-    BIASPRM = [0, -100, -15.5]
+    BIASPRM = [0, -100, -9]
 
     BIASPRM_RANGE = (
-        [0, -100, -20],
-        [0, -100, -11]
+        [0, -100, -13],
+        [0, -100, -6]
     )
 
     def __init__(
             self,      
-            fgoal_range=[0.05, 0.6], 
+            fgoal_range=[0.05, 1.0], 
             wo_range=[0.01, 0.035], 
             oy_init=None, 
             oy_range=None,
@@ -175,8 +175,14 @@ class GripperTactileEnv(GripperEnv):
         obj.attrib['pos'] = ' '.join(map(str, self.obj_pos))
 
         if self.sample_solimp: 
-            self.solimp = np.random.uniform(*self.SOLIMP_RANGE)
-            self.solimp[-1] = round(self.solimp[-1]) # ensure power is an int. this will only be uniform if power \in {1,2}
+            pars = np.random.uniform(*self.SOLIMP_RANGE)
+            self.solimp[2:4] = pars
+            a = np.array(list((zip(*self.SOLIMP_RANGE))))
+            rel_pars= [
+                safe_rescale(pars[0], a[0], [0,1]),
+                safe_rescale(pars[1], a[1], [0,1])
+            ]
+            self.soft_fac = np.mean(rel_pars)
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
