@@ -46,7 +46,7 @@ env = GripperTactileEnv(
     f_scale=2.6,
 )
 
-env.solimp = [0.00, 0.99, 0.006, 0.3, 2]
+env.solimp = [0.00, 0.99, 0.006, 0.5, 2]
 env.wo_range = 2*[0.0295/2]
 env.f_scale = 3.15
 _, e_wood = get_q_f(env, nsteps)

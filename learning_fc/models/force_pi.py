@@ -85,9 +85,13 @@ class ForcePI(BaseModel):
 
         return delta_qs
     
-    def predict(self, q, force, fgoal, *args, **kwargs):
+    def predict(self, *args, **kwargs):
         """
         interface to be compatible with stable baselines' API
         """
+        q = self.env.q
+        force = self.env.force
+        fgoal = self.env.fgoal
+        
         deltaq = self.get_q(q, force, fgoal)
         return self._deltaq_to_qdes(q, deltaq), {}

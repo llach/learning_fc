@@ -58,7 +58,7 @@ def f_act_plot(r, mode=PLOTMODE.debug, prefix=""):
     if mode == PLOTMODE.debug: 
         plt.show()
     else:
-        plt.savefig(f"{prefix}mr_test")
+        plt.savefig(f"{prefix}mr_test.png")
 
 
 def clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=""):
@@ -114,4 +114,4 @@ def clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=""):
     if mode == PLOTMODE.debug: 
         plt.show()
     else:
-        plt.savefig(f"{prefix}curve")
+        plt.savefig(f"{prefix}curve.png")

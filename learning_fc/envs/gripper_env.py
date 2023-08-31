@@ -36,8 +36,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     }
 
     FMAX = 0.315
-    FSCALE_RANGE = [2.1, 3.3]
-
     def __init__(
             self, 
             amax=1.0, 
@@ -84,9 +82,6 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs,
         )
-
-        self.max_fmax = self.FMAX*self.FSCALE_RANGE[1]
-        self.fgoal_range_max = [0.05, 0.95*self.max_fmax]
     
     def _name_2_qpos_id(self, name):
         """ given a joint name, return their `qpos`-array address
@@ -129,6 +124,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
 
         return aout
     
+    def _get_f(self, f):
+        return self.f_m * f
+    
     def _update_state(self):
         """ updates internal state variables that may be used as observations
         """
@@ -146,7 +144,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.qdot = (self.last_q - self.q)/self.dt
         
         # contact force and force change
-        self.force = self.f_scale * get_pad_forces(self.model, self.data) + np.random.normal(0.0, self.noise_f, (2,))
+        self.force = self._get_f(get_pad_forces(self.model, self.data)) + np.random.normal(0.0, self.noise_f, (2,))
         self.fdot = (self.last_f - self.force)/self.dt
         
         # binary contact states

@@ -414,32 +414,31 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     return cumr_a, cumr_o
 
 def stiffness_var_plot(env, model, vis, n_goals, n_trials, plot_title):
-    sfc = env.sample_fscale
-    env.set_attr("sample_fscale", False)
+    rand_stiff = env.randomize_stiffness
+    env.set_attr("randomize_stiffness", False)
 
     reses = []
-    fscales = np.linspace(*env.FSCALE_RANGE, n_goals)
-    for fs in fscales:
-        fmax = env.FMAX*fs
-        env.set_attr("f_scale", fs)
-
+    fmaxes = []
+    kappas = np.linspace(0, 1, n_goals)
+    for kappa in kappas:
+        env.change_stiffness(kappa)
+        fmaxes.append(env.fmax)
         reses.append(
             deterministic_eval(
                 env, 
                 model, 
                 vis, 
-                np.linspace(0.05*fmax, 0.95*fmax, n_trials),
+                np.linspace(*env.fgoal_range, n_trials),
                 reset_cb=force_reset_cb,
                 after_step_cb=force_after_step_cb
             )
         )
-    env.set_attr("sample_fscale", sfc)
+    env.set_attr("randomize_stiffness", rand_stiff)
 
     fig, axes = plt.subplots(nrows=n_goals, ncols=2, figsize=(10, 0.5+n_goals*2.5)) 
 
-    for i, (r, fs) in enumerate(zip(reses, fscales)):
+    for i, (r, fs, fmax) in enumerate(zip(reses, kappas, fmaxes)):
         n_steps  = r.nsteps
-        fmax = env.FMAX*fs
         x = np.arange(r.nsteps*r.ntrials)
 
         axes[i,0].plot(x, r.force)

@@ -1,6 +1,7 @@
 import pickle 
 
 import numpy as np
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
 import learning_fc
@@ -23,15 +24,15 @@ env = GripperTactileEnv(
     model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
     noise_f=0.0,
     f_scale=3.1,
-    sample_solimp=True,
     sample_biasprm=True,
-    sample_fscale=True,
+    randomize_stiffness=True
 )
 
 forces  = []
 fscales = []
 fgoal_abs = []
 fgoal_rel = []
+kappas = []
 
 for _ in range(ntrials):
     _, f = get_q_f(env, nsteps)
@@ -39,14 +40,16 @@ for _ in range(ntrials):
     fscales.append(env.f_scale)
     fgoal_abs.append(env.get_goal())
     fgoal_rel.append(env.get_goal()/env.fmax)
+    kappas.append(env.kappa)
 
-with open("traj.pkl", "wb") as f:
-    pickle.dump(dict(
-        forces=forces,
-        fscales=fscales,
-        fgoal_abs=fgoal_abs,
-        fgoal_rel=fgoal_rel
-    ), f)
+# with open("traj.pkl", "wb") as f:
+#     pickle.dump(dict(
+#         forces=forces,
+#         fscales=fscales,
+#         fgoal_abs=fgoal_abs,
+#         fgoal_rel=fgoal_rel,
+#         f_alphas=f_alphas
+#     ), f)
 # exit(0)
 
 # with open("traj.pkl", "rb") as f:
@@ -56,21 +59,22 @@ with open("traj.pkl", "wb") as f:
 # fscales = data["fscales"]
 # fgoal_abs = data["fgoal_abs"]
 # fgoal_rel = data["fgoal_rel"]
+# f_alphas = data["f_alphas"]
 
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, ax = plt.subplots()
 
 xs = np.arange(nsteps)
 
-for force in forces:
-    ax.plot(xs, force, alpha=0.2, c=Colors.tab10_0)
+for i, force in enumerate(forces):
+    ax.plot(xs, force, alpha=0.4, c=cm.rainbow(kappas[i]))
 
 setup_axis(
     ax, 
     xlabel=r"$t$" if tex else "t", 
     ylabel=r"$f^\text{left}$" if tex else "force", 
     xlim=[0, nsteps], 
-    ylim=[0, 0.8],
+    ylim=[-0.05, 1.2],
     remove_first_ytick=True,
 )
 

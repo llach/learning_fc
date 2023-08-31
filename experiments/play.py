@@ -22,7 +22,7 @@ env, model, vis, _ = make_eval_env_model(
     with_vis=with_vis, 
     checkpoint="best", 
     env_override = dict(
-        control_mode=ControlMode.PositionDelta
+        control_mode=ControlMode.PositionDelta,
         # model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
         # f_scale=3.0,
         # sample_fscale=True,
@@ -30,10 +30,11 @@ env, model, vis, _ = make_eval_env_model(
         # sample_biasprm=True
         # noise_f=0.002,
         # ftheta=0.008,
+        sample_solimp=False
     )
 )
 
-# model = StaticModel(safe_rescale(-0.0002999, [-env.dq_max, env.dq_max], [-1,1]))
+model = StaticModel(safe_rescale(-0.00031, [-env.dq_max, env.dq_max], [-1,1]))
 
 obs, _ = env.reset()
 if vis: vis.reset()

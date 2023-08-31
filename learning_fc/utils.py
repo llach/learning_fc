@@ -31,7 +31,7 @@ def find_latest_model_in_path(path, filters=[]):
     assert trial_name is not None, f"could not find a trial under {path} with filters {filters}"
     return trial_name
 
-def get_q_f(env, n_steps):
+def get_q_f(env, n_steps, qdes=-1):
     """ quick rollouts for gripper closing
     """
     q_env = []
@@ -40,7 +40,7 @@ def get_q_f(env, n_steps):
     for _ in range(n_steps):
         q_env.append(env.q)
         f_env.append(env.force)
-        env.step ([-1,-1])
+        env.step ([qdes,qdes])
     q_env = np.array(q_env)
     f_env = np.array(f_env)
     return q_env, f_env
@@ -82,6 +82,10 @@ def safe_unwrap(e):
 
 """ MuJoCo
 """
+
+def interp(v, interval):
+    int_len = interval[1]-interval[0]
+    return interval[0] + v*int_len
 
 def safe_rescale(x, bounds1, bounds2=[-1,1]):
     x = np.clip(x, *bounds1) # make sure x is within its interval

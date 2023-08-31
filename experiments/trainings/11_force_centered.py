@@ -13,7 +13,7 @@ OBS  = [
 ]
 
 CTRL = ControlMode.PositionDelta
-TIME = int(2e6)
+TIME = int(2.5e6)
 
 ekw = dict(
     control_mode=CTRL, 
@@ -22,9 +22,8 @@ ekw = dict(
     ra_scale=0,
     rp_scale=0.1,
     rf_scale=0.9,
-    sample_solimp=True,
-    sample_fscale=True,
     sample_biasprm=True,
+    randomize_stiffness=True,
     noise_f=0.002,
     ftheta=0.0075,
     model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     train(
         env_name="gripper_tactile", 
         model_name=ALG,
-        nenv=1,
+        nenv=10,
         max_steps=200,
         train_kw=dict(
             timesteps=TIME,
@@ -46,5 +45,5 @@ if __name__ == "__main__":
                 net_arch=[100,100]
             )
         ),
-        frame_stack=2,
+        frame_stack=3,
     )

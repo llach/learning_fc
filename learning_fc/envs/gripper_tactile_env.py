@@ -1,7 +1,7 @@
 import mujoco
 import numpy as np
 
-from learning_fc import safe_rescale
+from learning_fc import safe_rescale, interp
 from learning_fc.envs import GripperEnv
 from learning_fc.enums import ControlMode, ObsConfig, Observation
 
@@ -17,7 +17,7 @@ class GripperTactileEnv(GripperEnv):
     OBJ_V_MAX = 0.0025
     
     SOLREF = [0.02, 1.0]
-    SOLIMP = [0.9, 0.95, 0.001, 0.5, 2]
+    SOLIMP = [0.0, 0.99, 0.01, 0.5, 2]
 
     # SOLREF_HARD = [0.008, 0.9]
     # SOLREF_SOFT = [0.025, 1.1]
@@ -27,13 +27,10 @@ class GripperTactileEnv(GripperEnv):
     #     [0.025, 1.1]     # maximum parameter values
     # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.00, 0.99, 0.006, 0.3, 2]
+    SOLIMP_HARD = [0.00, 0.99, 0.003, 0.5, 2]
     SOLIMP_SOFT = [0.00, 0.99, 0.02,  0.5, 2]
 
-    SOLIMP_RANGE = (
-        [0.006, 0.3], # dmin is zero, otherwise sampling is biased towards hard objects
-        [0.02,  0.5]
-    )# sampling range for solimp parameters
+    WIDTH_RANGE = [0.006, 0.02]
 
     BIASPRM = [0, -100, -9]
 
@@ -41,6 +38,11 @@ class GripperTactileEnv(GripperEnv):
         [0, -100, -13],
         [0, -100, -6]
     )
+
+    M_RANGE = [1.8, 3.3]
+
+    FGOAL_MIN_RANGE = [0.1, 0.16]
+    FGOAL_MAX_RANGE = [0.47, 0.9]
 
     def __init__(
             self,      
@@ -54,9 +56,8 @@ class GripperTactileEnv(GripperEnv):
             ra_scale=0.0,
             rp_scale=0.0, 
             ov_max=0.0001,
-            sample_solimp = False,
-            sample_fscale = False,
             sample_biasprm = False,
+            randomize_stiffness = False,
             control_mode=ControlMode.Position, 
             obs_config=ObsConfig.F_DF,
             **kwargs
@@ -70,8 +71,7 @@ class GripperTactileEnv(GripperEnv):
         self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
         self.fgoal_range = fgoal_range  # sampling range for fgoal
-        self.sample_solimp = sample_solimp  # toggle solimp sampling
-        self.sample_fscale = sample_fscale
+        self.randomize_stiffness = randomize_stiffness
         self.sample_biasprm = sample_biasprm
 
         if oy_init is not None:
@@ -94,6 +94,9 @@ class GripperTactileEnv(GripperEnv):
         )
         
         self.set_goal(0)
+        self.change_stiffness(0.5)
+        self.max_fmax = self.FMAX*self.M_RANGE[1]
+        self.fgoal_range_max = [self.FGOAL_MIN_RANGE[0], self.FGOAL_MAX_RANGE[1]]
 
     def _update_state(self):
         """ updates internal state variables that may be used as observations
@@ -174,15 +177,7 @@ class GripperTactileEnv(GripperEnv):
         obj = root.findall(".//body[@name='object']")[0]
         obj.attrib['pos'] = ' '.join(map(str, self.obj_pos))
 
-        if self.sample_solimp: 
-            pars = np.random.uniform(*self.SOLIMP_RANGE)
-            self.solimp[2:4] = pars
-            a = np.array(list((zip(*self.SOLIMP_RANGE))))
-            rel_pars= [
-                safe_rescale(pars[0], a[0], [0,1]),
-                safe_rescale(pars[1], a[1], [0,1])
-            ]
-            self.soft_fac = np.mean(rel_pars)
+        if self.randomize_stiffness: self.change_stiffness(np.random.uniform(0,1))
 
         objgeom = obj.findall(".//geom")[0]
         objgeom.attrib['solimp'] = ' '.join(map(str, self.solimp))
@@ -197,27 +192,33 @@ class GripperTactileEnv(GripperEnv):
 
         act_default = root.findall(".//general[@dyntype='none']")[0]
         act_default.attrib["biasprm"] = " ".join(map(str, self.biasprm))
-
-        # force-related sampling
-        if self.sample_fscale: self.f_scale = np.random.uniform(*self.FSCALE_RANGE)
-        self.fgoal_range[0] = self.f_scale * self.FMAX * 0.05
-        self.fgoal_range[1] = self.f_scale * self.FMAX * 0.95 # upper limit of the goal force sampling range is 95% of the currently possible maximum force
-        self.fmax = self.f_scale * self.FMAX
         
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
-    def set_goal(self, x): 
-        self.fgoal = x
-        if self.fgoal > self.f_scale*self.FMAX: # if the maximum force is smaller than the goal, raise it
-            self.f_scale = (self.fgoal*1.10)/self.FMAX
-            print(f"adjusted f_scale to {self.f_scale}")
+    def set_goal(self, x): self.fgoal = x
 
     def set_solver_parameters(self, solimp=None, solref=None):
         """ see https://mujoco.readthedocs.io/en/stable/modeling.html#solver-parameters
         """
         if solimp is not None: self.solimp = solimp
         if solref is not None: self.solref = solref
+
+    def change_stiffness(self, kappa):
+        assert 0 <= kappa and kappa <= 1, "0 <= kappa and kappa <= 1"
+        self.kappa = kappa # 0 is hard, 1 is soft
+
+        self.f_m = interp(1-kappa, self.M_RANGE)
+
+        self.sol_width = interp(kappa, self.WIDTH_RANGE)
+        self.solimp[2] = self.sol_width
+
+        self.fgoal_min = interp(1-kappa, self.FGOAL_MIN_RANGE)
+        self.fgoal_max = interp(1-kappa, self.FGOAL_MAX_RANGE)
+
+        self.fgoal_range = [self.fgoal_min, self.fgoal_max]
+
+        self.fmax = self._get_f(self.FMAX)
 
     def get_goal(self): return self.fgoal
