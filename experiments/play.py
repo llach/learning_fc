@@ -38,8 +38,8 @@ cumrews = np.zeros((N_GOALS,))
 for i, kappa in enumerate(kappas):
     obs, _ = env.reset()
 
-    env.change_stiffness(kappa)
-    env.set_goal(np.random.uniform(*env.fgoal_range))
+    # env.change_stiffness(kappa)
+    # env.set_goal(np.random.uniform(*env.fgoal_range))
 
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()

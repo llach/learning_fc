@@ -26,7 +26,7 @@ class TactileVis(VisBase):
         self.draw_goal()
         self.plt_force.draw_line(
                 name="ftheta",
-                pos=env.ftheta,
+                pos=env.fth,
                 angle=0
             )
 
@@ -93,7 +93,7 @@ class TactileVis(VisBase):
         ]
 
     def draw_goal(self):
-        fth    = self.env.ftheta
+        fth    = self.env.fth
         fgoal  = self.env.fgoal
 
         self.plt_force.draw_line(
@@ -116,8 +116,8 @@ class TactileVis(VisBase):
         )
 
         self.plt_force.draw_line(
-            name="noise_lower",
-            pos=round(self.env.FMAX*self.env.f_scale, 3),
+            name="fmax",
+            pos=round(self.env.fmax, 3),
             angle=0,
             pen=dict(color="#FF0000", width=1, style=QtCore.Qt.PenStyle.DotLine)
         )

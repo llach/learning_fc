@@ -25,7 +25,7 @@ ekw = dict(
     sample_biasprm=True,
     randomize_stiffness=True,
     noise_f=0.002,
-    ftheta=0.0075,
+    fth=0.0075,
     model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
 )
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
         model_kw=dict(
             learning_rate=6e-4,
             policy_kwargs=dict(
-                net_arch=[20,20]
+                net_arch=[30,30]
             )
         ),
-        frame_stack=1,
+        frame_stack=3,
     )
