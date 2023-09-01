@@ -15,8 +15,8 @@ OBS  = [
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta
-TIME = int(45e5)
-STOP = int(15e5)
+TIME = int(2.5e6)
+STOP = int(1.5e6)
 
 def _get_schedules():
     vo_schedule = ParamSchedule(

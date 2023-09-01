@@ -260,7 +260,7 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    # trial = f"{model_path}/2023-08-28_09-54-35__gripper_tactile__ppo__k-2__lr-0.0006" # 00_no_move
+    # trial = f"{model_path}/2023-09-01_10-20-48__gripper_tactile__ppo__k-3__lr-0.0006_M2" # 00_no_move
     trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
