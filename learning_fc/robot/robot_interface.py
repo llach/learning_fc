@@ -269,9 +269,8 @@ if __name__ == "__main__":
     # model = PosModel(env)
     # model = StaticModel(safe_rescale(-0.001, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    model = ForcePI(env)
+    # model = ForcePI(env)
     ri = RobotInterface(model, env, k=k, goal=0.01)
-    model.env = ri
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])
