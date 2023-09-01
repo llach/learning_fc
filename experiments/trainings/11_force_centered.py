@@ -45,5 +45,5 @@ if __name__ == "__main__":
                 net_arch=[30,30]
             )
         ),
-        frame_stack=3,
+        frame_stack=1,
     )

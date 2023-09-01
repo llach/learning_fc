@@ -49,7 +49,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             qinit_range=[0.045, 0.045], 
             obs_config=ObsConfig.Q_F_DF, 
             control_mode=ControlMode.Position, 
-            model_path=learning_fc.__path__[0]+"/assets/franka_force.xml", 
+            model_path="assets/franka_force.xml", 
             **kwargs
         ):
         self.amax = amax        # maximum acceleration 
@@ -76,7 +76,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         utils.EzPickle.__init__(self, **kwargs)
         MujocoEnv.__init__(
             self,
-            model_path=model_path,
+            model_path=learning_fc.__path__[0]+f"/{model_path}",
             frame_skip=20,
             observation_space=observation_space,
             default_camera_config=DEFAULT_CAMERA_CONFIG,
