@@ -42,8 +42,8 @@ if __name__ == "__main__":
         model_kw=dict(
             learning_rate=6e-4,
             policy_kwargs=dict(
-                net_arch=[100,100]
+                net_arch=[20,20]
             )
         ),
-        frame_stack=3,
+        frame_stack=1,
     )

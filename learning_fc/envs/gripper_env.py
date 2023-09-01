@@ -115,7 +115,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             assert False, f"unknown control mode {self.control_mode}"
         
         # motors can't realize arbitrarily small position deltas, so we emulate it here
-        self.qdes = np.where(np.abs(self.q-self.qdes)>self.dq_min, self.qdes, self.q) 
+        # self.qdes = np.where(np.abs(self.q-self.qdes)>self.dq_min, self.qdes, self.q) 
 
         # create action array, insert gripper actions at proper indices
         aout = np.zeros_like(self.data.ctrl)

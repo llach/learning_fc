@@ -41,7 +41,7 @@ class GripperTactileEnv(GripperEnv):
 
     M_RANGE = [1.8, 3.3]
 
-    FGOAL_MIN_RANGE = [0.1, 0.16]
+    FGOAL_MIN_RANGE = [0.05, 0.16]
     FGOAL_MAX_RANGE = [0.47, 0.9]
 
     def __init__(
@@ -217,7 +217,7 @@ class GripperTactileEnv(GripperEnv):
         self.fgoal_min = interp(1-kappa, self.FGOAL_MIN_RANGE)
         self.fgoal_max = interp(1-kappa, self.FGOAL_MAX_RANGE)
 
-        self.fgoal_range = [self.fgoal_min, self.fgoal_max]
+        self.fgoal_range = [self.FGOAL_MIN_RANGE[0], self.FGOAL_MAX_RANGE[1]]
 
         self.fmax = self._get_f(self.FMAX)
 
