@@ -29,7 +29,7 @@ data = np.zeros((2, len(qdeses), 2))
 
 for i, soli in enumerate([1, 0]):
     env.change_stiffness(soli)
-    print(env.fmin, env.fmax)
+    print(env.fmax)
     for j, qdes in enumerate(qdeses):
         _, f = get_q_f(env, nsteps, qdes=safe_rescale(
             -qdes,

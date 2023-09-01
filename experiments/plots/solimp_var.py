@@ -50,7 +50,7 @@ setup_axis(
     xlabel=r"$t$" if tex else "t", 
     ylabel=r"$f_i$" if tex else "f", 
     xlim=[0, 80], 
-    ylim=[-0.002, 0.25],
+    ylim=[-0.002, 1.1],
     legend_items=legend_items,
     legend_loc="center right",
     yticks=np.linspace(0,25,6)*0.01,
