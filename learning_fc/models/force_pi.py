@@ -39,7 +39,7 @@ class ForcePI(BaseModel):
         for i, f in enumerate(f_t):
 
             # phase I: closing
-            if np.abs(f) < self.env.ftheta and not self.joint_transition[i]:
+            if np.abs(f) < self.env.fth and not self.joint_transition[i]:
                 delta_qs[i] = -self.closing_vel*self.env.dt*5
             # phase II: contact acquisition → waiting for force-closure
             elif not self.joint_transition[i]:
@@ -91,7 +91,7 @@ class ForcePI(BaseModel):
         """
         q = self.env.q
         force = self.env.force
-        fgoal = self.env.fgoal
+        fgoal = self.env.get_goal()
         
         deltaq = self.get_q(q, force, fgoal)
         return self._deltaq_to_qdes(q, deltaq), {}

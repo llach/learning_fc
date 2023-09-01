@@ -29,6 +29,11 @@ class RobotInterface:
         self.goal = goal
         self.freq = freq
         self.model = model
+        self.dt = 1/self.freq
+        self.dq_max = env.dq_max
+
+        # hacky way of supplying baseline with ROS data
+        if isinstance(self.model, ForcePI): self.model.env = self
 
         self.task = ControlTask.Force if isinstance(env.unwrapped, GripperTactileEnv) else ControlTask.Position
         self.obs_config = env.obs_config
@@ -137,6 +142,8 @@ class RobotInterface:
         obs = []
         for on in self.obs_config: obs.append(self._enum2obs(on))
         return np.concatenate(obs).astype(np.float32)
+    
+    def get_goal(self): return self.goal
     
     def actuate(self, action): self.qpub.publish(Float64MultiArray(data=action))
 
@@ -253,19 +260,18 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    trial = f"{model_path}/2023-08-28_09-54-35__gripper_tactile__ppo__k-2__lr-0.0006" # 00_no_move
-    # trial = find_latest_model_in_path(model_path, filters=["ppo"])
+    # trial = f"{model_path}/2023-08-28_09-54-35__gripper_tactile__ppo__k-2__lr-0.0006" # 00_no_move
+    trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
-    env.set_attr("dq_max", 0.003)
-
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
-    model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
+    # model = StaticModel(safe_rescale(-0.001, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    # model = ForcePI(env)
+    model = ForcePI(env)
     ri = RobotInterface(model, env, k=k, goal=0.01)
+    model.env = ri
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])
