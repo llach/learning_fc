@@ -41,7 +41,7 @@ r_sponge = r_sponge[0][:nsteps]
 env = GripperTactileEnv(
     control_mode=ControlMode.PositionDelta,
     oy_init=0,
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    model_path="assets/pal_force.xml",
     noise_f=0.002,
     f_scale=2.6,
 )
@@ -51,7 +51,7 @@ env.wo_range = 2*[0.0295/2]
 env.f_scale = 3.15
 _, e_wood = get_q_f(env, nsteps)
 
-env.solimp = [0.00, 0.99, 0.02, 0.5, 2]
+env.solimp = [0.00, 0.99, 0.01, 0.5, 2]
 env.wo_range = 2*[0.0255]
 env.f_scale = 2.4
 _, e_sponge = get_q_f(env, nsteps)

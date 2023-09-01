@@ -14,19 +14,19 @@ env = GripperTactileEnv(
     wo_range=[0.035, 0.035],
     noise_f=0,
     control_mode=ControlMode.PositionDelta,
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    model_path="assets/pal_force.xml",
 )
 
-env.f_scale = env.FSCALE_RANGE[0]
+env.change_stiffness(1)
 env.solimp = env.SOLIMP_SOFT
 q_low, f_low = get_q_f(env, nsteps)
 
-env.f_scale = env.FSCALE_RANGE[1]
+env.change_stiffness(0)
 env.solimp = env.SOLIMP_HARD
 _, f_high = get_q_f(env, nsteps)
 print(f"fmax {np.max(f_high)} | dpmax {0.035-q_low[-1,0]:.4f}")
 
-env.f_scale = np.mean(env.FSCALE_RANGE)
+env.change_stiffness(0.5)
 env.solimp = np.mean([env.SOLIMP_SOFT, env.SOLIMP_HARD], axis=0)
 _, f_mid = get_q_f(env, nsteps)
 
@@ -50,7 +50,7 @@ setup_axis(
     xlabel=r"$t$" if tex else "t", 
     ylabel=r"$f_i$" if tex else "f", 
     xlim=[0, 80], 
-    ylim=[-0.002, 0.7],
+    ylim=[-0.002, 1.1],
     legend_items=legend_items,
     legend_loc="lower right",
     yticks=np.linspace(0,7,8)*0.1,
