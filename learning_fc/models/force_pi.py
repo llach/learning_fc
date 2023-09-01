@@ -27,6 +27,7 @@ class ForcePI(BaseModel):
         BaseModel.__init__(self, env=env)
 
     def reset(self):
+        if self.verbose: print("ForcePI: reset()")
         self.joint_transition = [False, False]
         self.error_integral = 0.0
 
@@ -83,7 +84,8 @@ class ForcePI(BaseModel):
         # if self.phase == ControllerPhase.FORCE_CTRL:
         #     print("fc", delta_qs)
 
-        return delta_qs
+        if self.verbose: print(f"ForcePI dq {delta_qs} | states {self.joint_transition}")
+        return delta_qs[::-1]
     
     def predict(self, *args, **kwargs):
         """

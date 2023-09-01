@@ -22,7 +22,7 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, k=1, goal=0.0, fth=0.001, freq=25, control_mode=None):
+    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None):
         self.k = k
         self.env = env
         self.fth = fth
@@ -50,7 +50,8 @@ class RobotInterface:
         rospy.init_node("model_robot_interface")
 
         self.r = rospy.Rate(self.freq)
-        self.qpub = rospy.Publisher("/gripper_position_controller/command", Float64MultiArray, queue_size=1)
+        self.lpub = rospy.Publisher("/finger_left_controller/command", Float64MultiArray, queue_size=1)
+        self.rpub = rospy.Publisher("/finger_right_controller/command", Float64MultiArray, queue_size=1)
         self.dpub = rospy.Publisher("/model_debug", ModelDebug, queue_size=1)
 
         self._setup_subscribers()
@@ -78,6 +79,7 @@ class RobotInterface:
                 m.goal = float(self.goal)
                 m.force_deltas = self._goal_delta()
                 m.actions = self.last_a
+                m.ftheta = self.fth
                 self.dpub.publish(m)
                 self.r.sleep()
             except Exception as e:
@@ -145,7 +147,13 @@ class RobotInterface:
     
     def get_goal(self): return self.goal
     
-    def actuate(self, action): self.qpub.publish(Float64MultiArray(data=action))
+    def actuate(self, action): 
+        left = Float64MultiArray(data=[action[1]])
+        right = Float64MultiArray(data=[action[0]])
+        print(action, self.q)
+
+        if left.data != self.q[0]: self.lpub.publish(left)
+        if right.data != self.q[1]: self.rpub.publish(right)
 
     def set_goal(self, g):
         if self.task == ControlTask.Position:
@@ -205,7 +213,9 @@ class RobotInterface:
         elif self.control_mode == ControlMode.PositionDelta:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             self.qdes = np.clip(self.q+ain, 0, 0.045)
+            print(self.q)
         
+        # print(self.qdes)
         self.actuate(self.qdes)
         self.last_a = raw_action.copy()
 
@@ -235,7 +245,6 @@ class RobotInterface:
 
     def run(self):
         print("running model ...")
-
         self.hist = dict(
             obs={on: [] for on in self.obs_config},
             qdes=[],
@@ -260,16 +269,16 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    # trial = f"{model_path}/2023-09-01_10-20-48__gripper_tactile__ppo__k-3__lr-0.0006_M2" # 00_no_move
+    # trial = f"{model_path}/2023-09-01_11-54-09__gripper_tactile__ppo__k-1__lr-0.0006" 
     trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
-    # model = StaticModel(safe_rescale(-0.001, [-env.dq_max, env.dq_max], [-1, 1]))
+    model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    # model = ForcePI(env)
+    # model = ForcePI(env, verbose=True)
     ri = RobotInterface(model, env, k=k, goal=0.01)
 
     time.sleep(1.0)
@@ -288,6 +297,7 @@ if __name__ == "__main__":
         elif inp=="o":
             ri.stop()
             ri.actuate([0.045, 0.045])
+            if isinstance(model, ForcePI): model.reset()
 
         elif inp[0]=="g":
             goal = inp[1:]
