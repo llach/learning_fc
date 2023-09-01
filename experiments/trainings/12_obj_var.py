@@ -81,12 +81,11 @@ ekw = dict(
     ra_scale=0,
     rp_scale=0.2,
     rf_scale=0.8,
-    sample_solimp=True,
-    sample_fscale=True,
     sample_biasprm=True,
+    randomize_stiffness=True,
     noise_f=0.002,
-    ftheta=0.0075,
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    fth=0.0075,
+    model_path="assets/pal_force.xml",
 )
 
 if __name__ == "__main__":
@@ -100,10 +99,11 @@ if __name__ == "__main__":
         ),
         env_kw=ekw, 
         model_kw=dict(
+            learning_rate=6e-4,
             policy_kwargs=dict(
-                net_arch=[80,80]
+                net_arch=[50,50]
             )
         ),
-        frame_stack=3,
+        frame_stack=1,
         schedules=_get_schedules(),
     )

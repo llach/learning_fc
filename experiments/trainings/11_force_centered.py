@@ -26,7 +26,7 @@ ekw = dict(
     randomize_stiffness=True,
     noise_f=0.002,
     fth=0.0075,
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    model_path="assets/pal_force.xml",
 )
 
 if __name__ == "__main__":
