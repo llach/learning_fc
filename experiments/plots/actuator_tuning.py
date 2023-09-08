@@ -26,17 +26,17 @@ for fi in os.listdir(files_dir):
 
 q_rob = qs[-1]
 n_steps = len(q_rob)
-wo = 0.016
+wo = 0.018
 
 env = GripperTactileEnv(
     control_mode=ControlMode.PositionDelta,
     oy_init=0,
     wo_range=[wo, wo],
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    model_path="assets/pal_force.xml",
     noise_f=0.002,
     f_scale=3.1,
-    sample_solimp=False,
-    sample_biasprm=False
+    sample_biasprm=False,
+    randomize_stiffness=False,
 )
 
 env.biasprm = env.BIASPRM_RANGE[1]
@@ -53,10 +53,10 @@ env = GripperTactileEnv(
     oy_init=0,
     wo_range=[wo, wo],
 )
-env.biasprm = [0, -500, -55]
+env.biasprm = [0, -100, -10]
 q_bef, _ = get_q_f(env, n_steps)
 
-mode = PLOTMODE.debug
+mode = PLOTMODE.paper
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, ax = plt.subplots()
 xs = np.arange(n_steps)
@@ -78,7 +78,7 @@ setup_axis(
     ax, 
     xlabel=r"$t$" if tex else "t", 
     ylabel=r"$q_i$" if tex else "q_i", 
-    xlim=[0, 125], 
+    xlim=[0, 50], 
     ylim=[0, 0.045],
     legend_items=legend_items,
     legend_loc="upper right",

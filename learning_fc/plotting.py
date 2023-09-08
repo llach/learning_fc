@@ -39,7 +39,8 @@ class Colors(str, Enum):
 
 class PLOTMODE(str, Enum):
     debug="debug"
-    camera_ready="camera_ready"
+    thesis="thesis"
+    paper="paper"
 
 class FIGTYPE(str, Enum):
     single="single"
@@ -93,10 +94,10 @@ def set_rcParams(mode: PLOTMODE = PLOTMODE.debug, ftype: FIGTYPE = FIGTYPE.singl
     plt.rcParams['figure.constrained_layout.use'] = True
 
     # camera ready: slower but nicer
-    if mode == PLOTMODE.camera_ready:
+    if mode == PLOTMODE.thesis or mode == PLOTMODE.paper:
         # same font as text 
         plt.rcParams['font.family'] = 'serif'
-        plt.rcParams['font.serif'] = ['Palatino']
+        if mode == PLOTMODE.thesis: plt.rcParams['font.serif'] = ['Palatino']
 
         # high quality figure
         plt.rcParams["figure.dpi"] = 300
@@ -141,9 +142,9 @@ def setup_axis(
         ax.set_yticklabels(lbls)
 
     if remove_first_ytick: 
-        labels = ax.get_yticklabels()
+        labels = ax.get_yticklabels()[1:]
         labels[0].set(text="")
-        ax.set_yticks(ax.get_yticks()) 
+        ax.set_yticks(ax.get_yticks()[1:]) 
         ax.set_yticklabels(labels)
 
     if remove_xticks:

@@ -9,14 +9,15 @@ from learning_fc.enums import ControlMode
 from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
 
 
-nsteps = 150
+nsteps = 50
 env = GripperTactileEnv(
     oy_init=0,
     wo_range=[0.035, 0.035],
     noise_f=0,
     control_mode=ControlMode.PositionDelta,
-    model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+    model_path="assets/pal_force.xml",
 )
+env.f_m = 1
 
 env.solimp = env.SOLIMP_SOFT
 env.solimp[0] = 0
@@ -31,7 +32,7 @@ env.solimp[0] = 0
 _, f_mid = get_q_f(env, nsteps)
 
 
-mode = PLOTMODE.debug
+mode = PLOTMODE.paper
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, ax = plt.subplots()
 
@@ -42,19 +43,23 @@ qvar = ax.fill_between(xs, np.min(f_low, axis=1), np.max(f_high, axis=1), color=
 
 legend_items = [
     [(mq,), (qvar,)],
-    ["interval center", "interval borders"]
+    [
+        r"$\rho = 0.0065$" if tex else "interval center", 
+        r"$\rho \in [0.003, 0.01]$" if tex else "interval borders"
+    ]
 ]
 
 setup_axis(
     ax, 
     xlabel=r"$t$" if tex else "t", 
-    ylabel=r"$f_i$" if tex else "f", 
-    xlim=[0, 80], 
-    ylim=[-0.002, 1.1],
+    ylabel=r"$f$" if tex else "f", 
+    xlim=[0, 30], 
+    ylim=[-0.002, 0.35],
     legend_items=legend_items,
-    legend_loc="center right",
-    yticks=np.linspace(0,25,6)*0.01,
-    yticklabels=['', '0.05', '0.10', '0.15', '0.20', '0.25'],
+    legend_loc="lower right",
+    remove_first_ytick=True,
+    # yticks=np.linspace(0,25,6)*0.01,
+    # yticklabels=['', '0.05', '0.10', '0.15', '0.20', '0.25'],
 )
 
 if mode == PLOTMODE.debug: 
