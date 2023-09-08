@@ -1,27 +1,24 @@
-import learning_fc
-
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 
 ALG  = "ppo"
 OBS  = [
-    Observation.Pos,
-    Observation.Des,
+    Observation.Pos, 
     Observation.Force,
     Observation.ForceDelta,
     Observation.Action,
 ]
 
 CTRL = ControlMode.PositionDelta
-TIME = int(2.5e6)
+TIME = int(3.5e6)
 
 ekw = dict(
     control_mode=CTRL, 
     obs_config=OBS, 
     ro_scale=0,
-    ra_scale=0,
-    rp_scale=0.1,
-    rf_scale=0.9,
+    ra_scale=0.2,
+    rp_scale=0,
+    rf_scale=1.0,
     sample_biasprm=True,
     randomize_stiffness=True,
     noise_f=0.002,
@@ -42,8 +39,8 @@ if __name__ == "__main__":
         model_kw=dict(
             learning_rate=6e-4,
             policy_kwargs=dict(
-                net_arch=[30,30]
+                net_arch=[50,50]
             )
         ),
-        frame_stack=1,
+        frame_stack=2,
     )

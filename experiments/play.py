@@ -1,14 +1,10 @@
 import numpy as np
-import learning_fc
-import matplotlib.pyplot as plt
 
 from learning_fc import model_path
 from learning_fc.enums import ControlMode
-from learning_fc.models import ForcePI, PosModel, StaticModel
+from learning_fc.models import ForcePI
 from learning_fc.training import make_eval_env_model
-from learning_fc.training.evaluation import plot_rollouts
-from learning_fc.utils import find_latest_model_in_path, safe_rescale
-from learning_fc.training.evaluation import deterministic_eval, force_reset_cb, force_after_step_cb
+from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 10
 with_vis = 1
@@ -23,6 +19,8 @@ env, model, vis, _ = make_eval_env_model(
     checkpoint="best", 
     env_override = dict(
         control_mode=ControlMode.PositionDelta,
+        oy_range=[0,0],
+        wo_range=2*[0.035],
         # model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
         # f_scale=3.0,
         # sample_fscale=True,
@@ -33,12 +31,15 @@ env, model, vis, _ = make_eval_env_model(
     )
 )
 
+# model = ForcePI(env)
 kappas = np.linspace(0, 1, N_GOALS)
 cumrews = np.zeros((N_GOALS,))
 for i, kappa in enumerate(kappas):
     obs, _ = env.reset()
 
-    # env.change_stiffness(kappa)
+    env.change_stiffness(kappa)
+    # env.set_solver_parameters(solimp=env.SOLIMP_SOFT)
+    # env.set_attr("f_m", 1.78)
     # env.set_goal(np.random.uniform(*env.fgoal_range))
 
     if isinstance(model, ForcePI): model.reset()
@@ -47,7 +48,7 @@ for i, kappa in enumerate(kappas):
     for j in range(200):
         ain, _ = model.predict(obs, deterministic=True)
 
-        obs, r, _, _, _ = env.step(ain)
+        obs, r, _, _, _ = env.step([0,0])
         if vis: vis.update_plot(action=ain, reward=r)
 
         cumrews[i] += r

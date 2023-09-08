@@ -53,11 +53,11 @@
             <geom mesh="finger_0" material="grey" class="visual"/>
             <!-- <geom name="left_finger_bb" pos="-0.004 0 -0.159" class="col_bb" /> -->
 
-            <geom name="pad_1_l" type="box" size="0.003 0.017 0.017"   pos="-0.0033 0 -0.192" rgba="1 0 0 0.2"/>
-            <geom name="pad_2_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003 -0.0085 -0.1835" rgba="1 0 1 0.2" />
-            <geom name="pad_3_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003  0.0085 -0.1835" rgba="1 0 1 0.2" />
-            <geom name="pad_4_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003 -0.0085 -0.2005" rgba="1 0 1 0.2" />
-            <geom name="pad_5_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003  0.0085 -0.2005" rgba="1 0 1 0.2" />
+            <geom name="pad_1_l" type="box" size="0.003 0.017 0.017"   pos="-0.0033 0 -0.192" rgba="1 0 0 0"/>
+            <geom name="pad_2_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003 -0.0085 -0.1835" rgba="1 0 1 0" />
+            <geom name="pad_3_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003  0.0085 -0.1835" rgba="1 0 1 0" />
+            <geom name="pad_4_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003 -0.0085 -0.2005" rgba="1 0 1 0" />
+            <geom name="pad_5_l" type="box" size="0.003 0.0085 0.0085" pos="-0.003  0.0085 -0.2005" rgba="1 0 1 0" />
         </body>
         <body name="right_finger" pos="0 0 0" quat="0 -0.707107 0.707107 0">
             <inertial mass="0.10998" pos="0 0 0" diaginertia="0.000161667 0.000161667 0.000161667"/> 
@@ -66,11 +66,11 @@
             <geom mesh="finger_1" material="grey" class="visual" />
             <!-- <geom name="right_finger_bb" pos="0.004 0 -0.159" class="col_bb" /> -->
 
-            <geom name="pad_1_r" type="box" size="0.003 0.017 0.017"   pos="0.0033 0 -0.192" rgba="1 0 0 0.2" />
-            <geom name="pad_2_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 -0.0085 -0.1835" rgba="1 0 1 0.2" />
-            <geom name="pad_3_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 0.0085 -0.1835" rgba="1 0 1 0.2" />
-            <geom name="pad_4_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 -0.0085 -0.2005" rgba="1 0 1 0.2" />
-            <geom name="pad_5_r" type="box" size="0.003 0.0085 0.0085" pos="0.003  0.0085 -0.2005" rgba="1 0 1 0.2" />
+            <geom name="pad_1_r" type="box" size="0.003 0.017 0.017"   pos="0.0033 0 -0.192" rgba="1 0 0 0" />
+            <geom name="pad_2_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 -0.0085 -0.1835" rgba="1 0 1 0" />
+            <geom name="pad_3_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 0.0085 -0.1835"  rgba="1 0 1 0" />
+            <geom name="pad_4_r" type="box" size="0.003 0.0085 0.0085" pos="0.003 -0.0085 -0.2005" rgba="1 0 1 0" />
+            <geom name="pad_5_r" type="box" size="0.003 0.0085 0.0085" pos="0.003  0.0085 -0.2005" rgba="1 0 1 0" />
         </body>
     </body>
   </worldbody>

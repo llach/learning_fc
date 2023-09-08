@@ -1,21 +1,17 @@
-import learning_fc
-import numpy as np
-
 from learning_fc.enums import ControlMode, Observation
 from learning_fc.training import train
 from learning_fc.callbacks import ParamSchedule
 
 ALG  = "ppo"
 OBS  = [
-    Observation.Pos, 
-    Observation.Des, 
+    Observation.Pos,
     Observation.Force, 
     Observation.ForceDelta,
     Observation.HadCon,
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta
-TIME = int(2.5e6)
+TIME = int(4.5e6)
 STOP = int(1.5e6)
 
 def _get_schedules():
@@ -37,14 +33,14 @@ def _get_schedules():
         total_timesteps=TIME
     )
 
-    ra_schedule = ParamSchedule(
-        var_name="ra_scale",
-        start=0.0, 
-        stop=STOP,
-        first_value=0.0,
-        final_value=0.1,
-        total_timesteps=TIME
-    )
+    # ra_schedule = ParamSchedule(
+    #     var_name="ra_scale",
+    #     start=0.0, 
+    #     stop=STOP,
+    #     first_value=0.0,
+    #     final_value=0.1,
+    #     total_timesteps=TIME
+    # )
 
     wo_schedule = ParamSchedule(
         var_name="wo_range",
@@ -66,7 +62,7 @@ def _get_schedules():
 
     return [
         ro_schedule,
-        ra_schedule,
+        # ra_schedule,
         wo_schedule,
         oy_schedule,
         vo_schedule,
@@ -78,9 +74,9 @@ ekw = dict(
     obs_config=OBS, 
     ov_max=0.0002,
     ro_scale=0,
-    ra_scale=0,
-    rp_scale=0.2,
-    rf_scale=0.8,
+    ra_scale=0.2,
+    rp_scale=0.1,
+    rf_scale=0.9,
     sample_biasprm=True,
     randomize_stiffness=True,
     noise_f=0.002,
@@ -104,6 +100,6 @@ if __name__ == "__main__":
                 net_arch=[50,50]
             )
         ),
-        frame_stack=1,
+        frame_stack=3,
         schedules=_get_schedules(),
     )

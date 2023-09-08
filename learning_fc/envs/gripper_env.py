@@ -155,11 +155,11 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if on == Observation.Pos: return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Des: return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel: return safe_rescale(self.qdot, [-self.vmax, self.vmax])
-        if on == Observation.Force: return safe_rescale(self.force, [0, self.max_fmax])
+        if on == Observation.Force: return self.force#safe_rescale(self.force, [0, self.max_fmax])
         if on == Observation.FDot: return self.fdot 
         if on == Observation.Action: return self.ain
         if on == Observation.PosDelta: return safe_rescale(self.q_deltas, [-0.045, 0.045])
-        if on == Observation.ForceDelta: return safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
+        if on == Observation.ForceDelta: return self.force_deltas#safe_rescale(self.force_deltas, [-self.fgoal, self.fgoal])
         if on == Observation.InCon: return self.in_contact
         if on == Observation.HadCon: return self.had_contact
 

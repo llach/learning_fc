@@ -27,10 +27,10 @@ class GripperTactileEnv(GripperEnv):
     #     [0.025, 1.1]     # maximum parameter values
     # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.00, 0.99, 0.003, 0.5, 2]
+    SOLIMP_HARD = [0.00, 0.99, 0.002, 0.5, 2]
     SOLIMP_SOFT = [0.00, 0.99, 0.01,  0.5, 2]
 
-    WIDTH_RANGE = [0.006, 0.01]
+    WIDTH_RANGE = [0.003, 0.01]
 
     BIASPRM = [0, -100, -9]
 
@@ -39,9 +39,9 @@ class GripperTactileEnv(GripperEnv):
         [0, -100, -6]
     )
 
-    M_RANGE = [1.8, 3.3]
+    M_RANGE = [0.5, 5]
 
-    FGOAL_MIN_RANGE = [0.04, 0.16]
+    FGOAL_MIN_RANGE = [0.01, 0.16]
     FGOAL_MAX_RANGE = [0.47, 0.92]
 
     def __init__(
@@ -206,7 +206,7 @@ class GripperTactileEnv(GripperEnv):
         if solref is not None: self.solref = solref
 
     def change_stiffness(self, kappa):
-        assert 0 <= kappa and kappa <= 1, "0 <= kappa and kappa <= 1"
+        # assert 0 <= kappa and kappa <= 1, "0 <= kappa and kappa <= 1"
         self.kappa = kappa # 0 is hard, 1 is soft
 
         self.f_m = interp(1-kappa, self.M_RANGE)
