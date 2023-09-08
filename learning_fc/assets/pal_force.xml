@@ -8,7 +8,7 @@
     <default class="gripper">
       <material specular="0.5" shininess="0.25"/>
       <joint armature="0.1" damping="1" axis="0 0 1" range="0.0 0.045"/>
-      <general dyntype="none" biastype="affine" forcerange="-10 10" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -100 -11" />
+      <general dyntype="none" biastype="affine" forcerange="-1 1" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -90 -11" />
       
       <default class="finger">
         <joint pos="0 0 -0.076575" axis="1 0 0" type="slide" range="0 0.045" />

@@ -45,7 +45,7 @@ legend_items = [
     [(mq,), (qvar,)],
     [
         r"$\rho = 0.0065$" if tex else "interval center", 
-        r"$\rho \in [0.003, 0.01]$" if tex else "interval borders"
+        r"$\rho \in \{0.003, 0.01\}$" if tex else "interval borders"
     ]
 ]
 

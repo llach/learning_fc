@@ -61,7 +61,7 @@ def f_act_plot(r, mode=PLOTMODE.debug, prefix=""):
         plt.savefig(f"{prefix}mr_test.png")
 
 
-def clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=""):
+def clean_lc(trialdir, params, mode=PLOTMODE.thesis, prefix=""):
     total_steps = params["train"]["timesteps"]
     max_send = np.max([s["dur"] for s in params["make_model"]["schedules"]]) if  len(params["make_model"]["schedules"])>0 else None
 

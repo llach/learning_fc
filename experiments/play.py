@@ -48,7 +48,7 @@ for i, kappa in enumerate(kappas):
     for j in range(200):
         ain, _ = model.predict(obs, deterministic=True)
 
-        obs, r, _, _, _ = env.step([0,0])
+        obs, r, _, _, _ = env.step(ain)
         if vis: vis.update_plot(action=ain, reward=r)
 
         cumrews[i] += r
