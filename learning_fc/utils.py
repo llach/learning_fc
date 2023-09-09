@@ -45,6 +45,19 @@ def get_q_f(env, n_steps, qdes=-1):
     f_env = np.array(f_env)
     return q_env, f_env
 
+def get_cumr(env, model):
+    """ rollout policy for one episode, return cumulative reward
+    """
+    done = False
+    r = 0
+    obs, _ = env.reset()
+    while not done:
+        ain, _ = model.predict(obs, deterministic=True)
+        obs, reward, terminated, truncated, _ = env.step(ain)
+        done = terminated or truncated
+        r += reward
+    return r 
+
 """ model / env creation
 """
 

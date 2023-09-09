@@ -31,8 +31,9 @@ env, model, vis, _ = make_eval_env_model(
     )
 )
 
-# model = ForcePI(env)
-kappas = np.linspace(0, 1, N_GOALS)
+model = ForcePI(env, Kp=.1, Ki=1.1)
+# kappas = np.linspace(0, 1, N_GOALS)
+kappas = [0.4]
 cumrews = np.zeros((N_GOALS,))
 for i, kappa in enumerate(kappas):
     obs, _ = env.reset()
