@@ -33,15 +33,6 @@ def _get_schedules():
         total_timesteps=TIME
     )
 
-    # ra_schedule = ParamSchedule(
-    #     var_name="ra_scale",
-    #     start=0.0, 
-    #     stop=STOP,
-    #     first_value=0.0,
-    #     final_value=0.1,
-    #     total_timesteps=TIME
-    # )
-
     wo_schedule = ParamSchedule(
         var_name="wo_range",
         start=0.0, 
@@ -62,7 +53,6 @@ def _get_schedules():
 
     return [
         ro_schedule,
-        # ra_schedule,
         wo_schedule,
         oy_schedule,
         vo_schedule,
@@ -75,8 +65,8 @@ ekw = dict(
     ov_max=0.0002,
     ro_scale=0,
     ra_scale=0.2,
-    rp_scale=0.1,
-    rf_scale=0.9,
+    rp_scale=0.0,
+    rf_scale=1.0,
     sample_biasprm=True,
     randomize_stiffness=True,
     noise_f=0.002,

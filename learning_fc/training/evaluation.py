@@ -400,12 +400,12 @@ def tactile_eval(trialdir, trial_name=None, plot_title=None, with_vis=False, tra
     cumr_o = np.mean(o_res.eps_rew)
 
     ### clean plots
-    clean_lc(trialdir, params, mode=PLOTMODE.camera_ready, prefix=f"{trialdir}/{prefix}")
+    clean_lc(trialdir, params, mode=PLOTMODE.paper, prefix=f"{trialdir}/{prefix}")
 
     goals = np.linspace(*env.fgoal_range, 4)
     res = deterministic_eval(env, model, None, goals, reset_cb=force_reset_cb, after_step_cb=force_after_step_cb)
 
-    f_act_plot(res, mode=PLOTMODE.camera_ready, prefix=f"{trialdir}/{prefix}")
+    f_act_plot(res, mode=PLOTMODE.paper, prefix=f"{trialdir}/{prefix}")
 
     plt.rcParams.update(plt.rcParamsDefault)
 
