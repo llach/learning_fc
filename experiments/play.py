@@ -31,9 +31,9 @@ env, model, vis, _ = make_eval_env_model(
     )
 )
 
-model = ForcePI(env, Kp=.1, Ki=1.1)
-# kappas = np.linspace(0, 1, N_GOALS)
-kappas = [0.4]
+# model = ForcePI(env, Kp=.1, Ki=1.1)
+kappas = np.linspace(0, 1, N_GOALS)
+# kappas = [0.4]
 cumrews = np.zeros((N_GOALS,))
 for i, kappa in enumerate(kappas):
     obs, _ = env.reset()
@@ -41,7 +41,7 @@ for i, kappa in enumerate(kappas):
     env.change_stiffness(kappa)
     # env.set_solver_parameters(solimp=env.SOLIMP_SOFT)
     # env.set_attr("f_m", 1.78)
-    # env.set_goal(np.random.uniform(*env.fgoal_range))
+    env.set_goal(np.random.uniform(*env.fgoal_range))
 
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()

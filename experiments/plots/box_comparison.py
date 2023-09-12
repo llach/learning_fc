@@ -9,7 +9,7 @@ from learning_fc.training.evaluation import make_eval_env_model
 
 dist = 0.2
 width = 0.25
-ntrials = 5
+ntrials = 100
 # kappas = [0.5, 0.6]#, 0.7, 0.8]
 kappas = np.arange(0,1.1,0.1)
 
