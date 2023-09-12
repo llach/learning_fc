@@ -22,7 +22,7 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None):
+    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None, datadir=None):
         self.k = k
         self.env = env
         self.fth = fth
@@ -43,7 +43,7 @@ class RobotInterface:
         self.active = False
         self.js_idx = [None, None]
 
-        self.data_dir = f"{model_path}/data/"
+        self.data_dir = datadir or f"{model_path}/data/"
         os.makedirs(self.data_dir, exist_ok=True)
 
         ### ROS init
@@ -131,10 +131,10 @@ class RobotInterface:
         if on == Observation.Pos:           return safe_rescale(self.q, [0.0, 0.045])
         if on == Observation.Des:           return safe_rescale(self.qdes, [0.0, 0.045])
         if on == Observation.Vel:           return safe_rescale(self.qdot, [-self.env.vmax, self.env.vmax])
-        if on == Observation.Force:         return safe_rescale(self.force, [0, self.env.max_fmax])
+        if on == Observation.Force:         return self.force#safe_rescale(self.force, [0, self.env.max_fmax])
         if on == Observation.Action:        return self.last_a.copy()
         if on == Observation.PosDelta:      return safe_rescale(self._goal_delta(), [-0.045, 0.045])
-        if on == Observation.ForceDelta:    return safe_rescale(self._goal_delta(), [-self.goal, self.goal])
+        if on == Observation.ForceDelta:    return self._goal_delta()#safe_rescale(self._goal_delta(), [-self.goal, self.goal])
         if on == Observation.InCon:         return self.in_con.copy()
         if on == Observation.HadCon:        return self.had_con.copy()
 
@@ -150,7 +150,6 @@ class RobotInterface:
     def actuate(self, action): 
         left = Float64MultiArray(data=[action[1]])
         right = Float64MultiArray(data=[action[0]])
-        print(action, self.q)
 
         if left.data != self.q[0]: self.lpub.publish(left)
         if right.data != self.q[1]: self.rpub.publish(right)
@@ -213,9 +212,7 @@ class RobotInterface:
         elif self.control_mode == ControlMode.PositionDelta:
             ain = safe_rescale(raw_action, [-1, 1], [-self.env.dq_max, self.env.dq_max])
             self.qdes = np.clip(self.q+ain, 0, 0.045)
-            print(self.q)
         
-        # print(self.qdes)
         self.actuate(self.qdes)
         self.last_a = raw_action.copy()
 
@@ -269,17 +266,18 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    # trial = f"{model_path}/2023-09-01_11-54-09__gripper_tactile__ppo__k-1__lr-0.0006" 
-    trial = find_latest_model_in_path(model_path, filters=["ppo"])
+    # trial = f"{model_path}/2023-09-12_09-00-00__gripper_tactile__ppo__k-2__lr-0.0006_M2" 
+    trial = f"{model_path}/2023-09-12_09-38-10__gripper_tactile__ppo__k-3__lr-0.0006_M2" 
+    # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
-    model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
+    # model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
     # model = ForcePI(env, verbose=True)
-    ri = RobotInterface(model, env, k=k, goal=0.01)
+    ri = RobotInterface(model, env, k=k, goal=0.01, freq=25)
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])
