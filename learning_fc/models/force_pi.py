@@ -26,6 +26,9 @@ class ForcePI(BaseModel):
 
         BaseModel.__init__(self, env=env)
 
+    def __str__(self):
+        return f"ForcePI(Kp={self.Kp}, Ki={self.Ki}, k={self.k})"
+
     def reset(self):
         if self.verbose: print("ForcePI: reset()")
         self.joint_transition = [False, False]

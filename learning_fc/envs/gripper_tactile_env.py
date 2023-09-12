@@ -117,8 +117,7 @@ class GripperTactileEnv(GripperEnv):
         return 1 if np.abs(self.obj_v[1]) > self.ov_max else 0
     
     def _force_reward(self):
-        total_deltaf = np.sum(np.abs(self.fgoal - self.force))
-        return 1 - np.tanh(total_deltaf)
+        return self.rforce(self.fgoal, self.force)
     
     def _contact_reward(self):
         return np.sum(self.in_contact)
@@ -196,6 +195,10 @@ class GripperTactileEnv(GripperEnv):
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
+
+    def rforce(self, fgoal, forces):
+        total_deltaf = np.sum(np.abs(fgoal - forces))
+        return 1 - np.tanh(total_deltaf)
 
     def set_goal(self, x): self.fgoal = x
 

@@ -22,7 +22,7 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None, datadir=None):
+    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None, datadir=None, verbose=False):
         self.k = k
         self.env = env
         self.fth = fth
@@ -31,6 +31,7 @@ class RobotInterface:
         self.model = model
         self.dt = 1/self.freq
         self.dq_max = env.dq_max
+        self.verbose = verbose
 
         # hacky way of supplying baseline with ROS data
         if isinstance(self.model, ForcePI): self.model.env = self
@@ -61,7 +62,8 @@ class RobotInterface:
         self.dpub_thread = threading.Thread(target=self._debug_pub)
         self.dpub_thread.start()
 
-    def __del__(self):
+    def shutdown(self):
+        print("RobotInterface.shutdown()")
         self.initialized = False
         self.dpub.unregister()
         self.dpub_thread.join()
@@ -85,6 +87,7 @@ class RobotInterface:
             except Exception as e:
                 print(e)
                 break
+        print("debug pub shutting down")
 
     def _js_cb(self, msg):
         # first callback -> store joint indices
@@ -169,6 +172,7 @@ class RobotInterface:
         self.qdot  = np.array([0,0])
         self.act   = np.array([0,0])
 
+        self.cumr = 0
         self.force   = np.array([None,None])
         self.in_con  = np.array([0,0])
         self.had_con = np.array([0,0])
@@ -176,11 +180,11 @@ class RobotInterface:
         # reset observation buffer
         self.obs_buf = deque(maxlen=self.k)
 
-        print("waiting for joint states ...")
+        if self.verbose: print("waiting for joint states ...")
         while not rospy.is_shutdown() and np.any(self.q==None): self.r.sleep()
 
         if self.task == ControlTask.Force:
-            print("waiting for forces ...")
+            if self.verbose: print("waiting for forces ...")
             while not rospy.is_shutdown() and np.any(self.force==None): self.r.sleep()
 
         if self.control_mode == ControlMode.Position:
@@ -190,7 +194,7 @@ class RobotInterface:
 
         self.qdes = self.q.copy()
 
-        print("reset done!")
+        if self.verbose: print("reset done!")
 
     def step(self): 
         obs = self._get_obs()
@@ -198,7 +202,7 @@ class RobotInterface:
         
         self.obs_buf.append(obs)
         while len(self.obs_buf) < self.obs_buf.maxlen: 
-            print(f"obs {len(self.obs_buf)}..{self.obs_buf.maxlen}")
+            if self.verbose: print(f"obs {len(self.obs_buf)}..{self.obs_buf.maxlen}")
             self.obs_buf.append(obs)
 
         if isinstance(self.model, ForcePI):
@@ -216,6 +220,9 @@ class RobotInterface:
         self.actuate(self.qdes)
         self.last_a = raw_action.copy()
 
+        self.rew = self.env.rforce(self.get_goal(), self.force.copy())
+        self.cumr += self.rew
+
         # update history
         for k, v in obs_.items():
             self.hist["obs"][k].append(v)
@@ -223,31 +230,35 @@ class RobotInterface:
         self.hist["net_out"].append(raw_action)
         self.hist["goal"].append(self.goal)
         self.hist["timestamps"].append(datetime.utcnow())
+        self.hist["r"].append(self.rew)
+        self.hist["cumr"].append(self.cumr)
 
     def stop(self): 
         if self.active:
-            print("killing thread ...")
+            if self.verbose: print("killing thread ...")
             self.active = False
             self.exec_thread.join()
-            print("done")
+            if self.verbose: print("done")
 
     def save_hist(self, name=None):
-        fname = f"{datetime.utcnow().strftime(datefmt)}"
-        if name is not None: fname += f"__{name}"
-        file_path = f"{self.data_dir}{fname}.pkl"
+        now = f"{datetime.utcnow().strftime(datefmt)}"
+        if name is None: name = now
+        file_path = f"{self.data_dir}/{name}.pkl"
 
-        print(f"storing {file_path}")
+        if self.verbose: print(f"storing {file_path}")
         with open(file_path, "wb") as f:
             pickle.dump(self.hist, f)
 
     def run(self):
-        print("running model ...")
+        if self.verbose: print("running model ...")
         self.hist = dict(
             obs={on: [] for on in self.obs_config},
             qdes=[],
             net_out=[],
             goal=[],
             timestamps=[],
+            r=[],
+            cumr=[],
             dq_max=self.env.dq_max,
         )
 
@@ -256,7 +267,7 @@ class RobotInterface:
             while not rospy.is_shutdown() and self.active:
                 self.step()
                 self.r.sleep()
-            print("_step_loop() finished")
+            if self.verbose: print("_step_loop() finished")
         
         self.exec_thread = threading.Thread(target=_step_loop)
         self.exec_thread.start()
@@ -286,7 +297,7 @@ if __name__ == "__main__":
         inp = input("q = kill; sa = save; st = stop; o = open; gXXX = goal; aXXX = actuate\n")
         if inp == "q":
             ri.stop()
-            del ri
+            ri.shutdown()
             break
 
         elif inp == "st":
