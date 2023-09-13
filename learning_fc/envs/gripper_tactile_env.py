@@ -56,6 +56,7 @@ class GripperTactileEnv(GripperEnv):
             ra_scale=0.0,
             rp_scale=0.0, 
             ov_max=0.0001,
+            rf_upper=1.0,
             sample_biasprm = False,
             randomize_stiffness = False,
             control_mode=ControlMode.Position, 
@@ -70,6 +71,7 @@ class GripperTactileEnv(GripperEnv):
         self.rp_scale = rp_scale        # scaling factor for object proximity
         self.oy_range = oy_range        # sampling range for object width
         self.wo_range = wo_range        # sampling range for object width
+        self.rf_upper = rf_upper
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.randomize_stiffness = randomize_stiffness
         self.sample_biasprm = sample_biasprm
@@ -197,8 +199,13 @@ class GripperTactileEnv(GripperEnv):
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
     def rforce(self, fgoal, forces):
-        total_deltaf = np.sum(np.abs(fgoal - forces))
-        return 1 - np.tanh(total_deltaf)
+        dfs = fgoal - forces
+
+        cr = 0
+        for df in dfs:
+            if df >=0: cr += (1 - np.tanh(df))/2 # positive force deltas → below fgoal
+            else: cr += (1 - (self.rf_upper * np.tanh(np.abs(df))))/2
+        return cr
 
     def set_goal(self, x): self.fgoal = x
 

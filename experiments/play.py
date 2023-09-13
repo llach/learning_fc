@@ -46,7 +46,7 @@ for i, kappa in enumerate(kappas):
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()
     
-    for j in range(200):
+    for j in range(100):
         ain, _ = model.predict(obs, deterministic=True)
 
         obs, r, _, _, _ = env.step(ain)

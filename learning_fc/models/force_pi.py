@@ -11,7 +11,7 @@ class ControllerPhase(int, Enum):
 
 class ForcePI(BaseModel):
 
-    def __init__(self, env, Kp=.1, Ki=1.1, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
+    def __init__(self, env, Kp=1.07, Ki=0.82, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
         self.verbose = verbose
         self.q_limits = q_limits
 
