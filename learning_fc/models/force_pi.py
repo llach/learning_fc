@@ -11,7 +11,7 @@ class ControllerPhase(int, Enum):
 
 class ForcePI(BaseModel):
 
-    def __init__(self, env, Kp=1.07, Ki=0.82, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
+    def __init__(self, env, Kp=0.18, Ki=1.13, k=160, closing_vel=0.02, q_limits=[0.0, 0.045], verbose=False, **kwargs):
         self.verbose = verbose
         self.q_limits = q_limits
 
@@ -88,7 +88,7 @@ class ForcePI(BaseModel):
         #     print("fc", delta_qs)
 
         if self.verbose: print(f"ForcePI dq {delta_qs} | states {self.joint_transition}")
-        return delta_qs[::-1]
+        return delta_qs
     
     def predict(self, *args, **kwargs):
         """

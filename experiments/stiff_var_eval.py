@@ -10,8 +10,8 @@ from learning_fc.models import ForcePI
 N_GOALS  = 2
 N_TRIALS = 6
 
-trial = f"{model_path}/2023-08-31_11-35-02__gripper_tactile__ppo__k-3__lr-0.0006"
-# trial = find_latest_model_in_path(model_path, filters=["ppo"])
+# trial = f"{model_path}/2023-08-31_11-35-02__gripper_tactile__ppo__k-3__lr-0.0006"
+trial = find_latest_model_in_path(model_path, filters=["ppo"])
 print(trial)
 
 env, model, vis, params = make_eval_env_model(trial, with_vis=0, checkpoint="best")
