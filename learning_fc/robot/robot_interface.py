@@ -155,10 +155,10 @@ class RobotInterface:
         right = Float64MultiArray(data=[action[1]])
 
         if left.data[0] != self.q[0]: 
-            print(f"publishing left {left.data} | {self.q[0]}")
+            if self.verbose: print(f"publishing left {left.data} | {self.q[0]}")
             self.lpub.publish(left)
         if right.data[0] != self.q[1]: 
-            print(f"publishing right {right.data} | {self.q[0]}")
+            if self.verbose: print(f"publishing right {right.data} | {self.q[0]}")
             self.rpub.publish(right)
 
     def set_goal(self, g):
@@ -289,14 +289,13 @@ if __name__ == "__main__":
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
-    env.set_attr("fth", 0.02)
+    env.set_attr("fth", 0.05)
 
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
-    model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
+    # model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    # model = ForcePI(env, verbo
-    # se=True)
+    model = ForcePI(env, verbose=True)
     ri = RobotInterface(model, env, k=k, goal=0.01, freq=25, verbose=True)
 
     time.sleep(1.0)

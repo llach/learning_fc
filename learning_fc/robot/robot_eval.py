@@ -21,7 +21,7 @@ objects = {   #   wo,   dp,  fmin, fmax
 }
 
 N_TRIALS = 20
-N_SECS = 8.0
+N_SECS = 6.0
 
 # make sure eval data dir exists
 eval_data_dir = f"{model_path}/robot_eval"
@@ -31,6 +31,7 @@ os.makedirs(eval_data_dir, exist_ok=True)
 policy_trial = "2023-09-12_09-38-10__gripper_tactile__ppo__k-3__lr-0.0006_M2"
 env, model, _, params = make_eval_env_model(f"{model_path}/{policy_trial}" , with_vis=False, checkpoint="best")
 k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
+env.set_attr("fth", 0.05)
 
 # load Force Controller (even though we don't use the policy model, we need the env)
 model = ForcePI(env)
@@ -65,8 +66,10 @@ for _ in range(N_TRIALS):
     ri.reset()
     ri.actuate([0.045, 0.045])
     time.sleep(0.5)
-
-    # TODO add oy sampling
+    
+    # sample and print oy
+    oymax = round(wo-dp, 3)
+    print(f"oq={np.random.uniform(-oymax, oymax)}")
 
     # time for object rearrangement / decision to stop evaluation
     inp = input("next?")
@@ -77,6 +80,7 @@ for _ in range(N_TRIALS):
     print(f"collecting {model_name} sample {sample_name} - fgoal {fgoal}")
 
     # grasp object  
+    if isinstance(model, ForcePI): model.reset()
     ri.set_goal(fgoal)
     ri.reset()
     ri.run()
