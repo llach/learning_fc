@@ -10,7 +10,16 @@ from learning_fc.robot import RobotInterface
 from learning_fc.models import ForcePI
 from learning_fc.training import make_eval_env_model
 
-fmin, fmax = 0.1, 0.6 # TODO make object depedent
+objects = {   #   wo,   dp,  fmin, fmax
+     "tape":  [0.045, 0.009, 0.07, 0.33],
+     "spy":   [0.015, 0.004, 0.10, 0.50],
+     "spb":   [0.042, 0.006, 0.10, 0.70],
+     "wind":  [0.063, 0.003, 0.12, 0.82],
+     "pring": [0.074, 0.000, 0.12, 0.85],
+     "wood":  [0.059, 0.000, 0.13, 0.90],
+     "mug":   [0.081, 0.000, 0.15, 1.00],
+}
+
 N_TRIALS = 20
 N_SECS = 8.0
 
@@ -30,7 +39,13 @@ model = ForcePI(env)
 model_name = input("model name: ")
 assert model_name in ["pol", "nodr", "fc"], f'{model_name} not in ["pol", "nodr", "fc"]'
 assert model_name != "fc" or isinstance(model, ForcePI), 'model_name != "fc" or isinstance(model, ForcePI)'
+
 obj_name = input("object name: ")
+assert obj_name in list(objects.keys()), f"{obj_name} in {list(objects.keys())}"
+
+wo, dp, fmin, fmax = objects[obj_name]
+wo /= 2 # sim uses radius, we measured width
+dp /= 2
 
 trial_dir = f"{eval_data_dir}/{model_name}/"
 resfile = f"{trial_dir}/results.csv"

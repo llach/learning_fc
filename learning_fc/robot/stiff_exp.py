@@ -12,6 +12,16 @@ from learning_fc.enums import ControlMode
 from learning_fc.robot import RobotInterface
 from learning_fc.models import StaticModel
 
+objects = {   #   wo,   dp,  fmin, fmax
+     "tape":  [0.045, 0.009, 0.07, 0.33],
+     "spy":   [0.015, 0.004, 0.10, 0.50],
+     "spb":   [0.042, 0.006, 0.10, 0.70],
+     "wind":  [0.063, 0.003, 0.12, 0.82],
+     "pring": [0.074, 0.000, 0.12, 0.85],
+     "wood":  [0.059, 0.000, 0.13, 0.90],
+     "mug":   [0.081, 0.000, 0.15, 1.00],
+}
+
 dqmax = 0.003
 dqmin = 0.0003
 step_size = 0.0003
@@ -34,6 +44,7 @@ env = GripperTactileEnv(
 
 # get object name for saving
 obj_name = input("object name: ")
+assert obj_name in list(objects.keys()), f"{obj_name} in {list(objects.keys())}"
 
 ri = RobotInterface(model, env, goal=0.0, freq=25, datadir=stiff_data_dir)
 ri.reset()
@@ -65,7 +76,7 @@ for dq in dqs:
 
     # store all important info
     forces = ri.hist["force"]
-    ffinal = np.mean(forces[-20:])
+    ffinal = np.mean(forces[-10:])
     ri.save_hist(sample_name)
 
     if not os.path.isfile(resfile):
