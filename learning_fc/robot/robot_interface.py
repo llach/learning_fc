@@ -231,6 +231,7 @@ class RobotInterface:
         self.hist["goal"].append(self.goal)
         self.hist["timestamps"].append(datetime.utcnow())
         self.hist["r"].append(self.rew)
+        self.hist["force"].append(self.force)
         self.hist["cumr"].append(self.cumr)
 
     def stop(self): 
@@ -257,6 +258,7 @@ class RobotInterface:
             net_out=[],
             goal=[],
             timestamps=[],
+            force=[],
             r=[],
             cumr=[],
             dq_max=self.env.dq_max,
@@ -278,7 +280,7 @@ if __name__ == "__main__":
     from learning_fc.utils import find_latest_model_in_path
 
     # trial = f"{model_path}/2023-09-12_09-00-00__gripper_tactile__ppo__k-2__lr-0.0006_M2" 
-    trial = f"{model_path}/2023-09-12_09-38-10__gripper_tactile__ppo__k-3__lr-0.0006_M2" 
+    trial = f"{model_path}/2023-09-13_11-41-05__gripper_tactile__ppo__k-3__lr-0.0006_M2_12" 
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
@@ -288,7 +290,7 @@ if __name__ == "__main__":
     # model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
     # model = ForcePI(env, verbose=True)
-    ri = RobotInterface(model, env, k=k, goal=0.01, freq=25)
+    ri = RobotInterface(model, env, k=k, goal=0.01, freq=25, verbose=True)
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])
