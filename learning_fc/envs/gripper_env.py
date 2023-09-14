@@ -179,6 +179,13 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
     
     def _action_penalty(self):
         return np.sum(np.abs(self.last_a - self.ain))
+    
+    def action_bias(self, h, force, fgoal):
+        if h[0] == 0 and h[1] == 0: return np.array([1, 1]) # no contact → policy has full control
+        if h[0] == 1 and h[1] == 1:                         # full contact → scale actions for safety
+            dfs = 1-np.abs((fgoal-force)/fgoal)
+            return np.clip(dfs, 0.5, 1.0)
+        return np.array([0.05 if hi else 1 for hi in h])
 
     def _is_done(self): raise NotImplementedError
     def _get_reward(self): raise NotImplementedError
@@ -252,6 +259,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if self.t == 0: 
             self.last_a = a.copy() # avoid penalty on first timestep
 
+        ab = self.action_bias(self.had_contact, self.force, self.fgoal)
         self.ain = a.copy()
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation

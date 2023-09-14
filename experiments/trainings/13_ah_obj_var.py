@@ -11,25 +11,25 @@ OBS  = [
     Observation.Action
 ]
 CTRL = ControlMode.PositionDelta
-TIME = int(3.5e6)
+TIME = int(4.5e6)
 STOP = int(1.5e6)
 
 def _get_schedules():
-    vo_schedule = ParamSchedule(
-        var_name="ov_max",
+    ah_scale_schedule = ParamSchedule(
+        var_name="ah_scale",
         start=0.0, 
         stop=STOP,
-        first_value=0.0002,
-        final_value=0.00005,
+        first_value=0.1,
+        final_value=5.0,
         total_timesteps=TIME
     )
 
-    ro_schedule = ParamSchedule(
-        var_name="ro_scale",
+    ah_max_schedule = ParamSchedule(
+        var_name="ah_max",
         start=0.0, 
         stop=STOP,
-        first_value=0.0,
-        final_value=2.0,
+        first_value=0.3,
+        final_value=0.03,
         total_timesteps=TIME
     )
 
@@ -52,10 +52,10 @@ def _get_schedules():
     )
 
     return [
-        ro_schedule,
+        ah_scale_schedule,
+        ah_max_schedule,
         wo_schedule,
         oy_schedule,
-        vo_schedule,
     ]
 
 
@@ -69,8 +69,8 @@ ekw = dict(
     rf_scale=1.0,
     sample_biasprm=True,
     randomize_stiffness=True,
-    noise_f=0.002,
-    fth=0.02,
+    noise_f=0.01,
+    fth=0.0075,
     model_path="assets/pal_force.xml",
 )
 

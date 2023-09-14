@@ -39,7 +39,7 @@
 
     <body name="object" pos="0 -1 0.05" >
         <freejoint name="object_joint" />
-        <geom name="object" type="cylinder" size="0.02 0.05" mass="0.5" priority="1" solimp="0.00 0.99 0.015 0.5 3" />  
+        <geom name="object" type="cylinder" size="0.02 0.05" mass="0.4" priority="1" solimp="0.00 0.99 0.015 0.5 3" />  
     </body> 
     
     <body name="hand" childclass="gripper" pos="-0.19 0 0.05" quat="0 0.7071068 0 0.7071068">

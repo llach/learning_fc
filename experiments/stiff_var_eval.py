@@ -15,7 +15,7 @@ trial = find_latest_model_in_path(model_path, filters=["ppo"])
 print(trial)
 
 env, model, vis, params = make_eval_env_model(trial, with_vis=0, checkpoint="best")
-model = ForcePI(env)
+# model = ForcePI(env)
 
 plot_title = f"{params['train']['plot_title']}\n{params['train']['trial_name']}"
 stiffness_var_plot(env, model, vis, N_GOALS, N_TRIALS, plot_title)

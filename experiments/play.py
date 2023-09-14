@@ -10,7 +10,8 @@ N_GOALS  = 10
 with_vis = 1
 # trial = f"{model_path}/30_base"
 trial = find_latest_model_in_path(model_path, filters=["ppo"])
-# trial = f"{model_path}/_archive/rp_experiments/2023-08-25_08-29-08__gripper_tactile__ppo__k-3"
+# trial = f"{model_path}/2023-09-13_18-47-36__gripper_tactile__ppo__k-3__lr-0.0006"
+
 print(trial)
 
 env, model, vis, _ = make_eval_env_model(
@@ -19,8 +20,8 @@ env, model, vis, _ = make_eval_env_model(
     checkpoint="best", 
     env_override = dict(
         control_mode=ControlMode.PositionDelta,
-        oy_range=[0,0],
-        wo_range=2*[0.035],
+        oy_range=[0.04,0.04],
+        # wo_range=2*[0.035],
         # model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
         # f_scale=3.0,
         # sample_fscale=True,
@@ -31,7 +32,12 @@ env, model, vis, _ = make_eval_env_model(
     )
 )
 
-# model = ForcePI(env, Kp=.1, Ki=1.1)
+env.set_attr("noise_f", 0.002)
+env.set_attr("fth", 0.02)
+
+print(env.ro_scale, env.ov_max)
+
+model = ForcePI(env)
 kappas = np.linspace(0, 1, N_GOALS)
 # kappas = [0.4]
 cumrews = np.zeros((N_GOALS,))

@@ -41,7 +41,7 @@ class GripperTactileEnv(GripperEnv):
 
     M_RANGE = [0.5, 5]
 
-    FGOAL_MIN_RANGE = [0.01, 0.16]
+    FGOAL_MIN_RANGE = [0.08, 0.16]
     FGOAL_MAX_RANGE = [0.47, 0.92]
 
     def __init__(
@@ -55,6 +55,8 @@ class GripperTactileEnv(GripperEnv):
             ro_scale=1.0, 
             ra_scale=0.0,
             rp_scale=0.0, 
+            ah_scale=0.0,
+            ah_max=0.1,
             ov_max=0.0001,
             rf_upper=1.0,
             sample_biasprm = False,
@@ -69,8 +71,10 @@ class GripperTactileEnv(GripperEnv):
         self.ro_scale = ro_scale        # scaling factor for object movement penalty
         self.ra_scale = ra_scale        # scaling factor for action difference penalty
         self.rp_scale = rp_scale        # scaling factor for object proximity
-        self.oy_range = oy_range        # sampling range for object width
+        self.oy_range = oy_range        # sampling range for object position
         self.wo_range = wo_range        # sampling range for object width
+        self.ah_max   = ah_max
+        self.ah_scale = ah_scale
         self.rf_upper = rf_upper
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.randomize_stiffness = randomize_stiffness
@@ -123,6 +127,13 @@ class GripperTactileEnv(GripperEnv):
     
     def _contact_reward(self):
         return np.sum(self.in_contact)
+    
+    def had_action_reward(self, h, a):
+        if h[0]==h[1]: return 0 # both fingers in the same phase → both can be independently controlled 
+        har = 0
+        for hi, ai in zip(h, a):
+            if hi == 1 and np.abs(ai)>self.ah_max: har += 1
+        return har
 
     def _object_proximity_reward(self):
         """ fingers don't move towards the object sometimes → encourage them with small, positive rewards
@@ -142,8 +153,9 @@ class GripperTactileEnv(GripperEnv):
         self.r_obj_prox =   self.rp_scale * self._object_proximity_reward()
         self.r_obj_pos  = - self.ro_scale * self._object_pos_penalty()
         self.r_act      = - self.ra_scale * self._action_penalty()
+        self.r_ah       = - self.ah_scale * self.had_action_reward(self.had_contact, self.ain)
 
-        return self.r_force + self.r_obj_pos + self.r_obj_prox  + self.r_act
+        return self.r_force + self.r_obj_pos + self.r_obj_prox  + self.r_act #+ self.r_ah
     
     def _is_done(self): return False
 
@@ -171,7 +183,15 @@ class GripperTactileEnv(GripperEnv):
             oy_range = [-oy_max, oy_max]
 
         self.oy = round(np.random.uniform(*oy_range), 3)
-            
+
+        """
+        if self.oy_range is not None:
+            oy_range = np.clip(self.oy_range, 0, oy_max)
+        else:
+            oy_range = [-oy_max, oy_max]
+
+        self.oy = np.random.choice([-1,1])*round(np.random.uniform(*oy_range), 3)
+        """            
         self.obj_pos    = self.INITIAL_OBJECT_POS.copy()
         self.obj_pos[1] = self.oy
 
@@ -199,13 +219,7 @@ class GripperTactileEnv(GripperEnv):
         self.d_o = 0.045-(self.wo-np.abs(self.oy))
 
     def rforce(self, fgoal, forces):
-        dfs = fgoal - forces
-
-        cr = 0
-        for df in dfs:
-            if df >=0: cr += (1 - np.tanh(df))/2 # positive force deltas → below fgoal
-            else: cr += (1 - (self.rf_upper * np.tanh(np.abs(df))))/2
-        return cr
+        return 1-np.tanh(np.sum(np.abs(fgoal-forces))/fgoal)
 
     def set_goal(self, x): self.fgoal = x
 

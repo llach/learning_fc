@@ -40,6 +40,24 @@ class TactileVis(VisBase):
             pos=1,
             angle=0
         )
+
+        self.plt_cntct.draw_line(
+            name="a_zero",
+            pos=0,
+            angle=0
+        )
+        self.plt_cntct.draw_line(
+            name="a_zero_lower",
+            pos=-0.09,
+            angle=0,
+            pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
+        )
+        self.plt_cntct.draw_line(
+            name="a_zero_upper",
+            pos=0.09,
+            angle=0,
+            pen=dict(color="#D3D3D3", width=1, style=QtCore.Qt.PenStyle.DotLine)
+        )
         
         self.win.nextRow()
 
@@ -60,20 +78,9 @@ class TactileVis(VisBase):
 
         self.win.nextRow()
 
-        amax = self.env.amax
-        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"])#, yrange=[-1.2*amax, 1.2*amax], ticks=[-amax, 0, amax])
+        self.plt_acc = PIWrapper(self.win, title="Joint Accelerations", pens=["r", "y"])
         self.plt_vobj = PIWrapper(self.win, title="Object Velocity", pens=["r", "g", "b"])
 
-        # self.plt_acc.draw_line(
-        #     name="upper_limit",
-        #     pos=amax,
-        #     angle=0
-        # )
-        # self.plt_acc.draw_line(
-        #     name="lower_limit",
-        #     pos=-amax,
-        #     angle=0
-        # )
 
         self.win.nextRow()
 

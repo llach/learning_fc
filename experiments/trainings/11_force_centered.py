@@ -22,7 +22,7 @@ ekw = dict(
     sample_biasprm=True,
     randomize_stiffness=True,
     noise_f=0.002,
-    fth=0.0075,
+    fth=0.02,
     model_path="assets/pal_force.xml",
 )
 
