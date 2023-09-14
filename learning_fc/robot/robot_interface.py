@@ -22,7 +22,7 @@ class RobotInterface:
 
     JOINT_NAMES = ["gripper_left_finger_joint", "gripper_right_finger_joint"]
 
-    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None, datadir=None, verbose=False):
+    def __init__(self, model, env, k=1, goal=0.0, fth=0.0075, freq=25, control_mode=None, datadir=None, verbose=False, with_indb=False):
         self.k = k
         self.env = env
         self.fth = fth
@@ -32,6 +32,7 @@ class RobotInterface:
         self.dt = 1/self.freq
         self.dq_max = env.dq_max
         self.verbose = verbose
+        self.with_indb = with_indb
 
         # hacky way of supplying baseline with ROS data
         if isinstance(self.model, ForcePI): self.model.env = self
@@ -154,11 +155,11 @@ class RobotInterface:
         left = Float64MultiArray(data=[action[0]])
         right = Float64MultiArray(data=[action[1]])
 
-        if left.data[0] != self.q[0]: 
+        if np.abs(left.data[0]-self.q[0])>self.env.dq_min: 
             if self.verbose: print(f"publishing left {left.data} | {self.q[0]}")
             self.lpub.publish(left)
-        if right.data[0] != self.q[1]: 
-            if self.verbose: print(f"publishing right {right.data} | {self.q[0]}")
+        if np.abs(right.data[0]-self.q[1])>self.env.dq_min: 
+            if self.verbose: print(f"publishing right {right.data} | {self.q[1]}")
             self.rpub.publish(right)
 
     def set_goal(self, g):
@@ -211,10 +212,13 @@ class RobotInterface:
 
         if isinstance(self.model, ForcePI):
             raw_action, _ = self.model.predict(self.q, self.force, self.goal)
-            raw_action = raw_action[::-1]
         else:
             obs = np.asarray(self.obs_buf, dtype=np.float32).flatten()
             raw_action, _ = self.model.predict(obs, deterministic=True)
+
+        if self.with_indb:
+            ab = self.env.action_bias(self.had_con, self.force, self.get_goal())
+            raw_action = ab * raw_action
 
         if self.control_mode == ControlMode.Position:
             self.qdes = safe_rescale(raw_action, [-1, 1], [0.0, 0.045])
@@ -284,19 +288,26 @@ if __name__ == "__main__":
     from learning_fc.training import make_eval_env_model
     from learning_fc.utils import find_latest_model_in_path
 
-    # trial = f"{model_path}/2023-09-12_09-00-00__gripper_tactile__ppo__k-2__lr-0.0006_M2" 
-    trial = f"{model_path}/2023-09-13_11-41-05__gripper_tactile__ppo__k-3__lr-0.0006_M2_12" 
+    # trial = f"{model_path}/2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb" 
+    trial = f"{model_path}/2023-09-14_11-24-22__gripper_tactile__ppo__k-3__lr-0.0006_M2_noinb" 
     # trial = find_latest_model_in_path(model_path, filters=["ppo"])
     env, model, _, params = make_eval_env_model(trial, with_vis=False, checkpoint="best")
     k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
-    env.set_attr("fth", 0.05)
 
     from learning_fc.models import PosModel, StaticModel, ForcePI
     # model = PosModel(env)
     # model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    model = ForcePI(env, verbose=True)
-    ri = RobotInterface(model, env, k=k, goal=0.01, freq=25, verbose=True)
+    # model = ForcePI(env, verbose=True)
+    ri = RobotInterface(
+        model, 
+        env, 
+        k=k, 
+        goal=0.01, 
+        freq=25, 
+        verbose=True, 
+        with_indb=False
+    )
 
     time.sleep(1.0)
     ri.actuate([0.045, 0.045])

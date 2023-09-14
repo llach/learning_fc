@@ -41,7 +41,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             amax=1.0, 
             vmax=0.02, 
             dq_max=0.003,
-            dq_min=0.0002, 
+            dq_min=0.0003, 
             f_scale=1.0,
             fth=0.05, 
             noise_q=0.000027,
@@ -184,8 +184,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if h[0] == 0 and h[1] == 0: return np.array([1, 1]) # no contact → policy has full control
         if h[0] == 1 and h[1] == 1:                         # full contact → scale actions for safety
             dfs = 1-np.abs((fgoal-force)/fgoal)
-            return np.clip(dfs, 0.5, 1.0)
-        return np.array([0.05 if hi else 1 for hi in h])
+            return np.clip(dfs, 0.9, 1.0)
+        return np.array([0.0 if hi else 1 for hi in h])
 
     def _is_done(self): raise NotImplementedError
     def _get_reward(self): raise NotImplementedError
