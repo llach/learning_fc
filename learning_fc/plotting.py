@@ -85,6 +85,12 @@ def set_rcParams(mode: PLOTMODE = PLOTMODE.debug, ftype: FIGTYPE = FIGTYPE.singl
     plt.rcParams['xtick.labelsize'] = 13
     plt.rcParams['ytick.labelsize'] = 13
 
+    if mode == PLOTMODE.paper:
+        plt.rcParams['font.size'] = 21
+        plt.rcParams['legend.fontsize'] = 15
+        plt.rcParams['xtick.labelsize'] = 14
+        plt.rcParams['ytick.labelsize'] = 14
+
     # figure config
     if ftype == FIGTYPE.single or ftype == FIGTYPE.multicol:
         figsize = (7.8, 5.5)
