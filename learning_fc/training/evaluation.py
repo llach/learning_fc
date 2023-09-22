@@ -163,6 +163,7 @@ def make_eval_env_model(trialdir, with_vis=False, env_override={}, checkpoint="b
     # set the final values of scheduled parameters
     if "schedules" in params["train"]:
         for sc in params["train"]["schedules"]:
+            if sc["var_name"] in env_override.keys(): continue # override prevents loading final parameter value
             env.set_attr(sc["var_name"], sc["final_value"])
 
     # same for the model

@@ -66,8 +66,8 @@ xs = np.arange(n_steps)
 mq,  = ax.plot(q_env[:,0], c=Colors.act_var_mean)
 qvar = ax.fill_between(xs, np.min(q_low, axis=1), np.max(q_high, axis=1), color=Colors.act_var_var, alpha=0.3, lw=0)
 
-rq0, = ax.plot(xs, q_rob[:,0], c=Colors.tab10_0, lw=2)
-rq1, = ax.plot(xs, q_rob[:,1], c=Colors.tab10_1, lw=2)
+rq0, = ax.plot(xs, q_rob[:,0], c="#9a031e", lw=1.5)
+# rq1, = ax.plot(xs, q_rob[:,1], c=Colors.tab10_1, lw=2)
 
 # legend_items = [
 #     [(rq0, rq1), (eq1,), (mq,), (qvar,)],
@@ -75,9 +75,9 @@ rq1, = ax.plot(xs, q_rob[:,1], c=Colors.tab10_1, lw=2)
 # ]
 
 legend_items = [
-    [(rq0, rq1), (mq,), (qvar,)],
+    [(rq0, ), (mq,), (qvar,)],
     [
-        "robot", 
+        "real robot", 
         r"$b_2 = -9$" if tex else "sim after", 
          r"$b_2 \in [-13, -6]$ " if tex else "variation"
     ]
@@ -86,7 +86,7 @@ legend_items = [
 setup_axis(
     ax, 
     xlabel=r"$t$" if tex else "t", 
-    ylabel=r"$q_i$" if tex else "q_i", 
+    ylabel=r"$q$" if tex else "q_i", 
     xlim=[0, 50], 
     ylim=[0, 0.045],
     legend_items=legend_items,
@@ -99,4 +99,4 @@ setup_axis(
 if mode == PLOTMODE.debug: 
     plt.show()
 else:
-    plt.savefig("act_var")
+    plt.savefig(f"{os.environ['HOME']}/act_var")

@@ -1,3 +1,4 @@
+import os
 import learning_fc
 import numpy as np
 
@@ -65,4 +66,4 @@ setup_axis(
 if mode == PLOTMODE.debug: 
     plt.show()
 else:
-    plt.savefig("solimp_var")
+    plt.savefig(f"{os.environ['HOME']}/solimp_var")

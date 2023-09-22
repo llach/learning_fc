@@ -18,6 +18,14 @@ DEFAULT_CAMERA_CONFIG = {
     "lookat": [-0.00099796, -0.00137387, 0.04537828]
 }
 
+VIDEO_CAMERA_CONFIG = {
+    "trackbodyid": -1,
+    "azimuth": 0,
+    "distance": 0.30,
+    "elevation": -76,
+    "lookat": [-0.00099796, -0.00137387, 0.04537828]
+}
+
 def obs_space_shape(obs_conf):
     def _obs2len(on):
         if on == Observation.ObjVel: return 1
@@ -46,10 +54,12 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             fth=0.05, 
             noise_q=0.000027,
             noise_f=0.013,
+            with_bias=False,
             qinit_range=[0.045, 0.045], 
             obs_config=ObsConfig.Q_F_DF, 
             control_mode=ControlMode.Position, 
             model_path="assets/franka_force.xml", 
+            default_camera_config=DEFAULT_CAMERA_CONFIG,
             **kwargs
         ):
         self.amax = amax        # maximum acceleration 
@@ -61,6 +71,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         self.noise_q = noise_q  # std of normally distributed noise added to joint positions
         self.noise_f = noise_f  # std of normally distributed noise added to contact forces
         self.obs_config = obs_config    # contents of observation space    
+        self.with_bias = with_bias
         self.qinit_range = qinit_range
         self.control_mode = control_mode
 
@@ -79,7 +90,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             model_path=learning_fc.__path__[0]+f"/{model_path}",
             frame_skip=20,
             observation_space=observation_space,
-            default_camera_config=DEFAULT_CAMERA_CONFIG,
+            default_camera_config=default_camera_config,
             **kwargs,
         )
     
@@ -184,8 +195,8 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if h[0] == 0 and h[1] == 0: return np.array([1, 1]) # no contact → policy has full control
         if h[0] == 1 and h[1] == 1:                         # full contact → scale actions for safety
             dfs = 1-np.abs((fgoal-force)/fgoal)
-            return np.clip(dfs, 0.9, 1.0)
-        return np.array([0.0 if hi else 1 for hi in h])
+            return np.clip(dfs, 0.7, 1.0)
+        return np.array([0 if hi else 1 for hi in h])
 
     def _is_done(self): raise NotImplementedError
     def _get_reward(self): raise NotImplementedError
@@ -259,8 +270,9 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
         if self.t == 0: 
             self.last_a = a.copy() # avoid penalty on first timestep
 
-        ab = self.action_bias(self.had_contact, self.force, self.fgoal)
         self.ain = a.copy()
+        if self.with_bias:
+            self.ain = self.action_bias(self.had_contact, self.force, self.fgoal) * self.ain
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
         self._step_mujoco_simulation(self._make_action(a), self.frame_skip)

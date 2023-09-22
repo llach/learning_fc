@@ -25,18 +25,22 @@ class VisBase:
         # initialize counter
         self.t = 0
 
-    def reset(self):
-        self.draw_goal()
+    def reset(self, hard=False):
+        if hard:
+            for plot in self.all_plots:
+                plot.clear()
+        else:
+            self.draw_goal()
 
-        for plot in self.all_plots:
-            if self.t == 0: break
-            plot.draw_line(
-                name=f"ep{self.t}", 
-                pos=self.t,
-                pen=dict(color="#D3D3D3", width=1.5, style=QtCore.Qt.PenStyle.DashLine),
-                angle=90
-                )
-    
+            for plot in self.all_plots:
+                if self.t == 0: break
+                plot.draw_line(
+                    name=f"ep{self.t}", 
+                    pos=self.t,
+                    pen=dict(color="#D3D3D3", width=1.5, style=QtCore.Qt.PenStyle.DashLine),
+                    angle=90
+                    )
+                
     def draw_goal(self): raise NotImplementedError
 
 class PlotItemWrapper:
@@ -48,25 +52,33 @@ class PlotItemWrapper:
         self.plot = win.addPlot(title=title)
         self.lines = {}
 
-        self.curves = []
-        self.curve_data = []
-
-        # number of pens = number of curves
-        if isinstance(pens, list) and len(pens)>1:
-            for p in pens:
-                self.curves.append(self.plot.plot(pen=p))
-                self.curve_data.append([])
-        elif isinstance(pens, str):
-            self.curves = self.plot.plot(pen=pens)
-        else:
-            assert False, f"unsupported type for 'pens' {type(pens)}"
+        self.pens = pens
+        self._setup_pens()
 
         if yrange: self.plot.setYRange(*yrange)
         if ticks:  self.draw_ticks(ticks)
 
+    def _setup_pens(self):
+        # number of pens = number of curves
+        self.curves = []
+        self.curve_data = []
+    
+        if isinstance(self.pens, list) and len(self.pens)>1:
+            for p in self.pens:
+                self.curves.append(self.plot.plot(pen=p))
+                self.curve_data.append([])
+        elif isinstance(self.pens, str):
+            self.curves = self.plot.plot(pen=self.pens)
+        else:
+            assert False, f"unsupported type for 'pens' {type(self.pens)}"
+
     def _remove_line(self, name): 
         self.plot.removeItem(self.lines[name])
         self.lines.pop(name)
+
+    def clear(self):
+        self.plot.clear()
+        self._setup_pens()
 
     def draw_line(self, name, **lnargs):
         if name in self.lines: self._remove_line(name)
