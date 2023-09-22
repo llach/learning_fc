@@ -11,16 +11,15 @@ from learning_fc.models import ForcePI
 from learning_fc.training import make_eval_env_model
 
 objects = {   #   wo,   dp,  fmin, fmax
-     "tape":  [0.045, 0.009, 0.07, 0.33],
-     "spy":   [0.015, 0.004, 0.20, 0.50],
-     "spb":   [0.042, 0.006, 0.10, 0.70],
-     "wind":  [0.063, 0.003, 0.17, 0.82],
-     "pring": [0.074, 0.000, 0.17, 0.85],
-     "wood":  [0.059, 0.000, 0.21, 0.90],
-     "mug":   [0.081, 0.000, 0.22, 1.00],
+     "tape":  [0.045, 0.009, 0.20, 0.33],
+     "spb":   [0.042, 0.006, 0.21, 0.70],
+     "wind":  [0.063, 0.003, 0.22, 0.82],
+     "pring": [0.074, 0.000, 0.22, 0.85],
+     "wood":  [0.059, 0.000, 0.25, 0.90],
+     "mug":   [0.081, 0.000, 0.27, 1.00],
 }
 
-N_TRIALS = 20
+N_TRIALS = 30
 N_SECS = 6.0
 
 # make sure eval data dir exists
@@ -28,8 +27,10 @@ eval_data_dir = f"{model_path}/robot_eval"
 os.makedirs(eval_data_dir, exist_ok=True)
 
 # load policy and env
-policy_trial = "2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb"
-# policy_trial = "2023-09-14_11-24-22__gripper_tactile__ppo__k-3__lr-0.0006_M2_noinb" 
+# policy_trial, indb = "2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb", True
+policy_trial, indb = "2023-09-14_11-24-22__gripper_tactile__ppo__k-3__lr-0.0006_M2_noinb", False
+# policy_trial, indb = "2023-09-15_08-22-36__gripper_tactile__ppo__k-3__lr-0.0006_M2_nor", False
+
 env, model, _, params = make_eval_env_model(f"{model_path}/{policy_trial}" , with_vis=False, checkpoint="best")
 k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_stack"]
 
@@ -38,7 +39,7 @@ k = 1 if "frame_stack" not in params["make_env"] else params["make_env"]["frame_
 
 # get model and object name for saving
 model_name = input("model name: ")
-assert model_name in ["pol", "nodr", "fc"], f'{model_name} not in ["pol", "nodr", "fc"]'
+assert model_name in ["pol", "noib", "nodr", "fc"], f'{model_name} not in ["pol", "nodr", "fc"]'
 if model_name == "fc": 
     assert isinstance(model, ForcePI), 'isinstance(model, ForcePI)'
 else:
@@ -66,17 +67,19 @@ ri = RobotInterface(
     goal=0.0, 
     freq=25, 
     datadir=trial_dir, 
-    with_indb=True
+    with_indb=indb
 )
 ri.reset()
 r = rospy.Rate(51)
 
+# open gripper
+ri.reset()
+ri.actuate([0.045, 0.045])
+time.sleep(0.5)
+
 input("start?")
 for _ in range(N_TRIALS):
-    # open gripper
-    ri.reset()
-    ri.actuate([0.045, 0.045])
-    time.sleep(0.5)
+    
     
     # sample and print oy
     oymax = round(wo-dp, 3)
@@ -100,8 +103,15 @@ for _ in range(N_TRIALS):
     while time.time() - start < N_SECS: r.sleep()
     ri.stop()
 
-    # store all important info
     cumr = round(ri.cumr, 2)
+    print(f"{sample_name},{fgoal},{cumr}")
+
+    # open gripper
+    ri.reset()
+    ri.actuate([0.045, 0.045])
+    time.sleep(0.5)
+
+    # store all important info
     ri.save_hist(sample_name)
 
     if not os.path.isfile(resfile):
@@ -111,8 +121,7 @@ for _ in range(N_TRIALS):
     with open(resfile, "a") as f:
             f.write(f"{sample_name},{fgoal},{cumr}\n")
 
-    # print for easy copying
-    print(f"{sample_name},{fgoal},{cumr}")
+    
 
 ri.reset()
 ri.actuate([0.045, 0.045])

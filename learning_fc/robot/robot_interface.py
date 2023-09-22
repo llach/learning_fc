@@ -181,6 +181,9 @@ class RobotInterface:
         self.force   = np.array([None,None])
         self.in_con  = np.array([0,0])
         self.had_con = np.array([0,0])
+        self.last_a = np.array([0,0])
+
+        self.set_goal(0)
 
         # reset observation buffer
         self.obs_buf = deque(maxlen=self.k)
@@ -298,15 +301,16 @@ if __name__ == "__main__":
     # model = PosModel(env)
     # model = StaticModel(safe_rescale(-0.003, [-env.dq_max, env.dq_max], [-1, 1]))
 
-    # model = ForcePI(env, verbose=True)
+    # model = ForcePI(env, verbose=False)
     ri = RobotInterface(
         model, 
         env, 
         k=k, 
-        goal=0.01, 
+        fth=env.fth,
+        goal=0.0, 
         freq=25, 
-        verbose=True, 
-        with_indb=False
+        verbose=False, 
+        with_indb=True
     )
 
     time.sleep(1.0)
