@@ -1,6 +1,7 @@
 mujoco
 PyYaml
 imageio
+pync
 
 pyqtgraph
 pyqt6

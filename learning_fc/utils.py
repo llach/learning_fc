@@ -59,6 +59,20 @@ def get_cumr(env, model):
         r += reward
     return r 
 
+def get_cumr_obj_delta(env, model):
+    """ rollout policy for one episode, return cumulative reward
+    """
+    done = False
+    r = 0
+    obs, _ = env.reset()
+    oystart = env.obj_pos[1] # store starting oy pos
+    while not done:
+        ain, _ = model.predict(obs, deterministic=True)
+        obs, reward, terminated, truncated, _ = env.step(ain)
+        done = terminated or truncated
+        r += reward
+    return np.array([r, np.abs(oystart-env.obj_pos[1])])
+
 """ model / env creation
 """
 
