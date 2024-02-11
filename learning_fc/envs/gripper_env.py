@@ -275,7 +275,7 @@ class GripperEnv(MujocoEnv, utils.EzPickle):
             self.ain = self.action_bias(self.had_contact, self.force, self.fgoal) * self.ain
         
         # `self.do_simulation` invovled an action space shape check that this environment won't pass due to underactuation
-        self._step_mujoco_simulation(self._make_action(a), self.frame_skip)
+        self._step_mujoco_simulation(self._make_action(self.ain), self.frame_skip)
         if self.render_mode == "human":
             self.render()
 

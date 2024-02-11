@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
+from learning_fc import model_path
 from sim_eval_data import dist, width, kappas
 
  # legend 
@@ -33,7 +34,7 @@ plt.rcParams["figure.dpi"] = 100
 def configure_boxes(box, ax):
 
     # Customizing box colors
-    colors = ['#4CAF50', '#2196F3', '#FFC107', '#FF5722']
+    colors = ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0']
     for patch, color in zip(box['boxes'], colors):
         patch.set_facecolor(color)
 
@@ -59,7 +60,8 @@ def configure_boxes(box, ax):
         r"$\pi^{IB}$",
         r"$\pi^{NO-IB}$",
         r"$\pi^{NO-RAND}$",
-    ], fontsize=12)
+        r"$\pi^{NO-CURR}$",
+    ], rotation=45, fontsize=14)
 
     # Remove top and right spines
     ax.spines['top'].set_visible(False)
@@ -69,11 +71,11 @@ def configure_boxes(box, ax):
 force_rewards = []
 objd = []
 
-for mname in "fc,pol,noib,nodr".split(","):
-    with open(f"{os.environ['HOME']}/{mname}_eval.pkl", "rb") as f:
+for mname in "fc,pol,noib,nodr,nocurr".split(","):
+    with open(f"{os.environ['HOME']}/fc_models/{mname}_eval.pkl", "rb") as f:
         data = pickle.load(f)
         force_rewards.append(np.array(data["res"]).reshape((-1)))
-        objd.append(np.array(data["objd"]).reshape((-1)))
+        objd.append(np.array(data["objd"]).reshape((-1))*100)
 
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(7.8, 5.5))
 
@@ -101,11 +103,15 @@ configure_boxes(box, ax1)
 #     ncol=4,
 # )
 
-ax1.set_ylabel(r"$r$")
+ax1.set_title("Force Reward", fontsize=20)
+ax2.set_title("Object Displacement", fontsize=20)
+
+ax1.set_ylabel(r"$r$", fontsize=16)
+ax2.set_ylabel(r"$\Delta o_y$ [cm]", fontsize=16)
 
 objd_bpl  = ax2.boxplot(objd, widths=0.25, showfliers=False, patch_artist=True)
 configure_boxes(objd_bpl, ax2)
 
 fig.tight_layout()
-# plt.savefig(f"{os.environ['HOME']}/box.pdf")
+plt.savefig(f"{model_path}/box.pdf")
 plt.show()

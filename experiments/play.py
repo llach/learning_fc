@@ -13,9 +13,9 @@ with_vis = 0
 # trial = f"{model_path}/30_base"
 # trial = find_latest_model_in_path(model_path, filters=["ppo"])
 # trial = f"{model_path}/2023-09-13_18-47-36__gripper_tactile__ppo__k-3__lr-0.0006"
-trial = f"{model_path}/2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb"
+# trial = f"{model_path}/2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb"
+trial = f"{model_path}/2024-02-11_16-40-14__gripper_tactile__ppo__k-3__lr-0.0006"
 
-print(trial)
 
 env, model, vis, _ = make_eval_env_model(
     trial, 
@@ -64,10 +64,7 @@ for i, kappa in enumerate(kappas):
         ain, _ = model.predict(obs, deterministic=True)
         # if env.had_contact[0] and env.had_contact[1]: ain = [-0.1,-0.1]
         # else: ain = [-1,-1]
-        print(ain)
         
-
-        # if j == 150: env.set_goal(env.fgoal*1.2)
         obs, r, _, _, _ = env.step(ain)
         if vis: vis.update_plot(action=ain, reward=r)
 
