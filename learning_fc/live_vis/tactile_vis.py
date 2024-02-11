@@ -133,7 +133,7 @@ class TactileVis(VisBase):
 
     def update_plot(self, action, reward):
         self.t += 1
-        action = safe_rescale(action, [-1,1], [0,0.045])
+        action = safe_rescale(action, [-1,1], [-0.045,0.045])
 
         # store new data
         self.plt_force.update(self.env.force)

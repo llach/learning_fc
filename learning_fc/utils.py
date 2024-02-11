@@ -66,12 +66,15 @@ def get_cumr_obj_delta(env, model):
     r = 0
     obs, _ = env.reset()
     oystart = env.obj_pos[1] # store starting oy pos
+    doy = 0
     while not done:
         ain, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, _ = env.step(ain)
         done = terminated or truncated
         r += reward
-    return np.array([r, np.abs(oystart-env.obj_pos[1])])
+        if not np.all(env.had_contact): doy = np.abs(oystart-env.obj_pos[1])
+        # doy = np.abs(oystart-env.obj_pos[1])
+    return np.array([r, doy])
 
 """ model / env creation
 """

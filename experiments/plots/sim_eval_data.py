@@ -10,7 +10,7 @@ from learning_fc.training.evaluation import make_eval_env_model
 
 dist = 0.1
 width = 0.15
-ntrials = 10
+ntrials = 100
 kappas = np.arange(0,1.1,0.2)
 
 if __name__ == "__main__":
@@ -40,7 +40,15 @@ if __name__ == "__main__":
         fc_objd.append(objds)
         fc_res.append(crs)
     print(f"fc took {time.time()-start}")
-    pol_res, noib_res, nodr_res = fc_res, fc_res, fc_res
+
+    print(np.mean(fc_res), np.std(fc_res))
+
+    with open(f"{os.environ['HOME']}/fc_eval.pkl", "wb") as f:
+        pickle.dump({
+            "res": fc_res,
+            "objd": fc_objd,
+        }, f)
+   
 
     start = time.time()
     pol_res = []
@@ -55,6 +63,14 @@ if __name__ == "__main__":
     env.set_attr("with_bias", False)
     print(f"pol took {time.time()-start}")
 
+    print(np.mean(pol_res), np.std(pol_res))
+    
+    with open(f"{os.environ['HOME']}/pol_eval.pkl", "wb") as f:
+        pickle.dump({
+            "res": pol_res,
+            "objd": pol_objd,
+        }, f)
+
     start = time.time()
     noib_res = []
     model.set_parameters(f"{model_path}/2023-09-14_11-24-22__gripper_tactile__ppo__k-3__lr-0.0006_M2_noinb/weights/_best_model.zip")
@@ -66,6 +82,12 @@ if __name__ == "__main__":
     noib_res = noib[:,:,0]
     noib_objd = noib[:,:,1]
     print(f"noib took {time.time()-start}")
+
+    with open(f"{os.environ['HOME']}/noib_eval.pkl", "wb") as f:
+        pickle.dump({
+            "res": noib_res,
+            "objd": noib_objd,
+        }, f)
 
     start = time.time()
     nodr_res = []
@@ -79,14 +101,8 @@ if __name__ == "__main__":
     nodr_objd = nodr[:,:,1]
     print(f"nodr took {time.time()-start}")
 
-    with open(f"{os.environ['HOME']}/sim_eval.pkl", "wb") as f:
+    with open(f"{os.environ['HOME']}/nodr_eval.pkl", "wb") as f:
         pickle.dump({
-            "fc_res": fc_res,
-            "fc_objd": fc_objd,
-            "pol_res": pol_res,
-            "pol_objd": pol_objd,
-            "noib_res": noib_res,
-            "noib_objd": noib_objd,
-            "nodr_res": nodr_res,
-            "nodr_objd": nodr_objd,
+            "res": nodr_res,
+            "objd": nodr_objd,
         }, f)
