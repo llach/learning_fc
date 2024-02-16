@@ -52,7 +52,7 @@ def _get_schedules():
     )
 
     return [
-        ro_schedule,
+        # ro_schedule,
         wo_schedule,
         oy_schedule,
         vo_schedule,
@@ -69,7 +69,7 @@ ekw = dict(
     rf_scale=1.0,
     sample_biasprm=True,
     randomize_stiffness=True,
-    with_bias=True,
+    with_bias=False,
     noise_f=0.002,
     fth=0.02,
     model_path="assets/pal_force.xml",

@@ -9,12 +9,14 @@ from learning_fc.training import make_eval_env_model
 from learning_fc.utils import find_latest_model_in_path
 
 N_GOALS  = 10
-with_vis = 0
+with_vis = 1
 # trial = f"{model_path}/30_base"
 # trial = find_latest_model_in_path(model_path, filters=["ppo"])
 # trial = f"{model_path}/2023-09-13_18-47-36__gripper_tactile__ppo__k-3__lr-0.0006"
 # trial = f"{model_path}/2023-09-14_10-53-25__gripper_tactile__ppo__k-3__lr-0.0006_M2_inb"
-trial = f"{model_path}/2024-02-11_16-40-14__gripper_tactile__ppo__k-3__lr-0.0006"
+# trial = f"{model_path}/2024-02-11_16-40-14__gripper_tactile__ppo__k-3__lr-0.0006"
+# trial = f"{model_path}/2024-02-11_21-26-18__gripper_tactile__ppo__k-3__lr-0.0006_M2_nopen"
+trial = f"{model_path}/2024-02-05_13-51-07__gripper_tactile__ppo__k-3__lr-0.0006_M2_nocurr"
 
 
 env, model, vis, _ = make_eval_env_model(
@@ -23,12 +25,11 @@ env, model, vis, _ = make_eval_env_model(
     checkpoint="best", 
     env_override = dict(
         control_mode=ControlMode.PositionDelta,
-        oy_range=[0.04,0.04],
+        # oy_range=[-0.04,0.04],
         # wo_range=2*[0.035],
         # model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
         # f_scale=3.0,
         # sample_fscale=True,
-        # fgoal_range=[0.05, 0.6],
         # sample_biasprm=True
         # noise_f=0.002,
         # ftheta=0.008,
@@ -37,7 +38,7 @@ env, model, vis, _ = make_eval_env_model(
 
 env.set_attr("noise_f", 0.002)
 env.set_attr("fth", 0.02)
-env.set_attr("with_bias", True)
+env.set_attr("with_bias", False)
 
 print(env.ro_scale, env.ov_max)
 
@@ -45,6 +46,7 @@ print(env.ro_scale, env.ov_max)
 kappas = np.linspace(0, 1, N_GOALS)
 # kappas = [0.4]
 cumrews = np.zeros((N_GOALS,))
+Oys = []
 for i, kappa in enumerate(kappas):
     obs, _ = env.reset()
 
@@ -56,11 +58,12 @@ for i, kappa in enumerate(kappas):
     if isinstance(model, ForcePI): model.reset()
     if vis: vis.reset()
 
-    oy = env.obj_pos[1]
+    oystart = env.obj_pos[1]
+    oy = 0
     oys = []
     hcs = []
     
-    for j in range(300):
+    for j in range(100):
         ain, _ = model.predict(obs, deterministic=True)
         # if env.had_contact[0] and env.had_contact[1]: ain = [-0.1,-0.1]
         # else: ain = [-1,-1]
@@ -68,17 +71,22 @@ for i, kappa in enumerate(kappas):
         obs, r, _, _, _ = env.step(ain)
         if vis: vis.update_plot(action=ain, reward=r)
 
-        oys.append(oy-env.obj_pos[1])
+        if not np.all(env.had_contact): oy = np.abs(oystart-env.obj_pos[1])
+        oys.append(np.abs(oystart-env.obj_pos[1]))
         hcs.append(env.had_contact)
         cumrews[i] += r
 
-    plt.plot(list(range(300)), oys)
-    ax2 = plt.twinx()
-    ax2.plot(list(range(300)), hcs)
-    plt.show()
-    print(cumrews[i])
+    print(cumrews[-1])
+    Oys.append(oy)
+
+    # plt.plot(list(range(300)), oys)
+    # ax2 = plt.twinx()
+    # ax2.plot(list(range(300)), hcs)
+    # plt.show()
+    print(cumrews[i], Oys[-1])
 
     time.sleep(0.01)
+print(f"{np.mean(Oys)}±{np.std(Oys)}")
 print(f"{np.mean(cumrews):.0f}±{np.std(cumrews):.1f}")
 env.close()
 
