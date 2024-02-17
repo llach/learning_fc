@@ -35,7 +35,7 @@ plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}\usepackage[T1]{font
 def configure_boxes(box, ax):
 
     # Customizing box colors
-    colors = ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', '#607D8B']
+    colors = ['#ff8d00', '#4483e7', '#FFC107', '#4CAF50', '#9C27B0', '#607D8B']
     for patch, color in zip(box['boxes'], colors):
         patch.set_facecolor(color)
 
