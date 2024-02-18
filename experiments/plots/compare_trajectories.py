@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib import colormaps as cm
-from learning_fc import  model_path
+from learning_fc import  model_path, cm_uni
 
 # legend 
 plt.rcParams['legend.fancybox']  = True
@@ -63,7 +63,23 @@ def plot_two_models(ax, base, pol, title, with_offset=False, legend=False):
         f_pol = np.squeeze(assure_len(pol[goal]))
         f_base = np.squeeze(assure_len(f_base))
 
-        if title == "Wood" and goal == 0.7:
+        if title == "Mug" and goal == 0.7:
+            f_pol = f_pol[20:]
+            f_base = f_base[20:]
+        if title == "Mug" and goal == 0.5:
+            f_pol = f_pol[10:]
+            f_base = f_base[10:]
+        if title == "Mug" and goal == 0.2:
+            f_pol = f_pol[13:]
+            f_base = f_base[13:]
+
+        if title == "Plush Toy" and goal == 0.7:
+            f_pol = f_pol[10:]
+            f_base = f_base[10:]
+        if title == "Plush Toy" and goal == 0.5:
+            f_pol = f_pol[10:]
+            f_base = f_base[10:]
+        if title == "Plush Toy" and goal == 0.2:
             f_pol = f_pol[10:]
             f_base = f_base[10:]
 
@@ -84,8 +100,8 @@ def plot_two_models(ax, base, pol, title, with_offset=False, legend=False):
         xs = g_offset+np.arange(l_forces)
 
         gl_p, = ax.plot(xs, goals, color=cmap(7), label="f_goal")
-        bl_p, = ax.plot(xs, np.mean(f_base, axis=1), color="#ff8d00", label="Baseline")
-        po_p, = ax.plot(xs, np.mean(f_pol, axis=1), color="#4483e7", label="Policy")
+        bl_p, = ax.plot(xs, np.mean(f_base, axis=1), color=cm_uni["orange"], label="Baseline")
+        po_p, = ax.plot(xs, np.mean(f_pol, axis=1), color=cm_uni["blue"], label="Policy")
 
         g_offset += l_forces
 
@@ -144,16 +160,15 @@ def load_trials(model, obj="chicken"):
 
     return trials
 
-
-fc_wood = load_trials("fc", obj="wood")
-model_wood = load_trials("pol", obj="wood")
+fc_mug = load_trials("fc", obj="mug")
+model_mug = load_trials("pol", obj="mug")
 
 fc_chick = load_trials("fc", obj="chicken")
 model_chick = load_trials("pol", obj="chicken")
 
 fig, (ax1, ax2) = plt.subplots(nrows=2)
 
-plot_two_models(ax1, fc_wood, model_wood, title="Wood", with_offset=True, legend=True)
+plot_two_models(ax1, fc_mug, model_mug, title="Mug", with_offset=True, legend=True)
 artists = plot_two_models(ax2, fc_chick, model_chick, title="Plush Toy", with_offset=False)
 
 ax1.set_xticklabels([])
