@@ -99,4 +99,4 @@ setup_axis(
 if mode == PLOTMODE.debug: 
     plt.show()
 else:
-    plt.savefig(f"{os.environ['HOME']}/act_var")
+    plt.savefig(f"{model_path}/b2_var")

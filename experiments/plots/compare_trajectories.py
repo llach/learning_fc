@@ -115,7 +115,7 @@ def plot_two_models(ax, base, pol, title, with_offset=False, legend=False):
             r"$f^{\text{goal}}$",
         ])
         l.get_frame().set_linewidth(0.5)
-    if title is not None: ax.set_title(title)
+    if title is not None: ax.set_title(r"\textbf{\textsc{"+title+r"}}")
 
     return [gl_p, bl_p, po_p]
 
@@ -173,6 +173,8 @@ artists = plot_two_models(ax2, fc_chick, model_chick, title="Plush Toy", with_of
 
 ax1.set_xticklabels([])
 ax2.set_xlabel("Steps")
+
+fig.get_layout_engine().set(hspace=0.07)
 
 plt.savefig(f"{model_path}/traj_compare.pdf")
 plt.show()

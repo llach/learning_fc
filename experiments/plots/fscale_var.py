@@ -4,6 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from learning_fc import model_path
 from learning_fc.envs import GripperTactileEnv
 from learning_fc.utils import get_q_f
 from learning_fc.enums import ControlMode
@@ -68,4 +69,4 @@ setup_axis(
 if mode == PLOTMODE.debug: 
     plt.show()
 else:
-    plt.savefig(f"{os.environ['HOME']}/fscale_var")
+    plt.savefig(f"{model_path}/kappa_var")

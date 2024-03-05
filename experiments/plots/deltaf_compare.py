@@ -29,9 +29,10 @@ def diff_traj(traj, dt):
     tdiff = np.diff(traj, axis=0)/dt
     return np.concatenate([[tdiff[0]], tdiff])
 
-def dfdq(fs, qs):
+def dfdq(fs, qs, fth=0.02):
     dd = np.diff(qs, axis=0)/(np.diff(fs, axis=0)+1e-4)
-    return np.concatenate([[dd[0]], dd])
+    dd = np.concatenate([[dd[0]], dd])
+    return np.where(fs>fth, dd, np.zeros_like(fs))
 
 
 nsteps = 70
@@ -53,16 +54,16 @@ env = GripperTactileEnv(
 )
 
 env.solimp = [0.00, 0.99, 0.009, 0.5, 2]
-env.wo_range = 2*[0.0295/2]
-env.f_scale = 3.15
+env.wo_range = 2*[0.038/2]
+env.f_m = 3.1
 qewood, e_wood = get_q_f(env, nsteps)
 
 env.solimp = [0.00, 0.99, 0.01, 0.5, 2]
 env.wo_range = 2*[0.0255]
-env.f_scale = 2.4
+env.f_m = 2.5
 qesponge, e_sponge = get_q_f(env, nsteps)
 
-mode = PLOTMODE.debug
+mode = PLOTMODE.paper
 tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
 fig, axes = plt.subplots(ncols=2, nrows=2, gridspec_kw={'height_ratios': [3, 2]}, figsize=(13,8))
 xs = np.arange(nsteps)
@@ -88,8 +89,8 @@ setup_axis(
     ylabel=r"$f_i$" if tex else "f", 
     xlim=[0, nsteps], 
     ylim=[-0.005, 1.0],
-    yticks=np.linspace(0,7,8)*0.1,
-    yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
+    # yticks=np.linspace(0,7,8)*0.1,
+    # yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
     remove_xticks=True,
     legend_items=[
         [(rw0, rw1), (ew0, ew1)],
@@ -104,8 +105,8 @@ setup_axis(
     axes[0,1], 
     xlim=[0, nsteps], 
     ylim=[-0.005, 1.0],
-    yticks=np.linspace(0,7,8)*0.1,
-    yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
+    # yticks=np.linspace(0,7,8)*0.1,
+    # yticklabels=['', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7'],
     remove_xticks=True,
     remove_yticks=True,
     legend_items=[
@@ -123,10 +124,10 @@ dr_sponge = diff_traj(r_sponge, env.dt)
 de_wood = diff_traj(e_wood, env.dt)
 de_sponge = diff_traj(e_sponge, env.dt)
 
-dr_wood = dfdq(r_wood, qrwood)
-dr_sponge = dfdq(r_sponge, qrsponge)
+# dr_wood = dfdq(r_wood, qrwood)
+# dr_sponge = dfdq(r_sponge, qrsponge)
 
-de_wood = dfdq(e_wood, qewood)
+# de_wood = dfdq(e_wood, qewood)
 # de_sponge = dfdq(e_sponge, qesponge)
 
 
@@ -145,6 +146,9 @@ des1, = axes[1,1].plot(xs, de_sponge[:,1], c=Colors.tab10_3)
 
 drsmax = np.max(dr_sponge)
 desmax = np.max(de_sponge)
+
+axes[0,0].set_title("Wood")
+axes[0,1].set_title("Sponge")
 
 setup_axis(
     axes[1,0], 
@@ -179,4 +183,4 @@ setup_axis(
 if mode == PLOTMODE.debug: 
     plt.show()
 else:
-    plt.savefig("dfdt_compare")
+    plt.savefig(f"{model_path}/dfdt_compare.pdf")
