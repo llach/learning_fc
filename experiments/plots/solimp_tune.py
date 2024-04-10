@@ -19,7 +19,7 @@ def param_trial_plot(pname, vrange, solimp, sidx, stidx, mode):
         wo_range=[0.03, 0.03],
         noise_f=0,
         control_mode=ControlMode.PositionDelta,
-        model_path=learning_fc.__path__[0]+"/assets/pal_force.xml",
+        model_path="/assets/pal_force.xml",
     )
 
     forces = np.zeros((ntrials, nsteps))

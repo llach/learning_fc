@@ -63,10 +63,11 @@ for i, kappa in enumerate(kappas):
     oys = []
     hcs = []
     
-    for j in range(100):
-        ain, _ = model.predict(obs, deterministic=True)
+    for j in range(500):
+        # ain, _ = model.predict(obs, deterministic=True)
         # if env.had_contact[0] and env.had_contact[1]: ain = [-0.1,-0.1]
         # else: ain = [-1,-1]
+        ain = [-1,-1]
         
         obs, r, _, _, _ = env.step(ain)
         if vis: vis.update_plot(action=ain, reward=r)

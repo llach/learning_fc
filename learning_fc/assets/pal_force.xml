@@ -8,7 +8,7 @@
     <default class="gripper">
       <material specular="0.5" shininess="0.25"/>
       <joint armature="0.1" damping="1" axis="0 0 1" range="0.0 0.045"/>
-      <general dyntype="none" biastype="affine" forcerange="-1 1" ctrlrange="0 0.045" gainprm="100 0 0" biasprm="0 -90 -11" />
+      <general dyntype="none" biastype="affine" forcerange="-100 100" ctrlrange="0 0.045" gainprm="500 0 0" biasprm="0 -500 -50" />
       
       <default class="finger">
         <joint pos="0 0 -0.076575" axis="1 0 0" type="slide" range="0 0.045" />
@@ -35,11 +35,11 @@
 
   <worldbody>
     <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
-    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" priority="2" solimp="0.95 0.99 0.001 0.5 2"/>
 
     <body name="object" pos="0 -1 0.05" >
         <freejoint name="object_joint" />
-        <geom name="object" type="cylinder" size="0.02 0.05" mass="0.4" priority="1" solimp="0.00 0.99 0.015 0.5 3" />  
+        <geom name="object" type="cylinder" size="0.02 0.05" mass="0.2" priority="1" solimp="0.00 0.99 0.015 0.5 3" />  
     </body> 
     
     <body name="hand" childclass="gripper" pos="-0.19 0 0.05" quat="0 0.7071068 0 0.7071068">

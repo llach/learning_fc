@@ -25,3 +25,17 @@ cm_uni['gray'] = '#B4A096'
 cm_uni['lightorange'] = '#D7B469'
 cm_uni['orange'] = '#D29600'
 cm_uni['brown'] = '#916946'
+
+cm_itten = OrderedDict()
+cm_itten['red'] = '#E32322'
+cm_itten['deeporange'] = '#EA621F'
+cm_itten['orange'] = '#F18E1C'
+cm_itten['amber'] = '#FDC60B'
+cm_itten['yellow'] = '#F4E500'
+cm_itten['lightgreen'] = '#8CBB26'
+cm_itten['darkgreen'] = '#008e5b'   # green
+cm_itten['lightblue'] = '#0696BB'
+cm_itten['blue'] = '#2A71B0'
+cm_itten['purple'] = '#444E99'
+cm_itten['magenta'] = '#6D398B'
+cm_itten['pink'] = '#c4037d'

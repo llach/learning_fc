@@ -27,8 +27,8 @@ class GripperTactileEnv(GripperEnv):
     #     [0.025, 1.1]     # maximum parameter values
     # ) # sampling range for solref parameters
 
-    SOLIMP_HARD = [0.00, 0.99, 0.002, 0.5, 2]
-    SOLIMP_SOFT = [0.00, 0.99, 0.01,  0.5, 2]
+    SOLIMP_HARD = [0.001, 0.99, 0.002, 0.5, 2]
+    SOLIMP_SOFT = [0.001, 0.99, 0.01,  0.5, 2]
 
     WIDTH_RANGE = [0.003, 0.01]
 
@@ -79,6 +79,7 @@ class GripperTactileEnv(GripperEnv):
         self.fgoal_range = fgoal_range  # sampling range for fgoal
         self.randomize_stiffness = randomize_stiffness
         self.sample_biasprm = sample_biasprm
+        self.actf = 1
 
         if oy_init is not None:
             self.oy_range = [oy_init, oy_init]
@@ -211,8 +212,10 @@ class GripperTactileEnv(GripperEnv):
         assert np.abs(self.wo) > np.abs(self.oy), "|wo| > |oy|"
         self.total_object_movement = 0
 
+        # if self.sample_biasprm:
         act_default = root.findall(".//general[@dyntype='none']")[0]
-        act_default.attrib["biasprm"] = " ".join(map(str, self.biasprm))
+        act_default.attrib["gainprm"] = " ".join(map(str, self.actf*np.array([100, 0, 0])))
+        act_default.attrib["biasprm"] = " ".join(map(str, self.actf*np.array([0, -100, -10])))
         
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 
