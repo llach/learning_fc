@@ -1,23 +1,69 @@
+import os
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.polynomial.polynomial import polyfit
 
 from learning_fc import model_path
-from learning_fc.training import make_eval_env_model
-from learning_fc.training.evaluation import stiffness_var_plot
-from learning_fc.utils import find_latest_model_in_path
-from learning_fc.models import ForcePI
 
-N_GOALS  = 2
-N_TRIALS = 6
+widths = {
+    "sponge": 45,
+    "mug": 84.5,
+    # "glue": 58.15
+}
+colors = ["orange", "blue"]
 
-# trial = f"{model_path}/2023-08-31_11-35-02__gripper_tactile__ppo__k-3__lr-0.0006"
-trial = find_latest_model_in_path(model_path, filters=["ppo"])
-print(trial)
+def read_f_q(obj_name):
+    assert obj_name in widths, f"{obj_name} not in {list(widths.keys())}"
+    exp_path = f"{model_path}/stiff_exp/"
+    fTs, dpTs, dqdes = [], [], []
 
-env, model, vis, params = make_eval_env_model(trial, with_vis=0, checkpoint="best")
-# model = ForcePI(env)
+    for fi in os.listdir(exp_path):
+        if not fi.endswith(".pkl") or obj_name not in fi: continue
 
-plot_title = f"{params['train']['plot_title']}\n{params['train']['trial_name']}"
-stiffness_var_plot(env, model, vis, N_GOALS, N_TRIALS, plot_title)
+        with open(f"{exp_path}/{fi}", "rb") as f:
+            data = pickle.load(f)
 
+        f = np.mean(data["force"], axis=1)
+        fT = np.mean(f[-10:])
+        fTs.append(fT)
+
+        apertureT = np.sum(data["q"], axis=1)[-1]
+        dpT = widths[obj_name]-1000*apertureT
+        dpTs.append(dpT)
+
+        dqdes.append(float(fi.split("__")[1].split(".pkl")[0]))
+    fTs = np.array(fTs)
+    dpTs = np.array(dpTs)
+    dqdes = np.array(dqdes)
+
+    idxs = np.argsort(dqdes)
+    fTs = fTs[idxs][2:]
+    dpTs = dpTs[idxs][2:]
+    dqdes = dqdes[idxs][2:]
+
+    return fTs, dpTs, dqdes
+        
+fig, axs = plt.subplots(ncols=2, figsize=(10,5))
+for i, obj in enumerate(widths.keys()):
+    c= colors[i]
+    fTs, dpTs, dqdes = read_f_q(obj)
+
+    axs[0].scatter(dqdes, fTs, label=obj, c=c)
+    b, m = polyfit(dqdes, fTs, 1)
+    axs[0].plot(dqdes, b + m*dqdes, linestyle='-', alpha=0.3, c=c)
+
+    axs[1].scatter(dqdes, dpTs, label=obj, c=c)
+    b, m = polyfit(dqdes, dpTs, 1)
+    axs[1].plot(dqdes, b + m*dqdes, linestyle='-', alpha=0.3, c=c)
+
+axs[0].set_ylabel("f(T)")
+axs[1].set_ylabel("Penetration Depth [mm]")
+
+for ax in axs: 
+    ax.legend()
+    ax.set_xlabel("\Delta q_des")
+
+fig.tight_layout()
+plt.savefig("/Users/llach/stiffness_experiment.png")
 plt.show()

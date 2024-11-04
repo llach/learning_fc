@@ -5,10 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib import colormaps as cm
-from learning_fc import  model_path, cm_uni
-
-import plot_config
-
+from learning_fc import model_path, cm_uni, plot_config
 
 model = "fc"
 
@@ -152,5 +149,5 @@ ax2.set_xlabel("Steps")
 
 fig.get_layout_engine().set(hspace=0.07)
 
-plt.savefig(f"{os.environ['HOME']}/repos/diss/images/rl_ctrl/traj_compare.pdf")
+# plt.savefig(f"{os.environ['HOME']}/repos/diss/images/rl_ctrl/traj_compare.pdf")
 plt.show()

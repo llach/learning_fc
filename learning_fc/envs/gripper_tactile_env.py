@@ -215,7 +215,7 @@ class GripperTactileEnv(GripperEnv):
         # if self.sample_biasprm:
         act_default = root.findall(".//general[@dyntype='none']")[0]
         act_default.attrib["gainprm"] = " ".join(map(str, self.actf*np.array([100, 0, 0])))
-        act_default.attrib["biasprm"] = " ".join(map(str, self.actf*np.array([0, -100, -10])))
+        act_default.attrib["biasprm"] = " ".join(map(str, self.actf*np.array(self.biasprm)))
         
         self.set_goal(round(np.random.uniform(*self.fgoal_range), 3))
 

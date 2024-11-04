@@ -56,8 +56,8 @@ def filter_trials(trials, obj):
     return f_trials
 
 
-obj, c, le = "mug", cm_uni["cyan"], True
-# obj, c, le = "glue", cm_uni["lightblue"], False
+# obj, c, le = "mug", cm_uni["cyan"], True
+obj, c, le = "glue", cm_uni["lightblue"], False
 trials = load_trials(obj)
 trials = filter_trials(trials, obj)
 
@@ -80,11 +80,11 @@ if le:
 ax1_ticks = [0.0, 0.2, 0.4, 0.6]
 ax0_ticks = [0.0, 0.1, 0.2, 0.3]
 
-axs[0].set_yticks(ax0_ticks)
-axs[0].set_yticklabels([str(ti) for ti in ax0_ticks])
+axs[0].set_ylim(*axs[1].get_ylim())
 
-axs[1].set_yticks(ax1_ticks)
-axs[1].set_yticklabels([str(ti) for ti in ax1_ticks])
+for ax in axs:
+    ax.set_yticks(ax1_ticks)
+    ax.set_yticklabels([str(ti) for ti in ax1_ticks])
 
 for ax in axs: 
     ax.set_xlim(0,150)

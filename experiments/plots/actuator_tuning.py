@@ -9,7 +9,9 @@ from learning_fc import model_path
 from learning_fc.utils import get_q_f
 from learning_fc.enums import ControlMode
 from learning_fc.envs import GripperTactileEnv
-from learning_fc.plotting import Colors, set_rcParams, setup_axis, PLOTMODE, FIGTYPE
+
+from learning_fc import plot_config, cm_uni
+
 
 oname = "wood3"
 files_dir = f"{model_path}/data/"
@@ -53,50 +55,24 @@ env = GripperTactileEnv(
     oy_init=0,
     wo_range=[wo, wo],
 )
-env.biasprm = [0, -100, -10]
-q_bef, _ = get_q_f(env, n_steps)
 
-mode = PLOTMODE.paper
-tex = set_rcParams(mode=mode, ftype=FIGTYPE.single)
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(5.5/1.25,4/1.25))
 xs = np.arange(n_steps)
 
-# eq1, _ = ax.plot(xs, q_bef, c=Colors.grey)
+rq0, = ax.plot(xs, q_rob[:,0], c="#9a031e", lw=1.2, label="real robot")
 
-mq,  = ax.plot(q_env[:,0], c=Colors.act_var_mean)
-qvar = ax.fill_between(xs, np.min(q_low, axis=1), np.max(q_high, axis=1), color=Colors.act_var_var, alpha=0.3, lw=0)
+c=cm_uni["darkgreen"]
+mq,  = ax.plot(q_env[:,0], c=c, label=r"$b_2 = -9$")
+qvar = ax.fill_between(xs, np.min(q_low, axis=1), np.max(q_high, axis=1), color=c, alpha=0.3, lw=0, label=r"$b_2 \in [-13, -6]$")
 
-rq0, = ax.plot(xs, q_rob[:,0], c="#9a031e", lw=1.5)
-# rq1, = ax.plot(xs, q_rob[:,1], c=Colors.tab10_1, lw=2)
+ax.set_xlim(0,45)
+ax.set_ylim(0,0.048)
 
-# legend_items = [
-#     [(rq0, rq1), (eq1,), (mq,), (qvar,)],
-#     ["robot", "sim before", "sim after", "variation"]
-# ]
+ax.set_xlabel(r"Steps")
+ax.set_ylabel(r"Joint Position \, $q$ [$m$]")
 
-legend_items = [
-    [(rq0, ), (mq,), (qvar,)],
-    [
-        "real robot", 
-        r"$b_2 = -9$" if tex else "sim after", 
-         r"$b_2 \in [-13, -6]$ " if tex else "variation"
-    ]
-]
+leg = ax.legend()
+leg.get_frame().set_linewidth(0.3)
 
-setup_axis(
-    ax, 
-    xlabel=r"$t$" if tex else "t", 
-    ylabel=r"$q$" if tex else "q_i", 
-    xlim=[0, 50], 
-    ylim=[0, 0.045],
-    legend_items=legend_items,
-    legend_loc="lower right",
-    remove_first_ytick=True,
-    yticks=np.linspace(0,45,10)*0.001,
-    yticklabels=['0.0', '', '0.01', '', '0.02', '', '0.03', '', '0.04', ''],
-)
-
-if mode == PLOTMODE.debug: 
-    plt.show()
-else:
-    plt.savefig(f"{model_path}/b2_var")
+plt.savefig(f"{os.environ['HOME']}/repos/diss/images/rl_ctrl/act_var.pdf")
+plt.show()
